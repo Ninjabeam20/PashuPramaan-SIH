@@ -1,10 +1,14 @@
 /**
  * Maps GeoJSON state names → dummy REGION_DATA / DEMAND_LEVEL ids.
- * Source: click_that_hood india.geojson, simplified; rings rewound for d3-geo.
- * North-East states share dummy id `NE`. Islands omitted so the mainland fills the frame.
+ * Mainland states from click_that_hood (simplified; rings rewound for d3-geo).
+ * Jammu and Kashmir uses the pre-2019 unified outline (J&K + Ladakh, including
+ * the official northern claim). Arunachal Pradesh uses the official eastern
+ * outline. North-East states share dummy id `NE`.
+ * Islands omitted so the mainland fills the frame.
  */
 export const GEO_NAME_TO_ID: Record<string, string> = {
   "Andhra Pradesh": "AP",
+  "Arunachal Pradesh": "NE",
   Assam: "NE",
   Bihar: "BR",
   Chhattisgarh: "CG",

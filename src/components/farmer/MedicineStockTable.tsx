@@ -45,8 +45,8 @@ export function MedicineStockTable({ initialData }: { initialData: MedicineStock
   return (
     <>
       <Card className="flex flex-col p-0 overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-[var(--color-border)] flex items-center justify-between">
-          <div>
+        <div className="p-5 sm:p-6 border-b border-[var(--color-border)] flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">
               Medicine Stock
             </div>
@@ -55,7 +55,7 @@ export function MedicineStockTable({ initialData }: { initialData: MedicineStock
             </h2>
           </div>
           <Button 
-            className="bg-[#e46a4d] hover:bg-[#d65a3d] text-white px-4 py-2 font-semibold border-none"
+            className="!w-1/2 ml-auto bg-[#e46a4d] hover:bg-[#d65a3d] text-white px-4 py-2 font-semibold border-none"
             onClick={() => setIsAddStockOpen(true)}
           >
             + Add Stock

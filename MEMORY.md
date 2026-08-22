@@ -2,9 +2,9 @@
 
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
-**Last updated:** 2026-08-22  
-**Branch:** `main`  
-**HEAD:** `d859918` — Record 112f8ec in MEMORY after the admin dashboard commit.
+**Last updated:** 2026-08-23  
+**Branch:** `backend`  
+**HEAD:** *(this commit)* — map changes made to india map
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -14,7 +14,20 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ## Current tree (not yet committed)
 
-Working tree clean of product changes. Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`.
+Clean product tree at this commit (see history below). Implementation-spec docs still untracked:
+
+- `Cursor_changes 1.MD` — index, locked decisions, architecture
+- `Cursor_changes 2.MD` — create / modify / do-not-touch file inventory
+- `Cursor_changes 3.MD` — Prisma models and fields
+- `Cursor_changes 4.MD` — seed: users, farms, 48 Krishna animals + Shanti/Meena
+- `Cursor_changes 5.MD` — seed: medicines, prescriptions, treatments, dispatches, events
+- `Cursor_changes 6.MD` — admin national seed + dummy contradiction register
+- `Cursor_changes 7.MD` — Express GET routes and DTO mapping
+- `Cursor_changes 8.MD` — Express POST routes and page-handler wiring
+- `Cursor_changes 9.MD` — frontend dummy clients, admin extract, Docker/env scripts
+- `Cursor_changes 10.MD` — consistency-check script, runbook, out of scope
+
+Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`.
 
 ---
 
@@ -27,15 +40,15 @@ Working tree clean of product changes. Local-only (gitignored): `.playwright-mcp
 | `/farmer/home` | Farmer | Live |
 | `/farmer/my-farm` | Farmer | Live |
 | `/farmer/treatments` | Farmer | Live |
-| `/farmer/dispatch` | Farmer | Live |
-| `/farmer/insights` | Farmer | Live |
+| `/farmer/dispatch` | Farmer | Live (header Start Dispatch removed; card CTA kept) |
+| `/farmer/insights` | Farmer | Live (Add Stock half-width, right-aligned) |
 | `/vet/home` | Vet | Live |
 | `/vet/prescriptions` | Vet | Live |
 | `/vet/prescriptions/[rxId]` | Vet | Live |
 | `/vet/prescriptions/[rxId]/sign` | Vet | Live |
 | `/vet/prescriptions/[rxId]/countersign` | Vet | Live |
 | `/vet/patients` | Vet | Live |
-| `/admin` | Admin / Researcher | Live (single client page, tabbed) |
+| `/admin` | Admin / Researcher | Live (D3 choropleth; pre-2019 unified J&K outline) |
 
 ---
 
@@ -68,6 +81,14 @@ Ported the researcher UI to `/admin`. Login admin role and `/` now route correct
 ### `d859918` — Record 112f8ec in MEMORY after the admin dashboard commit (2026-08-22)
 
 Moved the admin working-tree notes into commit history and pointed remotes at the SIH `origin`.
+
+### `d0616b4` — Keep MEMORY HEAD and remotes in sync with d859918 (2026-08-22)
+
+MEMORY-only: pointed **HEAD** at `d859918` after that docs commit. No product files.
+
+### this commit — map changes made to india map (2026-08-23)
+
+Admin choropleth uses the pre-2019 unified Jammu & Kashmir outline (J&K + Ladakh dissolved, official northern claim through Aksai Chin) plus official Arunachal Pradesh. Heatmap colors and dummy AMU/demand data unchanged. Farmer dispatch: header Start Dispatch removed (card CTA kept). Insights: Add Stock half-width and right-aligned.
 
 ---
 

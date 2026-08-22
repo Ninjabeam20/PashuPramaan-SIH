@@ -51,27 +51,16 @@ export default function DispatchPage() {
       </div>
 
       {/* Header section */}
-      <section className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 -mt-2">
-        <div className="flex flex-col">
-          <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">
-            DISPATCH
-          </div>
-          <h1 className="text-4xl font-display font-normal text-[var(--color-text)] mb-2">
-            Farm Dispatch
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Check your products before they leave the farm.
-          </p>
+      <section className="flex flex-col -mt-2">
+        <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">
+          DISPATCH
         </div>
-        
-        <div className="shrink-0">
-          <Button 
-            className="w-full sm:w-auto bg-[#f47b59] hover:bg-[#e46a4d] text-white border-none font-bold min-h-[44px]"
-            onClick={() => setIsStartModalOpen(true)}
-          >
-            <span className="text-lg leading-none mr-1">+</span> Start Dispatch
-          </Button>
-        </div>
+        <h1 className="text-4xl font-display font-normal text-[var(--color-text)] mb-2">
+          Farm Dispatch
+        </h1>
+        <p className="text-sm text-[var(--color-text-muted)]">
+          Check your products before they leave the farm.
+        </p>
       </section>
 
       {/* Stats Summary */}
