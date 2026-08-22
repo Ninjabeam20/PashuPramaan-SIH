@@ -33,20 +33,11 @@ export const getFarmerDashboard = async () => {
           { id: "health_event", label: "Health Event", action: "health_event" },
           { id: "start_dispatch", label: "Start Dispatch", action: "start_dispatch" }
         ],
-        insight: {
-          demand_level: "High",
-          window_days: 30,
-          medicines: [
-            { name: "Oxytetracycline", demand_pct: 84, level: "High" },
-            { name: "Ivermectin", demand_pct: 61, level: "Medium" },
-            { name: "Vitamin B Complex", demand_pct: 45, level: "Normal" }
-          ],
-          recommendation: "Oxytetracycline demand is high. Consider restocking in the next 7-10 days."
-        },
-        top_medicines_by_demand: [
-          { rank: "01", name: "Oxytetracycline", level: "High" },
-          { rank: "02", name: "Ivermectin", level: "Medium" },
-          { rank: "03", name: "Vitamin B Complex", level: "Normal" }
+        medicine_stock: [
+          { name: "Oxytetracycline", quantity_label: "17 vials", status: { text: "Restock recommended", variant: "red" } },
+          { name: "Ivermectin", quantity_label: "32 doses", status: { text: "Stock sufficient", variant: "green" } },
+          { name: "Vitamin B Complex", quantity_label: "60 doses", status: { text: "Good", variant: "green" } },
+          { name: "Amoxicillin", quantity_label: "8 vials", status: { text: "Monitor", variant: "amber" } }
         ]
       });
     }, 500);

@@ -31,9 +31,15 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
             </Link>
             <Link 
               href="/vet/prescriptions" 
-              className={`h-full flex items-center border-b-2 px-1 ${pathname === '/vet/prescriptions' ? 'border-[var(--color-primary)] text-[var(--color-primary-dark)]' : 'border-transparent hover:text-[var(--color-text)] hover:border-[var(--color-border)]'}`}
+              className={`h-full flex items-center border-b-2 px-1 ${pathname.startsWith('/vet/prescriptions') ? 'border-[var(--color-primary)] text-[var(--color-primary-dark)]' : 'border-transparent hover:text-[var(--color-text)] hover:border-[var(--color-border)]'}`}
             >
               Prescriptions
+            </Link>
+            <Link 
+              href="/vet/patients" 
+              className={`h-full flex items-center border-b-2 px-1 ${pathname.startsWith('/vet/patients') ? 'border-[var(--color-primary)] text-[var(--color-primary-dark)]' : 'border-transparent hover:text-[var(--color-text)] hover:border-[var(--color-border)]'}`}
+            >
+              Patients
             </Link>
           </nav>
 

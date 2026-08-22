@@ -13,7 +13,7 @@ import { PrescriptionsTable } from "@/components/vet/PrescriptionsTable";
 import { CaseDetailModal } from "@/components/vet/CaseDetailModal";
 import { NewPrescriptionModal } from "@/components/vet/NewPrescriptionModal";
 
-export default function PrescriptionsPage() {
+function PrescriptionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isNewRxOpen = searchParams.get("new_rx") === "true";
@@ -189,5 +189,13 @@ export default function PrescriptionsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function PrescriptionsPage() {
+  return (
+    <React.Suspense fallback={<div className="flex h-64 items-center justify-center text-[var(--color-text-muted)]">Loading...</div>}>
+      <PrescriptionsContent />
+    </React.Suspense>
   );
 }

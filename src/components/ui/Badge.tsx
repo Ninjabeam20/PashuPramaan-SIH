@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked" | "countersigned" | "voided" | "reserve";
+export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked" | "countersigned" | "voided" | "reserve" | "patient_under_treatment" | "no_change" | "red" | "green" | "amber";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -23,7 +23,9 @@ export function Badge({ variant = "good", dot, className, children, ...props }: 
     unsigned_emergency: "bg-[var(--status-high-bg)] text-[var(--status-high-text)] border border-[var(--status-high-text)]/30",
     signed: "bg-[var(--status-good-bg)] text-[var(--status-good-text)] border border-[var(--status-good-text)]/30",
     recovered: "text-[var(--status-good-text)] border border-[var(--status-good-text)]/30 bg-transparent",
-    improved: "text-[#2563eb] border border-[#2563eb]/30 bg-transparent",
+    improved: "text-[var(--status-good-text)] border border-[var(--status-good-text)]/30 bg-transparent",
+    no_change: "text-[#d97706] border border-[#d97706]/30 bg-transparent",
+    patient_under_treatment: "bg-[#eff6ff] text-[#1d4ed8] border border-[#1d4ed8]/30",
     follow_up_pending: "text-[#d97706] border border-[#d97706]/30 bg-transparent",
     action_needed: "bg-[var(--status-high-bg)] text-[var(--status-high-text)]",
     healthy: "bg-[#e2ead8] text-[#557b4f]", // muted green/gray
@@ -44,6 +46,9 @@ export function Badge({ variant = "good", dot, className, children, ...props }: 
     countersigned: "bg-[#eff6ff] text-[#1d4ed8] border border-[#1d4ed8]/30",
     voided: "text-[var(--color-text-muted)] bg-[var(--color-border)]/30 line-through",
     reserve: "text-[#be123c] border border-[#be123c]/30 bg-transparent",
+    red: "bg-[#fce8e8] text-[#c93f4e]",
+    green: "bg-[#e2ead8] text-[#557b4f]",
+    amber: "bg-[#faecd1] text-[#b67a28]",
   };
 
   return (

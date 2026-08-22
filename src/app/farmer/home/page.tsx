@@ -2,21 +2,20 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Plus, HeartPulse, Truck, Activity, TriangleAlert, Info } from "lucide-react";
+import { ChevronRight, Plus, HeartPulse, Truck, Activity, Info } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RecordHealthEventModal } from "@/components/farmer/RecordHealthEventModal";
 import { getFarmerDashboard } from "@/lib/api/dummy/farmer-dashboard";
+import { MedicineStockAlertsCard } from "@/components/farmer/MedicineStockAlertsCard";
 
 interface DashboardData {
   farm: { name: string; status: string; animal_count: number; clear_count: number; under_treatment_count: number; waiting_count: number };
   attention_items: Array<{ id: string; priority: string; title: string; subtitle: string; detail: string; type: string }>;
-  insight: { demand_level: string; window_days: number; medicines: Array<{ name: string; demand_pct: number; level: string }>; recommendation: string };
-  top_medicines_by_demand: Array<{ rank: string; name: string; level: string }>;
+  medicine_stock: Array<{ name: string; quantity_label: string; status: { text: string; variant: string } }>;
 }
 
 export default function FarmerHome() {
@@ -36,7 +35,7 @@ export default function FarmerHome() {
     return <div className="text-red-500">Error loading dashboard.</div>;
   }
 
-  const { farm, attention_items, insight, top_medicines_by_demand } = data as DashboardData;
+  const { farm, attention_items, medicine_stock } = data as DashboardData;
 
   return (
     <div className="flex flex-col gap-8 pb-8">
@@ -142,81 +141,8 @@ export default function FarmerHome() {
         </section>
       </div>
 
-      {/* 4. Farm Insight Card */}
-      <Card className="flex flex-col p-0 overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-[var(--color-border)] flex items-center justify-between">
-          <h3 className="font-bold text-[var(--color-text)]">Your farm insight</h3>
-          <button className="text-xs font-semibold text-[var(--color-primary)] hover:underline flex items-center">
-            View Insights <ChevronRight size={14} className="ml-0.5" />
-          </button>
-        </div>
-        
-        <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[var(--color-border)]">
-          {/* Left Column */}
-          <div className="flex-1 p-5 sm:p-6 flex flex-col gap-6">
-            <div>
-              <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-2">
-                MEDICINE DEMAND
-              </div>
-              <div className="flex items-center gap-3 mb-1">
-                <span className="text-3xl font-display text-[var(--color-primary-dark)]">
-                  {insight.demand_level}
-                </span>
-                <Badge variant={insight.demand_level === "High" ? "alert" : "normal"}>ALERT</Badge>
-              </div>
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Expected requirement over the next {insight.window_days} days
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              {insight.medicines.map((med, idx: number) => {
-                const isFirst = idx === 0;
-                const isSecond = idx === 1;
-                const colorClass = isFirst ? "bg-[var(--status-high-text)]" : isSecond ? "bg-[var(--status-medium-text)]" : "bg-[var(--status-good-text)]";
-                const textColor = isFirst ? "text-[var(--status-high-text)]" : isSecond ? "text-[var(--status-medium-text)]" : "text-[var(--status-good-text)]";
-                return (
-                  <div key={med.name} className="flex flex-col gap-1.5">
-                    <div className="flex justify-between text-xs font-bold text-[var(--color-text)]">
-                      <span>{med.name}</span>
-                      <span className={textColor}>{med.demand_pct}%</span>
-                    </div>
-                    <ProgressBar progress={med.demand_pct} colorClass={colorClass} />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="bg-[#FAF8F3] border border-[var(--status-medium-bg)] rounded-lg p-3 flex items-start gap-3">
-              <TriangleAlert size={16} className="text-[var(--status-medium-text)] shrink-0 mt-0.5" />
-              <p className="text-xs text-[var(--color-text-muted)]">
-                {insight.recommendation}
-              </p>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="flex-1 p-5 sm:p-6">
-            <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-6">
-              TOP MEDICINES BY DEMAND
-            </div>
-            <div className="flex flex-col gap-4">
-              {top_medicines_by_demand.map((med) => (
-                <div key={med.rank} className="flex items-center justify-between text-sm py-1">
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs font-bold text-[var(--color-text-muted)]">{med.rank}</span>
-                    <span className="font-medium text-[var(--color-text)] flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${med.level === 'High' ? 'bg-[var(--status-high-text)]' : med.level === 'Medium' ? 'bg-[var(--status-medium-text)]' : 'bg-[var(--status-good-text)]'}`} />
-                      {med.name}
-                    </span>
-                  </div>
-                  <Badge variant={med.level.toLowerCase() as "high" | "medium" | "normal"}>{med.level}</Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Card>
+      {/* 4. Medicine Stock & Alerts Card */}
+      <MedicineStockAlertsCard stock={medicine_stock} />
 
       {isHealthEventOpen && (
         <RecordHealthEventModal onClose={() => setIsHealthEventOpen(false)} />
