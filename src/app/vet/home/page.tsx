@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/Button";
 
 import { getVetDashboard } from "@/lib/api/dummy/vet-dashboard";
 import { WorkloadSummary } from "@/components/vet/WorkloadSummary";
-import { EmergencyAlertBanner } from "@/components/vet/EmergencyAlertBanner";
+import { AlertsWidget } from "@/components/vet/AlertsWidget";
 import { AttentionList } from "@/components/vet/AttentionList";
-import { TreatmentEvidenceCard } from "@/components/vet/TreatmentEvidenceCard";
-import { PrescriptionsTable } from "@/components/vet/PrescriptionsTable";
+import { InsightsWidget } from "@/components/vet/InsightsWidget";
 import { ActivityFeed } from "@/components/vet/ActivityFeed";
 import { RecentOutcomes } from "@/components/vet/RecentOutcomes";
 import { CaseDetailModal } from "@/components/vet/CaseDetailModal";
@@ -56,15 +55,13 @@ export default function VetHome() {
       {/* 2. Workload Summary Card */}
       <WorkloadSummary workload={data.workload} />
 
-      {/* 3. Emergency and Treatment Evidence Row */}
-      <div className="flex flex-col lg:flex-row gap-6 mb-8">
-        <div className="flex-1 flex flex-col">
-          {data.emergency_alert && (
-            <EmergencyAlertBanner alert={data.emergency_alert} onReviewClick={handleReviewClick} />
-          )}
+      {/* 3. Emergency and Insights Row */}
+      <div className="flex flex-col lg:flex-row gap-6 mb-8 items-stretch">
+        <div className="flex-1 min-w-0">
+          <AlertsWidget alerts={data.alerts} onReviewClick={handleReviewClick} />
         </div>
         <div className="lg:w-[400px] shrink-0">
-          <TreatmentEvidenceCard evidence={data.treatment_evidence} />
+          <InsightsWidget insights={data.insights} />
         </div>
       </div>
 
@@ -82,10 +79,7 @@ export default function VetHome() {
         <AttentionList items={data.attention_items} onReviewClick={handleReviewClick} />
       </section>
 
-      {/* 5. Prescriptions Table */}
-      <PrescriptionsTable prescriptions={data.prescriptions} onReviewClick={handleReviewClick} />
-
-      {/* 6. Two-column Activity / Outcomes */}
+      {/* 5. Two-column Activity / Outcomes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ActivityFeed activities={data.recent_activity} />
         <RecentOutcomes outcomes={data.recent_outcomes} />

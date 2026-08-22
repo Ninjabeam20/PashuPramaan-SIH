@@ -45,6 +45,8 @@ export function CaseDetailModal({ caseId, actionText, onClose }: CaseDetailModal
       router.push(`/vet/prescriptions/${caseId}/sign`);
     } else if (cleanActionText === "Review") {
       router.push(`/vet/prescriptions/${caseId}`);
+    } else if (cleanActionText === "Review & Countersign") {
+      router.push(`/vet/prescriptions/${caseId}/countersign`);
     } else {
       console.log(`Action: ${cleanActionText} on case: ${caseId}`);
     }

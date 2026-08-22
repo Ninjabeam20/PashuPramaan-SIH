@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked";
+export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked" | "countersigned" | "voided" | "reserve";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -41,6 +41,9 @@ export function Badge({ variant = "good", dot, className, children, ...props }: 
     cleared: "bg-[#e2ead8] text-[#557b4f]",
     withdrawal: "bg-[#faecd1] text-[#b67a28]",
     blocked: "bg-[#fce8e8] text-[#c93f4e]",
+    countersigned: "bg-[#eff6ff] text-[#1d4ed8] border border-[#1d4ed8]/30",
+    voided: "text-[var(--color-text-muted)] bg-[var(--color-border)]/30 line-through",
+    reserve: "text-[#be123c] border border-[#be123c]/30 bg-transparent",
   };
 
   return (

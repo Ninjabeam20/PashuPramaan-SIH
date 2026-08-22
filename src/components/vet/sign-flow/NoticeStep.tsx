@@ -84,8 +84,8 @@ export function NoticeStep({ data, onNext, onBack }: NoticeStepProps) {
       )}
 
       {/* Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4 flex gap-3 pb-safe sm:pb-4 justify-center">
-        <div className="w-full max-w-3xl flex gap-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4 flex gap-3 pb-safe sm:pb-4 justify-center z-10">
+        <div className="w-full max-w-[720px] flex gap-3">
           <Button 
             className="flex-[2] min-h-[44px] bg-[var(--color-accent-vet)] hover:bg-[#c25d31] border-none text-white" 
             onClick={onNext}

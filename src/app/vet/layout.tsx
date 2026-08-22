@@ -38,9 +38,6 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button className="hidden sm:flex bg-[var(--color-accent-vet)] hover:bg-[#c25d31] text-white border-none gap-2 w-auto h-9 px-3">
-              <span className="text-lg leading-none">+</span> New Prescription
-            </Button>
             
             <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold border border-[var(--color-border)] rounded-full px-2 py-1 uppercase text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] cursor-pointer">
               EN

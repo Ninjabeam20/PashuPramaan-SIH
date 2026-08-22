@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Badge, BadgeVariant } from "@/components/ui/Badge";
-import { Beef } from "lucide-react"; // simple fallback icon
+import { Beef, CalendarDays, ChevronRight } from "lucide-react"; 
+import { HealthHistoryModal } from "./HealthHistoryModal";
 
 export interface AnimalItem {
   id: string;
@@ -9,6 +10,8 @@ export interface AnimalItem {
 }
 
 export function AnimalTable({ animals, onViewAction }: { animals: AnimalItem[], onViewAction?: (id: string) => void }) {
+  const [historyAnimalId, setHistoryAnimalId] = React.useState<string | null>(null);
+
   const getStatusText = (status: string) => {
     switch (status) {
       case "under_treatment": return "Under Treatment";
@@ -73,18 +76,31 @@ export function AnimalTable({ animals, onViewAction }: { animals: AnimalItem[], 
                 </Badge>
               </div>
 
-              <div className="w-full sm:w-auto sm:col-span-2 flex justify-end mt-2 sm:mt-0 border-t border-[var(--color-border)] sm:border-t-0 pt-3 sm:pt-0">
+              <div className="w-full sm:w-auto sm:col-span-2 flex justify-end mt-2 sm:mt-0 border-t border-[var(--color-border)] sm:border-t-0 pt-3 sm:pt-0 gap-4">
                 <button 
-                  className="text-xs font-bold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] flex items-center min-h-[44px] sm:min-h-0"
+                  className="text-[#1f6b4f] hover:text-[var(--color-primary-dark)] flex items-center justify-center p-2 rounded-md hover:bg-[#eef4ed] transition-colors"
+                  onClick={() => setHistoryAnimalId(animal.id)}
+                >
+                  <CalendarDays size={18} />
+                </button>
+                <button 
+                  className="text-xs font-bold text-[#1f6b4f] hover:text-[var(--color-primary-dark)] flex items-center min-h-[44px] sm:min-h-0"
                   onClick={() => onViewAction?.(animal.id)}
                 >
-                  View &rarr;
+                  View <ChevronRight size={14} className="ml-0.5" />
                 </button>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {historyAnimalId && (
+        <HealthHistoryModal 
+          animalId={historyAnimalId} 
+          onClose={() => setHistoryAnimalId(null)} 
+        />
+      )}
     </div>
   );
 }

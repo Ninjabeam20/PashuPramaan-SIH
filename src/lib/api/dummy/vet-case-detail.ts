@@ -76,7 +76,7 @@ export const getCaseDetail = async (caseId: string): Promise<CaseDetail> => {
     },
     farm_name: "Krishna Dairy",
     status_badges: [
-      { text: "SIGN", variant: "sign" },
+      { text: "SIGN-REQ", variant: "sign" },
       { text: "WATCH", variant: "watch" },
       { text: "CIA", variant: "cia" }
     ],

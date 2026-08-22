@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { RecordHealthEventModal } from "@/components/farmer/RecordHealthEventModal";
 import { getFarmerDashboard } from "@/lib/api/dummy/farmer-dashboard";
 
 interface DashboardData {
@@ -17,6 +20,9 @@ interface DashboardData {
 }
 
 export default function FarmerHome() {
+  const router = useRouter();
+  const [isHealthEventOpen, setIsHealthEventOpen] = React.useState(false);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["farmer-dashboard"],
     queryFn: getFarmerDashboard,
@@ -62,9 +68,9 @@ export default function FarmerHome() {
             <Badge variant={farm.status.toLowerCase() as "good"} dot>
               {farm.status}
             </Badge>
-            <button className="text-xs font-semibold text-[var(--color-primary)] hover:underline flex items-center mt-1">
+            <Link href="/farmer/my-farm" className="text-xs font-semibold text-[var(--color-primary)] hover:underline flex items-center mt-1">
               View Farm <ChevronRight size={14} className="ml-0.5" />
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -123,13 +129,13 @@ export default function FarmerHome() {
         <section className="md:w-72 flex flex-col gap-4 shrink-0">
           <h3 className="font-bold text-[var(--color-text)]">Quick actions</h3>
           <div className="flex flex-col gap-3">
-            <Button variant="primary" className="gap-2 justify-center">
+            <Button variant="primary" className="gap-2 justify-center" onClick={() => router.push('/farmer/treatments')}>
               <Plus size={18} /> Record Treatment
             </Button>
-            <Button variant="outline" className="gap-2 justify-center">
+            <Button variant="outline" className="gap-2 justify-center" onClick={() => setIsHealthEventOpen(true)}>
               <HeartPulse size={18} className="text-[var(--color-primary)]" /> Health Event
             </Button>
-            <Button variant="outline" className="gap-2 justify-center">
+            <Button variant="outline" className="gap-2 justify-center" onClick={() => router.push('/farmer/dispatch')}>
               <Truck size={18} className="text-[var(--color-primary)]" /> Start Dispatch
             </Button>
           </div>
@@ -211,6 +217,10 @@ export default function FarmerHome() {
           </div>
         </div>
       </Card>
+
+      {isHealthEventOpen && (
+        <RecordHealthEventModal onClose={() => setIsHealthEventOpen(false)} />
+      )}
     </div>
   );
 }
