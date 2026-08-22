@@ -34,7 +34,7 @@ export function WorkloadSummary({ workload }: WorkloadSummaryProps) {
           <div className="text-xs text-[var(--color-text-muted)] font-medium">Unsigned emergency</div>
         </div>
         <div className="flex flex-col border-l-0 md:border-l-2 border-[var(--color-border)] md:pl-4 pt-4 md:pt-0 border-t md:border-t-0 mt-2 md:mt-0">
-          <div className="text-3xl font-bold text-[#c27c19] mb-1">{workload.follow_up}</div>
+          <div className="text-3xl font-bold text-[var(--color-accent-vet)] mb-1">{workload.follow_up}</div>
           <div className="text-xs text-[var(--color-text-muted)] font-medium">Follow-up</div>
         </div>
         <div className="flex flex-col border-l-2 border-[var(--color-border)] pl-3 md:pl-4 pt-4 md:pt-0 border-t md:border-t-0 mt-2 md:mt-0">

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Badge, BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { getCaseDetail } from "@/lib/api/dummy/vet-case-detail";
@@ -12,6 +13,8 @@ interface CaseDetailModalProps {
 }
 
 export function CaseDetailModal({ caseId, actionText, onClose }: CaseDetailModalProps) {
+  const router = useRouter();
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["case-detail", caseId],
     queryFn: () => getCaseDetail(caseId),
@@ -36,6 +39,16 @@ export function CaseDetailModal({ caseId, actionText, onClose }: CaseDetailModal
   const cleanActionText = actionText.replace(/[\u2192\u2190]/g, "").trim();
   const isSignAction = cleanActionText.includes("Sign") || cleanActionText.includes("Countersign");
   const showPrimaryAction = cleanActionText !== "View" && cleanActionText !== "Close";
+
+  const handlePrimaryAction = () => {
+    if (cleanActionText === "Review & Sign") {
+      router.push(`/vet/prescriptions/${caseId}/sign`);
+    } else if (cleanActionText === "Review") {
+      router.push(`/vet/prescriptions/${caseId}`);
+    } else {
+      console.log(`Action: ${cleanActionText} on case: ${caseId}`);
+    }
+  };
 
   return (
     <div 
@@ -217,9 +230,7 @@ export function CaseDetailModal({ caseId, actionText, onClose }: CaseDetailModal
           {showPrimaryAction && (
             <Button 
               className={`flex-1 min-h-[44px] ${isSignAction ? 'bg-[var(--color-accent-vet)] hover:bg-[#c25d31] border-none text-white' : ''}`} 
-              onClick={() => {
-                console.log(`Action: ${cleanActionText} on case: ${caseId}`);
-              }}
+              onClick={handlePrimaryAction}
               disabled={isLoading}
             >
               {cleanActionText}

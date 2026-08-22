@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { TriangleAlert, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -55,41 +56,31 @@ export default function VetHome() {
       {/* 2. Workload Summary Card */}
       <WorkloadSummary workload={data.workload} />
 
-      {/* 3. Emergency Alert Banner */}
-      {data.emergency_alert && (
-        <EmergencyAlertBanner alert={data.emergency_alert} onReviewClick={handleReviewClick} />
-      )}
-
-      {/* 4. Two-column section */}
+      {/* 3. Emergency and Treatment Evidence Row */}
       <div className="flex flex-col lg:flex-row gap-6 mb-8">
-        {/* Left Column: Attention Items */}
-        <section className="flex-1 flex flex-col gap-4">
+        <div className="flex-1 flex flex-col">
+          {data.emergency_alert && (
+            <EmergencyAlertBanner alert={data.emergency_alert} onReviewClick={handleReviewClick} />
+          )}
+        </div>
+        <div className="lg:w-[400px] shrink-0">
+          <TreatmentEvidenceCard evidence={data.treatment_evidence} />
+        </div>
+      </div>
+
+      {/* 4. Attention Items */}
+      <section className="flex flex-col gap-4 mb-8">
+        <div className="flex justify-between items-start">
           <div>
             <h3 className="font-bold text-[var(--color-text)]">Needs your attention</h3>
             <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Review prescriptions and clinical cases that need action.</p>
           </div>
-          <AttentionList items={data.attention_items} onReviewClick={handleReviewClick} />
-        </section>
-
-        {/* Right Column: Quick actions */}
-        <section className="lg:w-80 flex flex-col gap-4 shrink-0 mt-6 lg:mt-0">
-          <h3 className="font-bold text-[var(--color-text)]">Quick actions</h3>
-          <div className="flex flex-col gap-3">
-            <Button className="gap-2 justify-center bg-[var(--color-accent-vet)] hover:bg-[#c25d31] text-white border-none w-full min-h-[44px]">
-              <Plus size={18} /> New Prescription
-            </Button>
-            <Button variant="outline" className="gap-2 justify-center w-full min-h-[44px]">
-              <TriangleAlert size={18} /> Review Emergencies
-            </Button>
-            <Button variant="outline" className="gap-2 justify-center w-full min-h-[44px]">
-              <FileText size={18} /> View Cases
-            </Button>
-          </div>
-
-          {/* Treatment Evidence Card */}
-          <TreatmentEvidenceCard evidence={data.treatment_evidence} />
-        </section>
-      </div>
+          <Link href="/vet/prescriptions" className="text-xs font-semibold text-[var(--color-text)] hover:underline min-h-[44px] flex items-center">
+            View all cases &rarr;
+          </Link>
+        </div>
+        <AttentionList items={data.attention_items} onReviewClick={handleReviewClick} />
+      </section>
 
       {/* 5. Prescriptions Table */}
       <PrescriptionsTable prescriptions={data.prescriptions} onReviewClick={handleReviewClick} />
