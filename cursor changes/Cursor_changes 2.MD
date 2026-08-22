@@ -84,7 +84,7 @@
 - `src/app/layout.tsx`, farmer/vet `layout.tsx`
 - `src/components/ui/*` styling
 - `src/components/admin/IndiaChoroplethMap.tsx`, `src/lib/admin/india-geo.ts`, `src/data/india-states.json`
-- `Create Dashboard Page/**` (Vite leftover)
+- `Create Dashboard Page/` — removed 2026-08-23 (leftover Vite/Figma scaffold; live admin is `src/app/admin`)
 - `docs/api-contract*.md` (optional status notes only; not the DTO source)
 - Login card markup; keep “Namaste, Ankita” in `src/app/farmer/home/page.tsx`
 - No JWT, no password hashing, no Neon/Vercel Postgres

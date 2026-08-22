@@ -226,6 +226,8 @@ PashuPramaan/
 └── README.md                            # Project documentation
 ```
 
+The researcher / admin UI lives only under `src/app/admin` (and `src/components/admin`, `src/lib/admin`, `src/data`). The original Vite/Figma scaffold `Create Dashboard Page/` was removed; it is not used at runtime.
+
 ---
 
 ## 📡 API Contract & Data Architecture

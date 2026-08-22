@@ -3,8 +3,9 @@
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
 **Last updated:** 2026-08-23  
-**Branch:** `backend`  
-**HEAD:** `6cead1e` — map changes made to india map
+**Branch:** `main`  
+**HEAD:** `f3effda` — major frontend remodelling , backend integration , map naming and changes, individual states and districts added-ug  
+**Note:** `backend` and `main` both point at `f3effda`. Working-tree deletion of `Create Dashboard Page/` is staged on `main` for the user’s commit (not committed by the agent).
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -12,29 +13,16 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ---
 
-## Current tree (not yet committed)
+## Current tree (staged on `main`, not committed)
 
-Pushed `6cead1e` (`map changes made to india map`). New uncommitted work:
+Checked out `main` (already equal to `backend` at `f3effda`; nothing to merge at commit level). Staged for the user to commit and push:
 
-- National choropleth labels every mainland state/UT with its own abbreviation (KL, AS, MN, SK, …), not only the previous 12-state subset.
-- Clicking a state on Overview or AMU & Regional Analytics opens `/admin/states/[slug]` (34 district pages).
-- Dummy livestock Area + Species tables, green district choropleth, hover Total/Male/Female (en-IN).
-- `src/data/districts/*.json` — simplified district GeoJSON (J&K page includes Ladakh districts).
+- Deleted leftover Vite/Figma scaffold `Create Dashboard Page/` (28 tracked files). Live admin UI is `src/app/admin/page.tsx` and did not import that folder.
+- `tsconfig.json`: dropped the `Create Dashboard Page` exclude; exclude is now `node_modules` only.
+- README: directory tree notes that admin lives only under App Router; Vite leftover removed.
+- `cursor changes/Cursor_changes 2.MD` and `Cursor_changes 10.MD`: out-of-scope bullets updated (folder gone).
 
-Implementation-spec docs live in `cursor changes/` (staged, not committed):
-
-- `cursor changes/Cursor_changes 1.MD` — index, locked decisions, architecture
-- `cursor changes/Cursor_changes 2.MD` — create / modify / do-not-touch file inventory
-- `cursor changes/Cursor_changes 3.MD` — Prisma models and fields
-- `cursor changes/Cursor_changes 4.MD` — seed: users, farms, 48 Krishna animals + Shanti/Meena
-- `cursor changes/Cursor_changes 5.MD` — seed: medicines, prescriptions, treatments, dispatches, events
-- `cursor changes/Cursor_changes 6.MD` — admin national seed + dummy contradiction register
-- `cursor changes/Cursor_changes 7.MD` — Express GET routes and DTO mapping
-- `cursor changes/Cursor_changes 8.MD` — Express POST routes and page-handler wiring
-- `cursor changes/Cursor_changes 9.MD` — frontend dummy clients, admin extract, Docker/env scripts
-- `cursor changes/Cursor_changes 10.MD` — consistency-check script, runbook, out of scope
-
-Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`.
+Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`. After the user commits, move this section into **Commit history** with `git log -1`.
 
 ---
 
@@ -97,6 +85,10 @@ MEMORY-only: pointed **HEAD** at `d859918` after that docs commit. No product fi
 ### `6cead1e` — map changes made to india map (2026-08-23)
 
 Admin choropleth uses the pre-2019 unified Jammu & Kashmir outline (J&K + Ladakh dissolved, official northern claim through Aksai Chin) plus official Arunachal Pradesh. Heatmap colors and dummy AMU/demand data unchanged. Farmer dispatch: header Start Dispatch removed (card CTA kept). Insights: Add Stock half-width and right-aligned. Pushed to `origin/backend`.
+
+### `f3effda` — major frontend remodelling , backend integration , map naming and changes, individual states and districts added-ug (2026-08-23)
+
+National choropleth labels every mainland state/UT. Clicking a state opens `/admin/states/[slug]` (34 district pages) with dummy livestock tables and district GeoJSON. Spec docs under `cursor changes/`. Pushed to `origin/backend`. Fast-forward merged into `main` and pushed `origin/main`.
 
 ---
 

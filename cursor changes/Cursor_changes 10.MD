@@ -83,7 +83,7 @@ Bump **Last updated** and **Branch** to `backend`. Do not invent a commit hash. 
 - CSS, layout, new screens
 - Changing “Namaste, Ankita”
 - Rewriting `docs/api-contract.md` to FastAPI
-- `Create Dashboard Page/` Vite app
+- `Create Dashboard Page/` — removed 2026-08-23 (leftover Vite/Figma scaffold; live admin is `src/app/admin`)
 - Editing the Cursor plan file `.cursor/plans/Backend Express Postgres-3e2f859a.plan.md`
 
 ## Reference map (dummy → server)
