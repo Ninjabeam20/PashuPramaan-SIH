@@ -4,35 +4,17 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-22  
 **Branch:** `main`  
-**HEAD:** `baa5f02` — Fea: Farmer & Vet Possible Finalization (pre-admin commit)
+**HEAD:** `112f8ec` — Fea: Admin researcher dashboard with D3 India map
 
 **Remotes:**
-- `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (empty private SIH repo; first push target)
+- `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
 - `upstream` → https://github.com/sofiaabidi/PashuPramaan.git (original remote)
 
 ---
 
-## Current tree (staging for SIH push)
+## Current tree (not yet committed)
 
-| Path | Change |
-|---|---|
-| `src/app/admin/page.tsx` | Researcher/Admin dashboard at `/admin`. D3 GeoJSON choropleth; dummy AMU / demand colors (green → yellow → orange → red). |
-| `src/components/admin/IndiaChoroplethMap.tsx` | **New.** D3 Mercator + `geoPath` map used by Overview, Analytics, Forecast. Client-only mount to avoid hydration mismatch. |
-| `src/lib/admin/india-geo.ts` | **New.** GeoJSON state name → dummy region id (`NE` covers NE states). |
-| `src/data/india-states.json` | **New.** Simplified India states GeoJSON (islands dropped so the mainland fills the frame). |
-| `src/app/globals.css` | Additive scrollbar styles from the Vite `index.css`. |
-| `tsconfig.json` | Excludes `Create Dashboard Page/` (scratch Vite source). |
-| `src/app/(auth)/login/page.tsx` | Admin role `router.push("/admin")`. |
-| `src/app/page.tsx` | `/` redirects to `/login`. |
-| `README.md` | Portal access table, admin routes, D3 note, backend direction, clone URL set to SIH repo, directory tree includes admin/data. |
-| `Create Dashboard Page/` | Untracked Vite source used for the admin port. Do not compile. |
-| `package.json` / `package-lock.json` | Added `d3` and `@types/d3`. |
-| `.gitignore` | Ignores `.playwright-mcp/` and root `admin-*.png` screenshots. |
-| `.cursor/rules/repo-memory.mdc` | Keep this file current. |
-
-**Not committed (local only):** `.playwright-mcp/`, root `admin-*.png` verification screenshots.
-
-Verification (2026-08-22): `npm run build` exit 0 after D3 map. Overview choropleth labels sit on state centroids (RJ/UP/MH/…). No hydration errors after client-only mount. Farmer `/farmer/home` and vet `/vet/home` still render. App routes on disk match the table below.
+Clean after `112f8ec`, except this MEMORY hash update (committed immediately after). Local-only: `.playwright-mcp/`, root `admin-*.png`.
 
 ---
 
@@ -78,6 +60,10 @@ Vet prescriptions registry, new-prescription modal, countersign route and flow, 
 ### `baa5f02` — Fea: Farmer & Vet Possible Finalization (2026-08-22)
 
 Farmer insights rewrite (forecast chart, medicine stock, heatmap). Vet patients directory + patient detail + follow-up modal. Extended API contract (`docs/api-contract (3).md`).
+
+### `112f8ec` — Fea: Admin researcher dashboard with D3 India map (2026-08-22)
+
+Ported the researcher UI to `/admin`. Login admin role and `/` now route correctly. Replaced boxy SVG states with D3 + simplified India GeoJSON choropleth (dummy AMU/demand colors). Added `IndiaChoroplethMap`, `india-geo.ts`, `india-states.json`. README clone URL set to `Ninjabeam20/PashuPramaan-SIH`; directory tree includes admin/data. Kept Vite source under `Create Dashboard Page/` (excluded from `tsconfig`). Ignored `.playwright-mcp/` and root `admin-*.png`.
 
 ---
 
