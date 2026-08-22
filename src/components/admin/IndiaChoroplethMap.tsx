@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { geoMercator, geoPath } from "d3"
 import type { Feature, FeatureCollection, Geometry } from "geojson"
 import indiaStates from "@/data/india-states.json"
-import { geoNameToId, LABELED_IDS } from "@/lib/admin/india-geo"
+import { geoNameToAbbr, geoNameToId, LABEL_NUDGE } from "@/lib/admin/india-geo"
 
 type IndiaFeature = Feature<Geometry, { name: string }>
 
@@ -27,7 +27,7 @@ export function IndiaChoroplethMap({
 }: {
   highlightId: string | null
   onHover: (id: string | null) => void
-  onClick?: (id: string) => void
+  onClick?: (id: string, geoName: string) => void
   getFill: (id: string) => string
   getStroke: (id: string) => string
   legendTitle: string
@@ -79,46 +79,51 @@ export function IndiaChoroplethMap({
               stroke={hov ? "#1A4030" : id ? getStroke(id) : NO_DATA_STROKE}
               strokeWidth={hov ? 1.2 : 0.5}
               strokeLinejoin="round"
-              style={{ cursor: onClick && id ? "pointer" : "default", transition: "fill 0.12s" }}
+              style={{ cursor: onClick ? "pointer" : "default", transition: "fill 0.12s" }}
               onMouseMove={(e) => {
-                if (!id) return
                 const r = svgRef.current?.getBoundingClientRect()
                 if (!r) return
-                setTip({ x: e.clientX - r.left, y: e.clientY - r.top, id, geoName })
-                onHover(id)
+                setTip({ x: e.clientX - r.left, y: e.clientY - r.top, id: id ?? "", geoName })
+                if (id) onHover(id)
               }}
               onMouseLeave={() => {
                 setTip(null)
                 onHover(null)
               }}
               onClick={() => {
-                if (id) onClick?.(id)
+                onClick?.(id ?? "", geoName)
               }}
             />
           )
         })}
         {features.map((feature, i) => {
           const geoName = feature.properties.name
+          const abbr = geoNameToAbbr(geoName)
+          if (!abbr) return null
           const id = geoNameToId(geoName)
-          if (!id || !LABELED_IDS.has(id)) return null
-          if (id === "NE" && geoName !== "Assam") return null
-          const [cx, cy] = path.centroid(feature)
-          if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null
+          const [cx0, cy0] = path.centroid(feature)
+          if (!Number.isFinite(cx0) || !Number.isFinite(cy0)) return null
+          const [dx, dy] = LABEL_NUDGE[geoName] ?? [0, 0]
+          const area = Math.abs(path.area(feature))
+          const fontSize = area > 5000 ? 10 : area > 1800 ? 9 : area > 500 ? 8 : 7
           return (
             <text
               key={`l-${geoName}-${i}`}
-              x={Math.round(cx * 10) / 10}
-              y={Math.round(cy * 10) / 10}
+              x={Math.round((cx0 + dx) * 10) / 10}
+              y={Math.round((cy0 + dy) * 10) / 10}
               textAnchor="middle"
               style={{
-                fontSize: 9,
+                fontSize,
                 fontFamily: "Inter, system-ui",
-                fontWeight: 600,
-                fill: highlightId === id ? "#fff" : "#374151",
+                fontWeight: 700,
+                fill: highlightId === id ? "#fff" : "#1F2937",
                 pointerEvents: "none",
+                paintOrder: "stroke",
+                stroke: highlightId === id ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.85)",
+                strokeWidth: 2.4,
               }}
             >
-              {id}
+              {abbr}
             </text>
           )
         })}
@@ -138,7 +143,9 @@ export function IndiaChoroplethMap({
             zIndex: 20,
           }}
         >
-          {renderTip(tip.id, tip.geoName)}
+          {tip.id ? renderTip(tip.id, tip.geoName) : (
+            <p style={{ color: "#fff", fontWeight: 600, fontSize: 12 }}>{tip.geoName}</p>
+          )}
         </div>
       )}
       <div

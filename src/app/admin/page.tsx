@@ -1,7 +1,9 @@
 "use client"
 
 import React, { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { IndiaChoroplethMap } from "@/components/admin/IndiaChoroplethMap"
+import { geoNameToSlug, slugFromRegionId } from "@/lib/admin/india-geo"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -277,7 +279,7 @@ const TH_STYLE: React.CSSProperties = {
 
 // ─── India Map ────────────────────────────────────────────────────────────────
 
-function IndiaMap({ highlightId, onHover, onClick }: { highlightId:string|null; onHover:(id:string|null)=>void; onClick?:(id:string)=>void }) {
+function IndiaMap({ highlightId, onHover, onClick }: { highlightId:string|null; onHover:(id:string|null)=>void; onClick?:(id:string, geoName:string)=>void }) {
   return (
     <IndiaChoroplethMap
       highlightId={highlightId}
@@ -432,6 +434,11 @@ function AMUTimelineChart() {
 
 function OverviewTab() {
   const [hoverId, setHoverId] = useState<string|null>(null)
+  const router = useRouter()
+  function openState(_id: string, geoName: string) {
+    const slug = geoNameToSlug(geoName)
+    if (slug) router.push(`/admin/states/${slug}`)
+  }
   return (
     <div style={{ maxWidth:1200, margin:"0 auto", padding:"32px 24px 48px" }}>
       <div style={{ marginBottom:24 }}>
@@ -477,7 +484,7 @@ function OverviewTab() {
           <button style={{ fontSize:13, fontWeight:500, color:"#2D6A4F", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit" }}>View full analytics →</button>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-          <Card style={{ padding:16, overflow:"hidden" }}><IndiaMap highlightId={hoverId} onHover={setHoverId}/></Card>
+          <Card style={{ padding:16, overflow:"hidden" }}><IndiaMap highlightId={hoverId} onHover={setHoverId} onClick={openState}/></Card>
           <Card style={{ overflow:"hidden" }}>
             <div style={{ padding:"14px 16px", borderBottom:"1px solid #E8E4DC" }}><SL>By State</SL></div>
             <div style={{ overflowY:"auto", maxHeight:380 }}>
@@ -490,9 +497,11 @@ function OverviewTab() {
                 <tbody>
                   {REGION_DATA.slice(0,8).map((row, i) => {
                     const cp = changePill(row.change)
+                    const rowSlug = slugFromRegionId(row.id)
                     return (
                       <tr key={row.id} onMouseEnter={() => setHoverId(row.id)} onMouseLeave={() => setHoverId(null)}
-                        style={{ borderBottom:"1px solid #F3F0EB", background:hoverId===row.id?"#F5F3EE":i%2===0?"#fff":"#FDFCFA", transition:"background 0.1s" }}>
+                        onClick={() => { if (rowSlug) router.push(`/admin/states/${rowSlug}`) }}
+                        style={{ borderBottom:"1px solid #F3F0EB", background:hoverId===row.id?"#F5F3EE":i%2===0?"#fff":"#FDFCFA", transition:"background 0.1s", cursor: rowSlug ? "pointer" : "default" }}>
                         <td style={{ padding:"10px 16px" }}>
                           <div style={{ display:"flex", alignItems:"center", gap:7 }}>
                             <div style={{ width:8, height:8, borderRadius:2, background:amuFill(row.amu), border:"1px solid rgba(0,0,0,0.08)", flexShrink:0 }}/>
@@ -530,6 +539,7 @@ const YEARS = ["2026","2025","2024","2023","2022"]
 const METRICS = ["AMU","AMU Change %","Predicted Demand","Anomalies","Unexplained Anomalies","CIA Usage","Explained vs Unexplained AMU"]
 
 function AnalyticsTab() {
+  const router = useRouter()
   const [stateFilter, setStateFilter] = useState("All States")
   const [districtFilter, setDistrictFilter] = useState("All Districts")
   const [yearFilter, setYearFilter] = useState("2026")
@@ -543,9 +553,14 @@ function AnalyticsTab() {
     ? DISTRICT_DATA[drillStateId ?? ""]?.find(d => d.district === drillDistrict)
     : null
 
-  function handleMapClick(id: string) {
-    setDrillStateId(id); setDrillDistrict(null)
-    const name = REGION_DATA.find(r => r.id === id)?.state
+  function handleMapClick(_id: string, geoName: string) {
+    const slug = geoNameToSlug(geoName)
+    if (slug) {
+      router.push(`/admin/states/${slug}`)
+      return
+    }
+    setDrillStateId(_id); setDrillDistrict(null)
+    const name = REGION_DATA.find(r => r.id === _id)?.state
     if (name) setStateFilter(name)
   }
   function handleBack() {
@@ -604,7 +619,7 @@ function AnalyticsTab() {
         <Card style={{ overflow:"hidden" }}>
           <div style={{ padding:"12px 16px 8px", borderBottom:"1px solid #E8E4DC" }}>
             <SL>Geographic Heatmap</SL>
-            <p style={{ fontSize:12, color:"#6B7280" }}>{metricFilter} · {yearFilter} · {drillStateId ? "hover districts" : "click state to drill down"}</p>
+            <p style={{ fontSize:12, color:"#6B7280" }}>{metricFilter} · {yearFilter} · {drillStateId ? "hover districts" : "click a state for its district map"}</p>
           </div>
           {!drillStateId
             ? <IndiaMap highlightId={hoverId} onHover={setHoverId} onClick={handleMapClick}/>

@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"district":"Daman"},"geometry":{"type":"Polygon","coordinates":[[[72.887,20.462],[72.896,20.379],[72.821,20.368],[72.887,20.462]]]}},{"type":"Feature","properties":{"district":"Diu"},"geometry":{"type":"Polygon","coordinates":[[[70.92,20.743],[70.997,20.713],[70.876,20.709],[70.92,20.743]]]}}]}

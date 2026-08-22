@@ -111,7 +111,8 @@ graph TD
 
 | Route | View Name | Key Features |
 |---|---|---|
-| `/admin` | **Researcher Dashboard** | Six in-page tabs (no extra routes): **Overview** (national AMU, attention cards, India heatmap, state table), **AMU & Regional Analytics** (state/district drill-down, filters, summary), **Anomalies** (filterable list, detail + sparklines, treatment modal, save to workspace), **Health × AMU** (timeline vs health events, Explained / Unexplained / Mixed), **Forecast & Planning** (demand forecast chart, medicine table, demand map), **Research Workspace** (saved insights, notes, export, open analysis). |
+| `/admin` | **Researcher Dashboard** | Six in-page tabs: **Overview** (national AMU, India heatmap with all state abbreviations, click-through to district pages), **AMU & Regional Analytics** (same national map; click a state for its district page), **Anomalies**, **Health × AMU**, **Forecast & Planning**, **Research Workspace**. |
+| `/admin/states/[slug]` | **State district register** | One page per mainland state/UT (34). District choropleth, hover headcount (Total / Male / Female), species table, state/district/year filters. Dummy livestock numbers. |
 
 ---
 
@@ -142,7 +143,7 @@ graph TD
 - **UI & Runtime**: React `19.2.8`, TypeScript `5.x`
 - **Styling**: Tailwind CSS `v4` with custom CSS variables design system
 - **State & Server Cache**: TanStack React Query `v5.101.4`
-- **Charts & Mapping**: Recharts `3.10.1`, Leaflet & React-Leaflet `5.0.0`, D3 + India GeoJSON choropleth on `/admin`
+- **Charts & Mapping**: Recharts `3.10.1`, Leaflet & React-Leaflet `5.0.0`, D3 + India GeoJSON choropleth on `/admin`, district GeoJSON on `/admin/states/[slug]`
 - **Icons & Primitives**: Lucide React, Custom accessible UI components
 - **Testing**: Vitest, React Testing Library, Playwright
 
@@ -165,6 +166,7 @@ PashuPramaan/
 │   │   ├── (auth)/                      # Authentication routes
 │   │   │   └── login/                   # Multi-role login (Farmer, Vet, Admin → /admin)
 │   │   ├── admin/                       # Researcher / Admin dashboard (`/admin`)
+│   │   │   └── states/[slug]/           # Per-state district maps (`/admin/states/maharashtra`)
 │   │   ├── farmer/                      # Farmer portal
 │   │   │   ├── home/                    # Farmer dashboard
 │   │   │   ├── my-farm/                 # Animal & herd management
@@ -181,7 +183,7 @@ PashuPramaan/
 │   │   ├── layout.tsx                   # Root HTML & typography layout
 │   │   └── page.tsx                     # Landing / entry redirection
 │   ├── components/                      # Reusable UI component library
-│   │   ├── admin/                       # Admin choropleth (D3 + GeoJSON)
+│   │   ├── admin/                       # Admin choropleth + state district maps
 │   │   ├── farmer/                      # Farmer-specific widgets & modals
 │   │   │   ├── AddAnimalModal.tsx
 │   │   │   ├── DispatchDetailModal.tsx
@@ -199,10 +201,13 @@ PashuPramaan/
 │   │   │   └── ...
 │   │   └── ui/                          # Design system primitives (Badge, Button, Card, Select, Input, ProgressBar)
 │   ├── data/
-│   │   └── india-states.json            # Simplified India states GeoJSON
+│   │   ├── india-states.json            # Simplified India states GeoJSON
+│   │   └── districts/                   # Per-state district GeoJSON (34 files)
 │   ├── lib/
 │   │   ├── admin/
-│   │   │   └── india-geo.ts             # GeoJSON state name → dummy region id
+│   │   │   ├── india-geo.ts             # State names, abbreviations, slugs
+│   │   │   ├── state-stats.ts           # Dummy livestock headcounts
+│   │   │   └── load-district-geo.ts     # Server loader for district GeoJSON
 │   │   └── api/
 │   │       └── dummy/                   # Mock API store for offline development
 │   │           ├── auth.ts
@@ -283,13 +288,14 @@ All three dashboards are live. Pick a role on login, or open the URL directly. L
 |---|---|---|---|
 | **Farmer / Animal Owner** | `farmer01` | `/farmer/home` | Home, My Farm, Treatments, Dispatch, Insights (nav at the top) |
 | **Veterinarian / Vet Officer** | `vet01` | `/vet/home` | Home, Prescriptions, Patients (sign / countersign under a prescription) |
-| **Administrator / Inspector** | `admin01` | `/admin` | One page with 6 tabs (Overview through Research Workspace) |
+| **Administrator / Inspector** | `admin01` | `/admin` | National dashboard; click a state for `/admin/states/[slug]` |
 
 Direct URLs (login can be skipped):
 
 - Farmer: [http://localhost:3000/farmer/home](http://localhost:3000/farmer/home)
 - Vet: [http://localhost:3000/vet/home](http://localhost:3000/vet/home)
 - Admin: [http://localhost:3000/admin](http://localhost:3000/admin)
+- Example state page: [http://localhost:3000/admin/states/maharashtra](http://localhost:3000/admin/states/maharashtra)
 
 Farmer and vet keep their own nav once you are inside that portal. They do not link to `/admin`, and admin does not link back to them — each role is a separate entry.
 
@@ -355,6 +361,7 @@ PashuPramaan utilizes an organic, premium visual design system balancing agricul
 - [x] 2-Step Emergency Countersign Pipeline
 - [x] Prophet Demand & Health Event Trend Visualizations
 - [x] Admin / Researcher dashboard (`/admin`) — national AMU heatmap, anomalies, Health × AMU, forecast, workspace
+- [x] Per-state district maps (`/admin/states/[slug]`) — dummy livestock headcount
 - [ ] Backend FastAPI + PostgreSQL Integration (replacing dummy store)
 - [ ] ECDSA P-256 Hardware Token / WebAuthn Signature Ceremony
 - [ ] Native Hindi & Regional Language Localization (i18n)

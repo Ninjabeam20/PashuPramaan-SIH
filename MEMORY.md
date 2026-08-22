@@ -4,7 +4,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-23  
 **Branch:** `backend`  
-**HEAD:** *(this commit)* — map changes made to india map
+**HEAD:** `6cead1e` — map changes made to india map
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -14,18 +14,25 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ## Current tree (not yet committed)
 
-Clean product tree at this commit (see history below). Implementation-spec docs still untracked:
+Pushed `6cead1e` (`map changes made to india map`). New uncommitted work:
 
-- `Cursor_changes 1.MD` — index, locked decisions, architecture
-- `Cursor_changes 2.MD` — create / modify / do-not-touch file inventory
-- `Cursor_changes 3.MD` — Prisma models and fields
-- `Cursor_changes 4.MD` — seed: users, farms, 48 Krishna animals + Shanti/Meena
-- `Cursor_changes 5.MD` — seed: medicines, prescriptions, treatments, dispatches, events
-- `Cursor_changes 6.MD` — admin national seed + dummy contradiction register
-- `Cursor_changes 7.MD` — Express GET routes and DTO mapping
-- `Cursor_changes 8.MD` — Express POST routes and page-handler wiring
-- `Cursor_changes 9.MD` — frontend dummy clients, admin extract, Docker/env scripts
-- `Cursor_changes 10.MD` — consistency-check script, runbook, out of scope
+- National choropleth labels every mainland state/UT with its own abbreviation (KL, AS, MN, SK, …), not only the previous 12-state subset.
+- Clicking a state on Overview or AMU & Regional Analytics opens `/admin/states/[slug]` (34 district pages).
+- Dummy livestock Area + Species tables, green district choropleth, hover Total/Male/Female (en-IN).
+- `src/data/districts/*.json` — simplified district GeoJSON (J&K page includes Ladakh districts).
+
+Implementation-spec docs live in `cursor changes/` (staged, not committed):
+
+- `cursor changes/Cursor_changes 1.MD` — index, locked decisions, architecture
+- `cursor changes/Cursor_changes 2.MD` — create / modify / do-not-touch file inventory
+- `cursor changes/Cursor_changes 3.MD` — Prisma models and fields
+- `cursor changes/Cursor_changes 4.MD` — seed: users, farms, 48 Krishna animals + Shanti/Meena
+- `cursor changes/Cursor_changes 5.MD` — seed: medicines, prescriptions, treatments, dispatches, events
+- `cursor changes/Cursor_changes 6.MD` — admin national seed + dummy contradiction register
+- `cursor changes/Cursor_changes 7.MD` — Express GET routes and DTO mapping
+- `cursor changes/Cursor_changes 8.MD` — Express POST routes and page-handler wiring
+- `cursor changes/Cursor_changes 9.MD` — frontend dummy clients, admin extract, Docker/env scripts
+- `cursor changes/Cursor_changes 10.MD` — consistency-check script, runbook, out of scope
 
 Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`.
 
@@ -48,7 +55,8 @@ Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`.
 | `/vet/prescriptions/[rxId]/sign` | Vet | Live |
 | `/vet/prescriptions/[rxId]/countersign` | Vet | Live |
 | `/vet/patients` | Vet | Live |
-| `/admin` | Admin / Researcher | Live (D3 choropleth; pre-2019 unified J&K outline) |
+| `/admin` | Admin / Researcher | Live (D3 choropleth; all state abbreviations; click → district page) |
+| `/admin/states/[slug]` | Admin / Researcher | Live (34 state/UT district maps, dummy headcount) |
 
 ---
 
@@ -86,9 +94,9 @@ Moved the admin working-tree notes into commit history and pointed remotes at th
 
 MEMORY-only: pointed **HEAD** at `d859918` after that docs commit. No product files.
 
-### this commit — map changes made to india map (2026-08-23)
+### `6cead1e` — map changes made to india map (2026-08-23)
 
-Admin choropleth uses the pre-2019 unified Jammu & Kashmir outline (J&K + Ladakh dissolved, official northern claim through Aksai Chin) plus official Arunachal Pradesh. Heatmap colors and dummy AMU/demand data unchanged. Farmer dispatch: header Start Dispatch removed (card CTA kept). Insights: Add Stock half-width and right-aligned.
+Admin choropleth uses the pre-2019 unified Jammu & Kashmir outline (J&K + Ladakh dissolved, official northern claim through Aksai Chin) plus official Arunachal Pradesh. Heatmap colors and dummy AMU/demand data unchanged. Farmer dispatch: header Start Dispatch removed (card CTA kept). Insights: Add Stock half-width and right-aligned. Pushed to `origin/backend`.
 
 ---
 
