@@ -4,7 +4,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-22  
 **Branch:** `main`  
-**HEAD:** `112f8ec` — Fea: Admin researcher dashboard with D3 India map
+**HEAD:** `d859918` — Record 112f8ec in MEMORY after the admin dashboard commit.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -14,7 +14,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ## Current tree (not yet committed)
 
-Clean after `112f8ec`, except this MEMORY hash update (committed immediately after). Local-only: `.playwright-mcp/`, root `admin-*.png`.
+Working tree clean of product changes. Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`.
 
 ---
 
@@ -64,6 +64,10 @@ Farmer insights rewrite (forecast chart, medicine stock, heatmap). Vet patients 
 ### `112f8ec` — Fea: Admin researcher dashboard with D3 India map (2026-08-22)
 
 Ported the researcher UI to `/admin`. Login admin role and `/` now route correctly. Replaced boxy SVG states with D3 + simplified India GeoJSON choropleth (dummy AMU/demand colors). Added `IndiaChoroplethMap`, `india-geo.ts`, `india-states.json`. README clone URL set to `Ninjabeam20/PashuPramaan-SIH`; directory tree includes admin/data. Kept Vite source under `Create Dashboard Page/` (excluded from `tsconfig`). Ignored `.playwright-mcp/` and root `admin-*.png`.
+
+### `d859918` — Record 112f8ec in MEMORY after the admin dashboard commit (2026-08-22)
+
+Moved the admin working-tree notes into commit history and pointed remotes at the SIH `origin`.
 
 ---
 
