@@ -36,3 +36,9 @@ body {
   font-family: var(--font-display);
   font-weight: 400;
 }
+
+/* Admin dashboard — scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1cdc4; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #b5b0a6; }

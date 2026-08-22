@@ -1,0 +1,14 @@
+---
+description: Keep MEMORY.md current with repo state and commits
+alwaysApply: true
+---
+
+# Repository memory
+
+`MEMORY.md` is the living record of this repo. Update it in the same session whenever you change code, routes, or docs.
+
+- Record only what `git log`, `git status`, and the files show. Do not invent commits.
+- New or wired routes go in the **Live App Router endpoints** table.
+- Uncommitted work stays under **Current tree**. After a commit, move that work into **Commit history**.
+- Bump **Last updated** and **HEAD** on every edit.
+- Do not commit secrets, screenshots, or `.playwright-mcp/`.

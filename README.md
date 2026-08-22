@@ -1,36 +1,368 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌾 PashuPramaan (पशु प्रमाण)
 
-## Getting Started
+> **Intelligent Livestock Health Management, Antimicrobial Stewardship (AMR/AWaRe), and Food Safety Provenance Platform**
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.8-61dafb?style=flat-square&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
+[![React Query](https://img.shields.io/badge/TanStack_Query-v5-ff4154?style=flat-square&logo=react-query)](https://tanstack.com/query)
+[![License](https://img.shields.io/badge/License-Proprietary-green?style=flat-square)](#)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 📖 Table of Contents
+
+- [Executive Overview](#-executive-overview)
+- [Key Pillars & Core Capabilities](#-key-pillars--core-capabilities)
+- [User Roles & Key Workflows](#-user-roles--key-workflows)
+  - [1. Farmer Portal](#1-farmer-portal)
+  - [2. Veterinarian Portal](#2-veterinarian-portal)
+  - [3. Researcher / Admin Portal](#3-researcher--admin-portal)
+- [Architecture & Tech Stack](#-architecture--tech-stack)
+- [Project Directory Structure](#-project-directory-structure)
+- [API Contract & Data Architecture](#-api-contract--data-architecture)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation & Local Run](#installation--local-run)
+  - [How to access the portals](#how-to-access-the-portals)
+  - [Available Scripts](#available-scripts)
+- [Design System & Theme Tokens](#-design-system--theme-tokens)
+- [Core Safety & Stewardship Principles](#-core-safety--stewardship-principles)
+- [Roadmap](#-roadmap)
+
+---
+
+## 🌟 Executive Overview
+
+**PashuPramaan (पशु प्रमाण)** is a next-generation livestock lifecycle, clinical health, and food supply chain verification platform. It solves the critical intersection between **livestock healthcare**, **antimicrobial resistance (AMR)** containment, and **consumer food safety**.
+
+In dairy and livestock production, inadvertent antibiotic residues in milk, meat, and eggs pose severe human health hazards and fuel global AMR. PashuPramaan bridges dairy and livestock farmers, certified veterinary practitioners, testing laboratories, and regulatory authorities onto a unified, verifiable digital trail:
+
+1. **Automated Withdrawal Period Tracking**: Dynamically calculates and counts down drug clearance timelines based on species, drug class, dosage, and route.
+2. **Hard-Gated Food Safety Dispatch**: Enforces a strict *fail-closed* safety check preventing contaminated animal produce from dispatch or sale.
+3. **PashuPramaan Food Safety Passport**: Generates tamper-evident, QR-verifiable clearance credentials for every milk/meat shipment.
+4. **WHO AWaRe & CIA Antimicrobial Stewardship**: Integrates WHO AWaRe classification (Access, Watch, Reserve) and Critically Important Antimicrobial (CIA) oversight into veterinary prescription and signing ceremonies.
+5. **Prophet-Powered Predictive Insights**: AI-assisted disease trend monitoring and medicine inventory forecasting at both farm and regional levels.
+
+---
+
+## 🛡️ Key Pillars & Core Capabilities
+
+```mermaid
+graph TD
+    A[Livestock Health Record] -->|Prescription / Treatment| B(Withdrawal Clock & MRL Calculation)
+    B --> C{Dispatch Safety Gate}
+    C -->|Withdrawal Active / MRL Exceeded| D[❌ Dispatch Blocked - Fails Closed]
+    C -->|Withdrawal Cleared & MRL Valid| E[✅ Passport Generated with QR Verification]
+    
+    V[Veterinarian] -->|AWaRe / CIA Warning Review| F[Digital Signing Ceremony]
+    F -->|PIN + Canvas Signature| A
+    
+    A --> G[Prophet Demand & Epidemic Forecasting]
+    G --> H[Farmer & Regional Insights]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. ⏱️ Active Withdrawal Period Clocks
+- Computes species- and product-specific clearance timelines (e.g., milk vs. meat vs. eggs).
+- Visual status ribbons and live countdowns indicate active drug elimination and clear dates.
+- Emergency backdating support (capped at 72 hours) for immediate field treatments.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. 🚦 Hard-Gated Dispatch & Provenance Passports
+- Real-time safety validation checks (Withdrawal status, Lab MRL assay results, Vet prescription status).
+- Single-click generation of the **PashuPramaan Passport** featuring verifiable QR codes and provenance details.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. ✍️ Digital Veterinary Signing Ceremony
+- Structured review workflow displaying diagnosis, treatment history, and drug administration details.
+- WHO AWaRe / CIA advisory step requiring conscious clinical affirmation when prescribing Watch or Reserve drugs.
+- Multi-factor signing authorization: typed name, drawn wet-ink canvas signature, and secure vet PIN.
+- Retroactive countersignature workflow for emergency farmer-administered interventions.
 
-## Learn More
+### 4. 📈 Predictive Medicine Demand & Disease Trends
+- Dual-line historical vs. forecasted drug demand charts.
+- Farm health heatmaps highlighting herd vulnerability and high-frequency conditions (e.g., Mastitis, IBD).
+- Natural language "Why this matters" situational insights.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 👥 User Roles & Key Workflows
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Farmer Portal
 
-## Deploy on Vercel
+| Route | View Name | Key Features |
+|---|---|---|
+| `/farmer/home` | **Farm Dashboard** | Herd status summary (Clear / Under Treatment / Waiting), high-priority attention alerts, quick actions (Record Treatment, Health Event, Start Dispatch), low-stock medicine alerts. |
+| `/farmer/my-farm` | **Livestock Registry** | Species overview cards (Cows, Buffaloes, Goats, Poultry), searchable/filterable animal directory, Add Animal modal (with flock support), full animal health history modals. |
+| `/farmer/treatments` | **Treatments & Withdrawal** | Active treatment list, 3-step Record Treatment wizard, drug route & dosage logs, treatment timeline side panels with withdrawal progress indicators. |
+| `/farmer/dispatch` | **Dispatch & Safety Gate** | Past dispatch history, 3-step Start Dispatch wizard, automated multi-gate eligibility check, QR passport generation. |
+| `/farmer/insights` | **Forecasting & Analytics** | 30d/90d demand projection charts, species risk heatmap, medicines-to-watch radar, AI explanatory summaries. |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2. Veterinarian Portal
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Route | View Name | Key Features |
+|---|---|---|
+| `/vet/home` | **Vet Command Center** | Workload stats (Awaiting Signature, Unsigned Emergency, Follow-up, Stewardship Review), Urgent attention queue, Clinical evidence insight cards (similar case recovery benchmarks), Recent activity & outcomes. |
+| `/vet/prescriptions` | **Prescription Registry** | Filterable prescriptions table (Sign, Countersigned, Signed, Voided), New Prescription creation wizard with AWaRe/CIA classification. |
+| `/vet/patients` | **Patient Directory** | Comprehensive patient profiles, cross-farm animal records, treatment histories, diagnostic logs. |
+| **Sign Flow** | **Review & Sign Pipeline** | Step 1: Clinical Case Review → Step 2: AWaRe/CIA Stewardship Notice → Step 3: Signature Canvas + Vet PIN validation → Step 4: Signed Confirmation with signature reference ID. |
+| **Countersign Flow** | **Emergency Countersign** | 2-step authorization pipeline for reviewing and countersigning emergency on-farm administrations. |
+
+### 3. Researcher / Admin Portal
+
+| Route | View Name | Key Features |
+|---|---|---|
+| `/admin` | **Researcher Dashboard** | Six in-page tabs (no extra routes): **Overview** (national AMU, attention cards, India heatmap, state table), **AMU & Regional Analytics** (state/district drill-down, filters, summary), **Anomalies** (filterable list, detail + sparklines, treatment modal, save to workspace), **Health × AMU** (timeline vs health events, Explained / Unexplained / Mixed), **Forecast & Planning** (demand forecast chart, medicine table, demand map), **Research Workspace** (saved insights, notes, export, open analysis). |
+
+---
+
+## 🏗️ Architecture & Tech Stack
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   PashuPramaan Web App                 │
+├────────────────────────────────────────────────────────┤
+│  Next.js 16 (App Router) + React 19 + TypeScript       │
+│  Tailwind CSS v4 + Fraunces (Display) / Inter (Body)   │
+│  TanStack React Query v5 (Data Fetching & State)      │
+│  Recharts (Visualizations) + Leaflet (Geo Mapping)     │
+│  Lucide React (Icons) + HTML5 Signature Canvas         │
+└──────────────────────────┬─────────────────────────────┘
+                           │ (REST / JSON / JWT)
+┌──────────────────────────▼─────────────────────────────┐
+│                 FastAPI Backend Service                │
+├────────────────────────────────────────────────────────┤
+│  FastAPI + PostgreSQL + SQLAlchemy                     │
+│  ECDSA P-256 Signature Verification                    │
+│  Prophet Time-Series Forecasting Models                │
+│  Veterinary Drug Formulary & MRL Safety Gate Engine    │
+└────────────────────────────────────────────────────────┘
+```
+
+- **Framework**: Next.js `16.3.2` (Turbopack, App Router)
+- **UI & Runtime**: React `19.2.8`, TypeScript `5.x`
+- **Styling**: Tailwind CSS `v4` with custom CSS variables design system
+- **State & Server Cache**: TanStack React Query `v5.101.4`
+- **Charts & Mapping**: Recharts `3.10.1`, Leaflet & React-Leaflet `5.0.0`, D3 + India GeoJSON choropleth on `/admin`
+- **Icons & Primitives**: Lucide React, Custom accessible UI components
+- **Testing**: Vitest, React Testing Library, Playwright
+
+**Backend direction:** Next.js can stay the UI and also host API routes. A separate **Express + PostgreSQL** service is a valid next step (the planned FastAPI backend can be swapped or deferred). Prefer one API layer, not both Express and FastAPI.
+
+---
+
+## 📂 Project Directory Structure
+
+```
+PashuPramaan/
+├── docs/                                # API specifications & domain design contracts
+│   ├── api-contract.md                  # Core Frontend ↔ Backend REST API contract
+│   └── api-contract (3).md              # Extended contract with signing & dispatch specs
+├── public/                              # Static public assets
+│   ├── images/                          # High-res photography & assets
+│   └── favicon.ico
+├── src/
+│   ├── app/                             # Next.js App Router root
+│   │   ├── (auth)/                      # Authentication routes
+│   │   │   └── login/                   # Multi-role login (Farmer, Vet, Admin → /admin)
+│   │   ├── admin/                       # Researcher / Admin dashboard (`/admin`)
+│   │   ├── farmer/                      # Farmer portal
+│   │   │   ├── home/                    # Farmer dashboard
+│   │   │   ├── my-farm/                 # Animal & herd management
+│   │   │   ├── treatments/              # Treatment logging & withdrawal tracker
+│   │   │   ├── dispatch/                # Dispatch safety checks & passports
+│   │   │   ├── insights/                # Predictive demand analytics
+│   │   │   └── layout.tsx               # Farmer navigation shell & header
+│   │   ├── vet/                         # Veterinarian portal
+│   │   │   ├── home/                    # Vet dashboard & workload center
+│   │   │   ├── prescriptions/           # Prescriptions table & sign launcher
+│   │   │   ├── patients/                # Patient directory & case viewer
+│   │   │   └── layout.tsx               # Vet navigation shell
+│   │   ├── globals.css                  # Design tokens, fonts, and theme variables
+│   │   ├── layout.tsx                   # Root HTML & typography layout
+│   │   └── page.tsx                     # Landing / entry redirection
+│   ├── components/                      # Reusable UI component library
+│   │   ├── admin/                       # Admin choropleth (D3 + GeoJSON)
+│   │   ├── farmer/                      # Farmer-specific widgets & modals
+│   │   │   ├── AddAnimalModal.tsx
+│   │   │   ├── DispatchDetailModal.tsx
+│   │   │   ├── RecordTreatmentModal.tsx
+│   │   │   ├── StartDispatchModal.tsx
+│   │   │   ├── TreatmentDetailPanel.tsx
+│   │   │   ├── WithdrawalRibbon.tsx
+│   │   │   └── ...
+│   │   ├── vet/                         # Vet-specific widgets & sign flows
+│   │   │   ├── sign-flow/               # 4-step Review & Sign ceremony
+│   │   │   ├── countersign-flow/        # 2-step Emergency Countersign flow
+│   │   │   ├── shared/                  # SignatureCapture & PinInput components
+│   │   │   ├── CaseDetailModal.tsx
+│   │   │   ├── NewPrescriptionModal.tsx
+│   │   │   └── ...
+│   │   └── ui/                          # Design system primitives (Badge, Button, Card, Select, Input, ProgressBar)
+│   ├── data/
+│   │   └── india-states.json            # Simplified India states GeoJSON
+│   ├── lib/
+│   │   ├── admin/
+│   │   │   └── india-geo.ts             # GeoJSON state name → dummy region id
+│   │   └── api/
+│   │       └── dummy/                   # Mock API store for offline development
+│   │           ├── auth.ts
+│   │           ├── dispatch.ts
+│   │           ├── farm-detail.ts
+│   │           ├── farm-insights.ts
+│   │           ├── farmer-dashboard.ts
+│   │           ├── treatments.ts
+│   │           ├── vet-dashboard.ts
+│   │           ├── vet-patients.ts
+│   │           ├── vet-prescriptions.ts
+│   │           └── vet-sign-flow.ts
+│   └── providers/                       # React Query & client context providers
+├── package.json                         # Dependencies and build scripts
+├── tsconfig.json                        # TypeScript configuration
+└── README.md                            # Project documentation
+```
+
+---
+
+## 📡 API Contract & Data Architecture
+
+The complete frontend-backend contract is documented under [`docs/api-contract.md`](docs/api-contract.md). 
+
+### Key Endpoints Summary
+
+| Domain | Method & Route | Description | Gate Behavior |
+|---|---|---|---|
+| **Auth** | `POST /api/auth/login` | Multi-role authentication (Farmer / Vet / Admin) | Issues Bearer JWT |
+| **Farmer** | `GET /api/farmer/dashboard` | Aggregated farm stats, attention items, medicine inventory | Read |
+| **Farmer** | `GET /api/farmer/farm` | Species counts, animal roster, recent farm activity | Read |
+| **Farmer** | `POST /api/farmer/animals` | Register new animal or poultry flock | Idempotent |
+| **Farmer** | `GET /api/farmer/treatments` | Active/historical treatments with live withdrawal state | Read |
+| **Farmer** | `POST /api/farmer/treatments` | Log new treatment & trigger withdrawal countdown | Enforces 72h backdate cap |
+| **Farmer** | `POST /api/farmer/dispatch/safety-check` | Multi-parameter farm-gate safety gate verification | **Fails closed on violation** |
+| **Farmer** | `POST /api/farmer/dispatch/passport` | Issue verifiable QR safety passport | Requires valid safety check |
+| **Farmer** | `GET /api/farmer/insights` | 30d/90d Prophet medicine demand & trend forecast | Read |
+| **Vet** | `GET /api/vet/dashboard` | Workload queues, emergency alerts, evidence cards | Read |
+| **Vet** | `POST /api/vet/prescriptions` | Issue new prescription with AWaRe / CIA tags | Sets status to `SIGN` |
+| **Vet** | `POST /api/vet/prescriptions/{id}/sign` | Complete digital signing ceremony with PIN & canvas | Generates digital signature ref |
+| **Vet** | `POST /api/vet/emergencies/{id}/countersign`| Countersign emergency field treatment | Linked audit trail |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js**: `v20.x` or `v22.x` (LTS recommended)
+- **Package Manager**: `npm`, `pnpm`, or `bun`
+
+### Installation & Local Run
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Ninjabeam20/PashuPramaan-SIH.git
+   cd PashuPramaan-SIH
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the local development server**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Access the application**:
+   Open [http://localhost:3000](http://localhost:3000) (or **3001** if 3000 is already taken). `/` redirects to `/login`.
+
+### How to access the portals
+
+All three dashboards are live. Pick a role on login, or open the URL directly. Login is dummy — any password works.
+
+| Role on login | Demo User ID | Goes to | What’s there |
+|---|---|---|---|
+| **Farmer / Animal Owner** | `farmer01` | `/farmer/home` | Home, My Farm, Treatments, Dispatch, Insights (nav at the top) |
+| **Veterinarian / Vet Officer** | `vet01` | `/vet/home` | Home, Prescriptions, Patients (sign / countersign under a prescription) |
+| **Administrator / Inspector** | `admin01` | `/admin` | One page with 6 tabs (Overview through Research Workspace) |
+
+Direct URLs (login can be skipped):
+
+- Farmer: [http://localhost:3000/farmer/home](http://localhost:3000/farmer/home)
+- Vet: [http://localhost:3000/vet/home](http://localhost:3000/vet/home)
+- Admin: [http://localhost:3000/admin](http://localhost:3000/admin)
+
+Farmer and vet keep their own nav once you are inside that portal. They do not link to `/admin`, and admin does not link back to them — each role is a separate entry.
+
+> **Signing PIN (Vet)**: Demo default PIN is `1234`
+
+---
+
+## 🛠️ Available Scripts
+
+| Command | Action |
+|---|---|
+| `npm run dev` | Starts Next.js development server with hot reloading |
+| `npm run build` | Compiles optimized production build |
+| `npm run start` | Serves the compiled production build |
+| `npm run lint` | Runs ESLint analysis across TypeScript & JSX files |
+
+---
+
+## 🎨 Design System & Theme Tokens
+
+PashuPramaan utilizes an organic, premium visual design system balancing agricultural grounding with clean clinical authority:
+
+```css
+:root {
+  --color-bg: #f5f1e7;          /* Warm organic cream */
+  --color-surface: #ffffff;     /* Crisp white container surface */
+  --color-primary: #2d4a22;     /* Forest agricultural green */
+  --color-primary-dark: #1f3517;/* Deep foliage green */
+  --color-text: #1e2a17;        /* High-contrast charcoal green */
+  --color-text-muted: #6b7364;  /* Muted earthy slate */
+  --color-border: #e4dfd1;      /* Subtle border tone */
+  --color-accent-vet: #de6a38;  /* Terracotta veterinary accent */
+
+  --status-high-bg: #fbdce0;    /* Alert high background */
+  --status-high-text: #b0334a;  /* Alert high crimson */
+  --status-medium-bg: #fcebc9;  /* Warning amber background */
+  --status-medium-text: #92610f;/* Warning amber text */
+  --status-good-bg: #e1ebd7;    /* Safe / clear green background */
+  --status-good-text: #2d4a22;  /* Safe / clear green text */
+}
+```
+
+- **Typography**: `Fraunces` (warm, authoritative serif display) + `Inter` (clean, accessible UI body).
+- **Responsive Layout**: Dedicated desktop navigation with a fixed mobile-friendly bottom app bar.
+
+---
+
+## ⚖️ Core Safety & Stewardship Principles
+
+1. **Fail-Closed by Design**: If any data is missing, expired, or unverified (e.g., active withdrawal period, missing vet signature for restricted drugs, or MRL assay failure), dispatch is unconditionally blocked.
+2. **Honest Provenance**: Passports reflect exact verified state (e.g., `"No assay on file"` rather than falsifying a lab check if only time-based withdrawal was observed).
+3. **Antimicrobial Governance**: Critically Important Antimicrobials (CIAs) and WHO Watch/Reserve drugs cannot be silently prescribed; they trigger mandatory justification notices.
+4. **Audit Trail Integrity**: All health events, emergency administrations, and signatures maintain immutable timestamps and author references.
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Multi-species Livestock & Poultry Flock Management
+- [x] Dynamic Drug Withdrawal Timers & Progress Ribbons
+- [x] Multi-gate Dispatch Safety Validation & PashuPramaan Passport QR Generation
+- [x] 4-Step Veterinary Review & Signing Ceremony with Canvas & PIN
+- [x] 2-Step Emergency Countersign Pipeline
+- [x] Prophet Demand & Health Event Trend Visualizations
+- [x] Admin / Researcher dashboard (`/admin`) — national AMU heatmap, anomalies, Health × AMU, forecast, workspace
+- [ ] Backend FastAPI + PostgreSQL Integration (replacing dummy store)
+- [ ] ECDSA P-256 Hardware Token / WebAuthn Signature Ceremony
+- [ ] Native Hindi & Regional Language Localization (i18n)
+- [ ] Offline PWA Mode with Background Sync for rural connectivity
+- [ ] Admin / Regulator supply-chain residue compliance (beyond the current researcher UI)
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ for sustainable livestock health, veterinary stewardship, and safe food systems.</sub>
+</div>

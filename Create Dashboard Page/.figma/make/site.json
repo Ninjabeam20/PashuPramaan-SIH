@@ -1,0 +1,10 @@
+{
+  "description": "Provides researchers and regulators with a comprehensive dashboard for monitoring livestock antimicrobial use, featuring interactive analytics and regional data.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

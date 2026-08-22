@@ -35,8 +35,8 @@ export default function LoginPage() {
         router.push("/farmer/home");
       } else if (role === "vet") {
         router.push("/vet/home");
-      } else {
-        console.log(`Redirect to ${role} dashboard (not implemented yet)`);
+      } else if (role === "admin") {
+        router.push("/admin");
       }
     } catch (error) {
       console.error("Login failed", error);
