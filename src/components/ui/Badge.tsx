@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed";
+export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -26,6 +26,21 @@ export function Badge({ variant = "good", dot, className, children, ...props }: 
     improved: "text-[#2563eb] border border-[#2563eb]/30 bg-transparent",
     follow_up_pending: "text-[#d97706] border border-[#d97706]/30 bg-transparent",
     action_needed: "bg-[var(--status-high-bg)] text-[var(--status-high-text)]",
+    healthy: "bg-[#e2ead8] text-[#557b4f]", // muted green/gray
+    under_treatment: "bg-[#faecd1] text-[#b67a28]", // amber
+    waiting: "bg-[#f2e2d0] text-[#a47b53]", // tan
+    withdrawal_active: "bg-[#faecd1] text-[#b67a28]",
+    vet_signed: "bg-[#e2ead8] text-[#557b4f]",
+    lab_mrl: "bg-[#e2ead8] text-[#557b4f]",
+    active: "bg-[#e2ead8] text-[#557b4f]",
+    completed: "bg-[var(--color-bg)] text-[var(--color-text-muted)]",
+    emergency_unsigned: "bg-[#f3e8ff] text-[#7c3aed]",
+    no_lab_assay: "bg-[var(--color-bg)] text-[var(--color-text-muted)]",
+    pending_vet_signature: "bg-[#faecd1] text-[#b67a28]",
+    exception: "bg-[#f3e8ff] text-[#7c3aed]",
+    cleared: "bg-[#e2ead8] text-[#557b4f]",
+    withdrawal: "bg-[#faecd1] text-[#b67a28]",
+    blocked: "bg-[#fce8e8] text-[#c93f4e]",
   };
 
   return (

@@ -13,8 +13,17 @@ import { TreatmentEvidenceCard } from "@/components/vet/TreatmentEvidenceCard";
 import { PrescriptionsTable } from "@/components/vet/PrescriptionsTable";
 import { ActivityFeed } from "@/components/vet/ActivityFeed";
 import { RecentOutcomes } from "@/components/vet/RecentOutcomes";
+import { CaseDetailModal } from "@/components/vet/CaseDetailModal";
 
 export default function VetHome() {
+  const [selectedCaseId, setSelectedCaseId] = React.useState<string | null>(null);
+  const [selectedActionText, setSelectedActionText] = React.useState<string>("");
+
+  const handleReviewClick = (caseId: string, actionText: string) => {
+    setSelectedCaseId(caseId);
+    setSelectedActionText(actionText);
+  };
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["vet-dashboard"],
     queryFn: getVetDashboard,
@@ -48,7 +57,7 @@ export default function VetHome() {
 
       {/* 3. Emergency Alert Banner */}
       {data.emergency_alert && (
-        <EmergencyAlertBanner alert={data.emergency_alert} />
+        <EmergencyAlertBanner alert={data.emergency_alert} onReviewClick={handleReviewClick} />
       )}
 
       {/* 4. Two-column section */}
@@ -59,7 +68,7 @@ export default function VetHome() {
             <h3 className="font-bold text-[var(--color-text)]">Needs your attention</h3>
             <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Review prescriptions and clinical cases that need action.</p>
           </div>
-          <AttentionList items={data.attention_items} />
+          <AttentionList items={data.attention_items} onReviewClick={handleReviewClick} />
         </section>
 
         {/* Right Column: Quick actions */}
@@ -83,13 +92,22 @@ export default function VetHome() {
       </div>
 
       {/* 5. Prescriptions Table */}
-      <PrescriptionsTable prescriptions={data.prescriptions} />
+      <PrescriptionsTable prescriptions={data.prescriptions} onReviewClick={handleReviewClick} />
 
       {/* 6. Two-column Activity / Outcomes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ActivityFeed activities={data.recent_activity} />
         <RecentOutcomes outcomes={data.recent_outcomes} />
       </div>
+
+      {/* Case Detail Modal */}
+      {selectedCaseId && (
+        <CaseDetailModal 
+          caseId={selectedCaseId} 
+          actionText={selectedActionText} 
+          onClose={() => setSelectedCaseId(null)} 
+        />
+      )}
     </div>
   );
 }

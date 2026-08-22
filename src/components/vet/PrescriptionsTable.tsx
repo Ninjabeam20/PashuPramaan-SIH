@@ -18,9 +18,10 @@ interface PrescriptionsTableProps {
     total: number;
     items: PrescriptionItem[];
   };
+  onReviewClick?: (caseId: string, actionText: string) => void;
 }
 
-export function PrescriptionsTable({ prescriptions }: PrescriptionsTableProps) {
+export function PrescriptionsTable({ prescriptions, onReviewClick }: PrescriptionsTableProps) {
   return (
     <Card className="flex flex-col p-0 overflow-hidden mb-8">
       <div className="p-5 flex items-start justify-between border-b border-[var(--color-border)]">
@@ -81,7 +82,7 @@ export function PrescriptionsTable({ prescriptions }: PrescriptionsTableProps) {
                   <span className="mr-4">{item.time}</span>
                   <button 
                     className="font-semibold text-[var(--color-text)] hover:underline"
-                    onClick={() => console.log(`${item.action_text} for ${item.rx_id}`)}
+                    onClick={() => onReviewClick?.(item.rx_id, item.action_text)}
                   >
                     {item.action_text}
                   </button>

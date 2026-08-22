@@ -10,9 +10,10 @@ interface EmergencyAlertBannerProps {
     administered_at: string;
     badge: string;
   };
+  onReviewClick?: (caseId: string, actionText: string) => void;
 }
 
-export function EmergencyAlertBanner({ alert }: EmergencyAlertBannerProps) {
+export function EmergencyAlertBanner({ alert, onReviewClick }: EmergencyAlertBannerProps) {
   if (!alert) return null;
 
   return (
@@ -38,7 +39,7 @@ export function EmergencyAlertBanner({ alert }: EmergencyAlertBannerProps) {
       </div>
       <button 
         className="text-[var(--status-high-text)] font-semibold text-xs hover:underline whitespace-nowrap self-start mt-2 md:mt-0 min-h-[44px] md:min-h-0 flex items-center"
-        onClick={() => console.log("Review & Countersign clicked")}
+        onClick={() => onReviewClick?.(alert.animal_flock, "Review & Countersign \u2192")}
       >
         Review & Countersign &rarr;
       </button>

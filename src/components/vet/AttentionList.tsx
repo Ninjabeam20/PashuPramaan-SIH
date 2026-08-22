@@ -19,7 +19,7 @@ export interface AttentionItem {
   badges: AttentionBadge[];
 }
 
-export function AttentionCard({ item }: { item: AttentionItem }) {
+export function AttentionCard({ item, onReviewClick }: { item: AttentionItem, onReviewClick?: (caseId: string, actionText: string) => void }) {
   const accentColorMap: Record<string, string> = {
     orange: "bg-[var(--color-accent-vet)]",
     red: "bg-[var(--status-high-text)]",
@@ -38,7 +38,7 @@ export function AttentionCard({ item }: { item: AttentionItem }) {
         </div>
         <button 
           className="text-xs font-semibold text-[var(--color-text)] hover:underline flex items-center min-h-[44px] sm:min-h-0 sm:py-0 -mt-3 sm:mt-0"
-          onClick={() => console.log(`${item.link_text} clicked for ${item.id}`)}
+          onClick={() => onReviewClick?.(item.id, item.link_text)}
         >
           {item.link_text}
         </button>
@@ -65,11 +65,11 @@ export function AttentionCard({ item }: { item: AttentionItem }) {
   );
 }
 
-export function AttentionList({ items }: { items: AttentionItem[] }) {
+export function AttentionList({ items, onReviewClick }: { items: AttentionItem[], onReviewClick?: (caseId: string, actionText: string) => void }) {
   return (
     <div className="flex flex-col gap-4">
       {items.map((item) => (
-        <AttentionCard key={item.id} item={item} />
+        <AttentionCard key={item.id} item={item} onReviewClick={onReviewClick} />
       ))}
     </div>
   );
