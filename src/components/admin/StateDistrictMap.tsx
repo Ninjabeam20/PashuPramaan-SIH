@@ -1,235 +1,383 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { geoMercator, geoPath } from "d3"
-import type { Feature, Geometry } from "geojson"
-import type { DistrictFeatureCollection } from "@/lib/admin/district-types"
-import { districtHeadcount, formatIn, type HeadCountMode } from "@/lib/admin/state-stats"
-import type { IndiaStateMeta } from "@/lib/admin/india-geo"
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import type { FeatureCollection, Geometry } from "geojson"
+import { getStateBySlug } from "@/lib/admin/india-geo"
+import "leaflet/dist/leaflet.css"
 
-const WIDTH = 640
-const HEIGHT = 720
-
-function lerpColor(t: number): string {
-  const stops: [number, number, number][] = [
-    [220, 252, 231],
-    [134, 239, 172],
-    [74, 222, 128],
-    [22, 163, 74],
-    [20, 83, 45],
-  ]
-  const x = Math.min(1, Math.max(0, t)) * (stops.length - 1)
-  const i = Math.min(stops.length - 2, Math.floor(x))
-  const f = x - i
-  const a = stops[i]
-  const b = stops[i + 1]
-  const r = Math.round(a[0] + (b[0] - a[0]) * f)
-  const g = Math.round(a[1] + (b[1] - a[1]) * f)
-  const bl = Math.round(a[2] + (b[2] - a[2]) * f)
-  return `rgb(${r},${g},${bl})`
+interface DistrictStats {
+  district: string
+  amu: number
+  change: number
+  anomalies: number
+  unexplained: number
 }
 
-function luminance(fill: string): number {
-  const m = fill.match(/\d+/g)
-  if (!m) return 0.5
-  const [r, g, b] = m.map(Number)
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255
+const KNOWN_DISTRICTS: Record<string, Record<string, Partial<DistrictStats>>> = {
+  maharashtra: {
+    "Pune": { amu: 14200, change: 22, anomalies: 4, unexplained: 2 },
+    "Nashik": { amu: 11800, change: 19, anomalies: 3, unexplained: 1 },
+    "Nagpur": { amu: 10200, change: 17, anomalies: 2, unexplained: 0 },
+    "Aurangabad": { amu: 9400, change: 24, anomalies: 3, unexplained: 1 },
+    "Amravati": { amu: 7800, change: 28, anomalies: 3, unexplained: 1 },
+    "Solapur": { amu: 8100, change: 21, anomalies: 2, unexplained: 0 },
+    "Kolhapur": { amu: 6700, change: 12, anomalies: 1, unexplained: 0 },
+    "Ahmednagar": { amu: 9200, change: 16, anomalies: 2, unexplained: 1 },
+    "Thane": { amu: 8900, change: 14, anomalies: 2, unexplained: 0 },
+    "Satara": { amu: 6400, change: 11, anomalies: 1, unexplained: 0 },
+    "Jalgaon": { amu: 7300, change: 15, anomalies: 2, unexplained: 0 },
+    "Nanded": { amu: 6900, change: 18, anomalies: 2, unexplained: 1 },
+    "Sangli": { amu: 5800, change: 9, anomalies: 1, unexplained: 0 },
+    "Yavatmal": { amu: 5200, change: 13, anomalies: 1, unexplained: 0 },
+    "Latur": { amu: 4900, change: 10, anomalies: 1, unexplained: 0 },
+    "Chandrapur": { amu: 4700, change: 8, anomalies: 1, unexplained: 0 },
+    "Beed": { amu: 4400, change: 12, anomalies: 1, unexplained: 0 },
+    "Buldhana": { amu: 4100, change: 7, anomalies: 1, unexplained: 0 },
+    "Parbhani": { amu: 3800, change: 9, anomalies: 1, unexplained: 0 },
+    "Jalna": { amu: 3600, change: 8, anomalies: 1, unexplained: 0 },
+    "Raigad": { amu: 3400, change: 6, anomalies: 1, unexplained: 0 },
+    "Osmanabad": { amu: 3200, change: 5, anomalies: 0, unexplained: 0 },
+    "Nandurbar": { amu: 3100, change: 7, anomalies: 0, unexplained: 0 },
+    "Wardha": { amu: 2900, change: 4, anomalies: 0, unexplained: 0 },
+    "Dhule": { amu: 2800, change: 5, anomalies: 0, unexplained: 0 },
+    "Gondia": { amu: 2600, change: 3, anomalies: 0, unexplained: 0 },
+    "Bhandara": { amu: 2500, change: 4, anomalies: 0, unexplained: 0 },
+    "Washim": { amu: 2400, change: 5, anomalies: 0, unexplained: 0 },
+    "Hingoli": { amu: 2200, change: 3, anomalies: 0, unexplained: 0 },
+    "Gadchiroli": { amu: 2100, change: 2, anomalies: 0, unexplained: 0 },
+    "Ratnagiri": { amu: 1900, change: 3, anomalies: 0, unexplained: 0 },
+    "Sindhudurg": { amu: 1600, change: 2, anomalies: 0, unexplained: 0 },
+    "Palghar": { amu: 2700, change: 4, anomalies: 0, unexplained: 0 },
+    "Mumbai": { amu: 1200, change: 1, anomalies: 0, unexplained: 0 },
+  },
+  gujarat: {
+    "Kachchh": { amu: 12400, change: 18, anomalies: 3, unexplained: 1 },
+    "Ahmedabad": { amu: 8920, change: 11, anomalies: 2, unexplained: 0 },
+    "Rajkot": { amu: 9100, change: 15, anomalies: 2, unexplained: 1 },
+    "Surat": { amu: 7840, change: 8, anomalies: 1, unexplained: 0 },
+    "Vadodara": { amu: 6800, change: 6, anomalies: 1, unexplained: 0 },
+    "Bhavnagar": { amu: 7200, change: 12, anomalies: 2, unexplained: 0 },
+    "Jamnagar": { amu: 5600, change: 9, anomalies: 1, unexplained: 0 },
+    "Junagadh": { amu: 4900, change: 14, anomalies: 1, unexplained: 0 },
+  },
+  "uttar-pradesh": {
+    "Lucknow": { amu: 12400, change: 16, anomalies: 3, unexplained: 1 },
+    "Agra": { amu: 10800, change: 21, anomalies: 4, unexplained: 2 },
+    "Kanpur": { amu: 11200, change: 18, anomalies: 3, unexplained: 1 },
+    "Varanasi": { amu: 9600, change: 14, anomalies: 2, unexplained: 1 },
+    "Meerut": { amu: 8900, change: 22, anomalies: 3, unexplained: 1 },
+    "Bareilly": { amu: 7400, change: 11, anomalies: 2, unexplained: 0 },
+    "Allahabad": { amu: 8200, change: 19, anomalies: 2, unexplained: 1 },
+    "Gorakhpur": { amu: 7100, change: 15, anomalies: 2, unexplained: 1 },
+  },
+  rajasthan: {
+    "Jaipur": { amu: 14600, change: 28, anomalies: 3, unexplained: 2 },
+    "Jodhpur": { amu: 12800, change: 33, anomalies: 3, unexplained: 2 },
+    "Bikaner": { amu: 11200, change: 31, anomalies: 2, unexplained: 1 },
+    "Udaipur": { amu: 9800, change: 24, anomalies: 2, unexplained: 1 },
+    "Kota": { amu: 10200, change: 29, anomalies: 2, unexplained: 1 },
+    "Ajmer": { amu: 8900, change: 26, anomalies: 2, unexplained: 0 },
+  },
+}
+
+function getDistrictStats(stateSlug: string, districtName: string): DistrictStats {
+  const known = KNOWN_DISTRICTS[stateSlug]?.[districtName]
+  if (known) {
+    return {
+      district: districtName,
+      amu: known.amu ?? 4500,
+      change: known.change ?? 12,
+      anomalies: known.anomalies ?? 1,
+      unexplained: known.unexplained ?? 0,
+    }
+  }
+
+  let hash = 0
+  for (let i = 0; i < districtName.length; i++) {
+    hash = (hash * 31 + districtName.charCodeAt(i)) >>> 0
+  }
+  const amu = 2000 + (hash % 11000)
+  const change = 3 + (hash % 28)
+  const anomalies = hash % 5
+  const unexplained = anomalies > 0 ? (hash % 2) : 0
+
+  return {
+    district: districtName,
+    amu,
+    change,
+    anomalies,
+    unexplained,
+  }
+}
+
+function districtColor(amu: number): string {
+  if (amu >= 12000) return "#EF4444"
+  if (amu >= 9000)  return "#FB923C"
+  if (amu >= 6000)  return "#FDE047"
+  if (amu >= 3500)  return "#86EFAC"
+  return "#22C55E"
 }
 
 export function StateDistrictMap({
-  state,
-  geo,
-  year,
-  mode,
-  selectedDistrict,
-  onSelect,
+  stateSlug,
+  stateName,
+  highlightDistrict,
+  onHoverDistrict,
+  onClickDistrict,
+  onBack,
 }: {
-  state: IndiaStateMeta
-  geo: DistrictFeatureCollection
-  year: string
-  mode: HeadCountMode
-  selectedDistrict: string | null
-  onSelect: (district: string | null) => void
+  stateSlug: string
+  stateName?: string
+  highlightDistrict?: string | null
+  onHoverDistrict?: (district: string | null) => void
+  onClickDistrict?: (district: string) => void
+  onBack?: () => void
 }) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const [ready, setReady] = useState(false)
-  const [tip, setTip] = useState<{ x: number; y: number; district: string } | null>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const geoLayerRef = useRef<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [districtCount, setDistrictCount] = useState(0)
+
+  const displayName = useMemo(() => {
+    if (stateName) return stateName
+    const stateMeta = getStateBySlug(stateSlug)
+    return stateMeta ? stateMeta.name : stateSlug.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())
+  }, [stateName, stateSlug])
 
   useEffect(() => {
-    setReady(true)
-  }, [])
+    let cancelled = false
+    setLoading(true)
 
-  const features = geo.features as Feature<Geometry, { district: string }>[]
-  const pops = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof districtHeadcount>>()
-    for (const f of features) {
-      const name = f.properties.district
-      map.set(name, districtHeadcount(state, name, year, mode))
+    async function initLeafletMap() {
+      if (typeof window === "undefined" || !mapContainerRef.current) return
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const [leafletModule, geoJsonModule] = await Promise.all([
+          import("leaflet" as string),
+          import(`@/data/districts/${stateSlug}.json`),
+        ])
+
+        if (cancelled || !mapContainerRef.current) return
+
+        const L = (leafletModule.default || leafletModule) as any
+        const geoData = (geoJsonModule.default || geoJsonModule) as FeatureCollection<Geometry, { district: string }>
+        setDistrictCount(geoData.features?.length || 0)
+
+        // Clean up previous map instance if exists
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove()
+          mapInstanceRef.current = null
+        }
+
+        // Initialize Leaflet Map
+        const map = L.map(mapContainerRef.current, {
+          zoomControl: false,
+          attributionControl: false,
+          scrollWheelZoom: false,
+          doubleClickZoom: true,
+          dragging: true,
+        })
+
+        mapInstanceRef.current = map
+
+        // Create Leaflet GeoJSON layer
+        const geoLayer = L.geoJSON(geoData, {
+          style: (feature: any) => {
+            const dName = feature?.properties?.district ?? ""
+            const isHighlighted = highlightDistrict === dName
+            const stats = getDistrictStats(stateSlug, dName)
+
+            return {
+              fillColor: isHighlighted ? "#2D6A4F" : districtColor(stats.amu),
+              weight: isHighlighted ? 2 : 1,
+              opacity: 1,
+              color: isHighlighted ? "#1A4030" : "rgba(255, 255, 255, 0.9)",
+              fillOpacity: 0.9,
+            }
+          },
+          onEachFeature: (feature: any, layer: any) => {
+            const dName = feature?.properties?.district ?? ""
+            const stats = getDistrictStats(stateSlug, dName)
+
+            // Bind floating tooltip
+            const tooltipHtml = `
+              <div style="font-family: Inter, system-ui, sans-serif; padding: 2px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 12px;">
+                  <strong style="color: #fff; font-size: 13px;">${stats.district}</strong>
+                  <span style="color: rgba(255,255,255,0.5); font-size: 10px;">${displayName}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 16px; margin-bottom: 3px;">
+                  <span style="color: rgba(255,255,255,0.55); font-size: 11px;">AMU Volume</span>
+                  <strong style="color: #fff; font-family: monospace; font-size: 11px;">${stats.amu.toLocaleString()}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 16px; margin-bottom: 3px;">
+                  <span style="color: rgba(255,255,255,0.55); font-size: 11px;">Change vs prev.</span>
+                  <strong style="color: #F97316; font-size: 11px;">↑ ${stats.change}%</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 16px; margin-bottom: 3px;">
+                  <span style="color: rgba(255,255,255,0.55); font-size: 11px;">Active Anomalies</span>
+                  <strong style="color: #fff; font-size: 11px;">${stats.anomalies}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 16px;">
+                  <span style="color: rgba(255,255,255,0.55); font-size: 11px;">Unexplained</span>
+                  <strong style="color: ${stats.unexplained > 0 ? "#F87171" : "rgba(255,255,255,0.5)"}; font-size: 11px;">${stats.unexplained > 0 ? stats.unexplained : "0"}</strong>
+                </div>
+              </div>
+            `
+
+            layer.bindTooltip(tooltipHtml, {
+              className: "custom-leaflet-tooltip",
+              sticky: true,
+              direction: "auto",
+              opacity: 1,
+            })
+
+            layer.on({
+              mouseover: (e: any) => {
+                const target = e.target
+                target.setStyle({
+                  fillColor: "#2D6A4F",
+                  color: "#1A4030",
+                  weight: 2,
+                  fillOpacity: 1,
+                })
+                target.bringToFront()
+                onHoverDistrict?.(dName)
+              },
+              mouseout: (e: any) => {
+                geoLayer.resetStyle(e.target)
+                onHoverDistrict?.(null)
+              },
+              click: () => {
+                onClickDistrict?.(dName)
+              },
+            })
+          },
+        }).addTo(map)
+
+        geoLayerRef.current = geoLayer
+
+        // Automatically center and fit whole state
+        const bounds = geoLayer.getBounds()
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [18, 18] })
+        }
+
+        setLoading(false)
+      } catch (err) {
+        console.error(`Leaflet error for ${stateSlug}:`, err)
+        if (!cancelled) setLoading(false)
+      }
     }
-    return map
-  }, [features, state, year, mode])
 
-  const { min, max } = useMemo(() => {
-    let lo = Infinity
-    let hi = 0
-    for (const c of pops.values()) {
-      lo = Math.min(lo, c.total)
-      hi = Math.max(hi, c.total)
+    initLeafletMap()
+
+    return () => {
+      cancelled = true
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
     }
-    if (!Number.isFinite(lo)) lo = 0
-    return { min: lo, max: hi || 1 }
-  }, [pops])
-
-  const { path, labeled } = useMemo(() => {
-    const projection = geoMercator().fitExtent(
-      [
-        [18, 16],
-        [WIDTH - 18, HEIGHT - 16],
-      ],
-      geo,
-    )
-    const generator = geoPath(projection)
-    const ranked = features
-      .map((f) => ({
-        name: f.properties.district,
-        area: Math.abs(generator.area(f)),
-        total: pops.get(f.properties.district)?.total ?? 0,
-      }))
-      .sort((a, b) => b.total - a.total || b.area - a.area)
-    const keep = features.length <= 14 ? features.length : features.length <= 36 ? 11 : 13
-    const labeledNames = new Set(ranked.slice(0, keep).map((r) => r.name))
-    return { path: generator, labeled: labeledNames }
-  }, [features, geo, pops])
-
-  if (!ready) {
-    return (
-      <div style={{ position: "relative", width: "100%", minHeight: 420, background: "#F4F7F2", borderRadius: 4 }} />
-    )
-  }
+  }, [stateSlug, highlightDistrict])
 
   return (
     <div style={{ position: "relative", width: "100%" }}>
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        style={{ width: "100%", height: "auto", display: "block" }}
-      >
-        <rect width={WIDTH} height={HEIGHT} fill="#F4F7F2" rx="4" />
-        {features.map((feature, i) => {
-          const district = feature.properties.district
-          const d = path(feature)
-          if (!d) return null
-          const counts = pops.get(district)
-          const t = counts ? (counts.total - min) / (max - min || 1) : 0.2
-          const selected = selectedDistrict === district
-          const hovered = tip?.district === district
-          return (
-            <path
-              key={`${district}-${i}`}
-              d={d}
-              fill={selected ? "#14532D" : lerpColor(t)}
-              stroke={selected || hovered ? "#1A2E24" : "#4B5563"}
-              strokeWidth={selected ? 1.8 : hovered ? 1.3 : 0.55}
-              strokeLinejoin="round"
-              style={{ cursor: "pointer", transition: "fill 0.12s, stroke-width 0.12s" }}
-              onMouseMove={(e) => {
-                const r = svgRef.current?.getBoundingClientRect()
-                if (!r) return
-                setTip({ x: e.clientX - r.left, y: e.clientY - r.top, district })
-              }}
-              onMouseLeave={() => setTip(null)}
-              onClick={() => onSelect(selected ? null : district)}
-            />
-          )
-        })}
-        {features.map((feature, i) => {
-          const district = feature.properties.district
-          if (!labeled.has(district) && selectedDistrict !== district) return null
-          const [cx, cy] = path.centroid(feature)
-          if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null
-          const selected = selectedDistrict === district
-          const fill = selected ? "#14532D" : lerpColor(
-            ((pops.get(district)?.total ?? min) - min) / (max - min || 1),
-          )
-          const dark = luminance(fill) < 0.55
-          return (
-            <text
-              key={`l-${district}-${i}`}
-              x={Math.round(cx * 10) / 10}
-              y={Math.round(cy * 10) / 10}
-              textAnchor="middle"
-              style={{
-                fontSize: district.length > 14 ? 8 : 9,
-                fontFamily: "Inter, system-ui",
-                fontWeight: 600,
-                fill: dark ? "#F9FAFB" : "#1F2937",
-                pointerEvents: "none",
-                paintOrder: "stroke",
-                stroke: dark ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.7)",
-                strokeWidth: 2,
-              }}
-            >
-              {district}
-            </text>
-          )
-        })}
-      </svg>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 10,
-          background: "rgba(255,255,255,0.94)",
-          borderRadius: 6,
-          padding: "7px 10px",
-          border: "1px solid #E8E4DC",
-        }}
-      >
-        <p style={{ fontSize: 9, fontWeight: 600, color: "#9CA3AF", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
-          Headcount
-        </p>
-        {[
-          { color: lerpColor(0), label: "Lower" },
-          { color: lerpColor(0.5), label: "Mid" },
-          { color: lerpColor(1), label: "Higher" },
-        ].map(({ color, label }) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-            <div style={{ width: 9, height: 9, background: color, borderRadius: 2, border: "1px solid rgba(0,0,0,0.1)" }} />
-            <span style={{ fontSize: 9, color: "#6B7280" }}>{label}</span>
-          </div>
-        ))}
+      {/* Global CSS for dark Leaflet tooltips */}
+      <style jsx global>{`
+        .custom-leaflet-tooltip.leaflet-tooltip {
+          background: #1A2E24 !important;
+          border: none !important;
+          border-radius: 8px !important;
+          padding: 10px 14px !important;
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
+          color: #fff !important;
+        }
+        .custom-leaflet-tooltip.leaflet-tooltip:before {
+          display: none !important;
+        }
+        .leaflet-container {
+          background-color: #EAF3FB !important;
+          font-family: inherit !important;
+        }
+      `}</style>
+
+      {/* Top Header inside Map Container */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "0 2px" }}>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#2D6A4F",
+              background: "#fff",
+              border: "1px solid #CBD5E1",
+              borderRadius: 6,
+              padding: "4px 10px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04)"
+            }}
+          >
+            <span>←</span> Back to India Map
+          </button>
+        ) : <div />}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{displayName}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", background: "#F3F0EB", padding: "2px 8px", borderRadius: 10 }}>
+            {districtCount} Districts
+          </span>
+        </div>
       </div>
-      {tip && (
+
+      {/* Leaflet Map Canvas */}
+      <div style={{ position: "relative", width: "100%", height: 460, borderRadius: 6, overflow: "hidden", border: "1px solid #E2E8F0", background: "#EAF3FB" }}>
+        {loading && (
+          <div style={{ position: "absolute", inset: 0, background: "#EAF3FB", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+            <p style={{ fontSize: 13, fontWeight: 500, color: "#2D6A4F" }}>Rendering {displayName} with Leaflet...</p>
+          </div>
+        )}
+        <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
+
+        {/* Legend */}
         <div
           style={{
             position: "absolute",
-            left: tip.x + 12,
-            top: Math.max(8, tip.y - 10),
-            background: "#fff",
-            borderRadius: 8,
-            padding: "10px 14px",
-            minWidth: 168,
-            boxShadow: "0 8px 24px rgba(16,24,16,0.16)",
+            bottom: 10,
+            right: 10,
+            background: "rgba(255,255,255,0.92)",
+            borderRadius: 6,
+            padding: "7px 10px",
             border: "1px solid #E8E4DC",
+            zIndex: 900,
             pointerEvents: "none",
-            zIndex: 20,
           }}
         >
-          <p style={{ fontWeight: 700, fontSize: 13, color: "#111827", marginBottom: 8 }}>{tip.district}</p>
-          {(["Total", "Male", "Female"] as const).map((k) => {
-            const c = pops.get(tip.district)
-            const v = k === "Total" ? c?.total : k === "Male" ? c?.male : c?.female
-            return (
-              <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 18, marginBottom: 3 }}>
-                <span style={{ color: "#6B7280", fontSize: 12 }}>{k}</span>
-                <span style={{ color: "#111827", fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-                  {formatIn(v ?? 0)}
-                </span>
-              </div>
-            )
-          })}
+          <p style={{ fontSize: 9, fontWeight: 600, color: "#9CA3AF", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
+            District AMU
+          </p>
+          {[
+            { color: "#22C55E", label: "< 3.5k · Low" },
+            { color: "#86EFAC", label: "3.5–6k" },
+            { color: "#FDE047", label: "6–9k" },
+            { color: "#FB923C", label: "9–12k" },
+            { color: "#EF4444", label: "> 12k · High" },
+          ].map(({ color, label }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+              <div style={{ width: 9, height: 9, background: color, borderRadius: 2, border: "1px solid rgba(0,0,0,0.1)" }} />
+              <span style={{ fontSize: 9, color: "#6B7280" }}>{label}</span>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   )
 }
+

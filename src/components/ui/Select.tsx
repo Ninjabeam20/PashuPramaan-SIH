@@ -33,35 +33,37 @@ export function Select({ options, value, onChange, placeholder = "Select...", cl
   const selectedOption = options.find((o) => o.value === value);
 
   return (
-    <div className={`relative ${className || ""}`} ref={containerRef}>
+    <div className={`relative ${isOpen ? "z-50" : "z-0"} ${className || ""}`} ref={containerRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-12 w-full items-center justify-between rounded-md border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] text-left"
+        className="flex h-12 w-full items-center justify-between rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] text-left"
       >
         <span className={selectedOption ? "text-[var(--color-text)]" : "text-[var(--color-text-muted)]"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown size={16} className="text-[var(--color-text-muted)]" />
+        <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-md">
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg">
           {options.map((option) => (
             <div
               key={option.value}
-              className="flex cursor-pointer items-center justify-start gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)]"
+              role="option"
+              aria-selected={option.value === value}
+              className="flex cursor-pointer items-center justify-start gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)] transition-colors"
               onClick={() => {
                 onChange?.(option.value);
                 setIsOpen(false);
               }}
             >
               {option.value === value ? (
-                <Check size={16} className="text-[var(--color-text-muted)]" />
+                <Check size={16} className="text-[var(--color-primary)] shrink-0" />
               ) : (
-                <div className="w-4 h-4" /> // placeholder for alignment
+                <div className="w-4 h-4 shrink-0" /> // placeholder for alignment
               )}
-              <span className={option.value === value ? "text-[var(--color-text)]" : "text-[var(--color-text-muted)]"}>
+              <span className={option.value === value ? "font-medium text-[var(--color-text)]" : "text-[var(--color-text-muted)]"}>
                 {option.label}
               </span>
             </div>

@@ -61,36 +61,6 @@ async function download(name) {
   return dest
 }
 
-function rewindGeom(g) {
-  const rev = (ring) => ring.slice().reverse()
-  if (g.type === "Polygon") g.coordinates = g.coordinates.map(rev)
-  else if (g.type === "MultiPolygon") g.coordinates = g.coordinates.map((poly) => poly.map(rev))
-}
-
-function simplify(input, output) {
-  execFileSync(
-    "npx",
-    [
-      "--yes",
-      "mapshaper",
-      "-i",
-      input,
-      "-simplify",
-      "visvalingam",
-      "5%",
-      "keep-shapes",
-      "-filter-fields",
-      "district",
-      "-clean",
-      "-o",
-      "format=geojson",
-      "precision=0.001",
-      output,
-    ],
-    { cwd: ROOT, stdio: "pipe" },
-  )
-}
-
 await mkdir(RAW, { recursive: true })
 await mkdir(OUT, { recursive: true })
 
@@ -101,31 +71,27 @@ for (let i = 0; i < needed.length; i += 6) {
 }
 
 for (const job of JOBS) {
-  const merged = { type: "FeatureCollection", features: [] }
+  const rawFeatures = []
   for (const file of job.files) {
     const raw = JSON.parse(await readFile(path.join(RAW, `${file}.geojson`), "utf8"))
-    merged.features.push(...raw.features)
+    rawFeatures.push(...raw.features)
   }
+
+  let filtered = rawFeatures
   if (job.keep) {
     const allow = new Set(job.keep)
-    merged.features = merged.features.filter((f) => allow.has(f.properties.district))
+    filtered = filtered.filter((f) => allow.has(f.properties?.district ?? f.properties?.DISTRICT))
   }
-  const tmpIn = path.join(RAW, `merge-${job.slug}.geojson`)
-  const tmpOut = path.join(RAW, `simple-${job.slug}.geojson`)
-  await writeFile(tmpIn, JSON.stringify(merged))
-  simplify(tmpIn, tmpOut)
-  const simple = JSON.parse(await readFile(tmpOut, "utf8"))
+
   const cleaned = {
     type: "FeatureCollection",
-    features: simple.features.map((f) => {
-      rewindGeom(f.geometry)
-      return {
-        type: "Feature",
-        properties: { district: String(f.properties.district ?? f.properties.DISTRICT ?? "Unknown") },
-        geometry: f.geometry,
-      }
-    }),
+    features: filtered.map((f) => ({
+      type: "Feature",
+      properties: { district: String(f.properties?.district ?? f.properties?.DISTRICT ?? "Unknown") },
+      geometry: f.geometry,
+    })),
   }
+
   const dest = path.join(OUT, `${job.slug}.json`)
   await writeFile(dest, JSON.stringify(cleaned))
   const kb = Math.round(Buffer.byteLength(JSON.stringify(cleaned)) / 1024)

@@ -304,12 +304,10 @@ export function StateRegionView({
               <p style={{ fontSize: 12, color: "#6B7280" }}>{districts.length} regions</p>
             </div>
             <StateDistrictMap
-              state={state}
-              geo={geo}
-              year={year}
-              mode={mode}
-              selectedDistrict={district}
-              onSelect={setDistrict}
+              stateSlug={state.slug}
+              stateName={state.name}
+              highlightDistrict={district}
+              onClickDistrict={(d) => setDistrict(d === district ? null : d)}
             />
           </div>
         </div>
