@@ -50,3 +50,13 @@ export const createPrescription = async (payload: any) => {
   }
   return await res.json();
 };
+
+export const getDrugsList = async () => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/drugs`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error("Failed to fetch drugs");
+  return await res.json();
+};

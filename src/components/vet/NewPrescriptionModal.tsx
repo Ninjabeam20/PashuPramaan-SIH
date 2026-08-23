@@ -1,6 +1,8 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useQuery } from "@tanstack/react-query";
+import { getDrugsList } from "@/lib/api/dummy/vet-prescriptions";
 
 interface NewPrescriptionModalProps {
   onClose: () => void;
@@ -9,6 +11,11 @@ interface NewPrescriptionModalProps {
 }
 
 export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescriptionModalProps) {
+  const { data: drugs = [] } = useQuery({
+    queryKey: ["vet-drugs"],
+    queryFn: getDrugsList,
+  });
+
   const [formData, setFormData] = React.useState({
     farm: "",
     animalFlock: "",
@@ -28,10 +35,26 @@ export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescript
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData(prev => {
+      const next = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+      
+      // Auto-populate AWaRe and CIA when a drug is selected
+      if (name === "drug") {
+        const selectedDrug = drugs.find((d: any) => d.id === value);
+        if (selectedDrug) {
+          next.aware = selectedDrug.awareClass || "";
+          next.cia = selectedDrug.isCia || false;
+        } else {
+          next.aware = "";
+          next.cia = false;
+        }
+      }
+      
+      return next;
+    });
   };
 
   const handleSave = () => {
@@ -104,13 +127,17 @@ export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescript
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-bold text-[var(--color-text)]">Drug</label>
-            <input 
+            <select 
               name="drug"
               value={formData.drug}
               onChange={handleChange}
-              placeholder="e.g. Amoxicillin"
-              className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1"
-            />
+              className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1"
+            >
+              <option value="">Select a drug</option>
+              {drugs.map((d: any) => (
+                <option key={d.id} value={d.id}>{d.name} {d.formulation ? `(${d.formulation})` : ''}</option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -131,7 +158,7 @@ export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescript
                 name="unit"
                 value={formData.unit}
                 onChange={handleChange}
-                placeholder="mL"
+                placeholder=" "
                 className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1"
               />
             </div>
@@ -193,12 +220,12 @@ export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescript
 
           <div className="flex flex-col sm:flex-row gap-6 sm:items-end">
             <div className="flex-1 flex flex-col gap-1.5">
-              <label className="text-sm font-bold text-[var(--color-text)]">AWaRe classification</label>
+              <label className="text-sm font-bold text-[var(--color-text)] opacity-70">AWaRe classification</label>
               <select 
                 name="aware"
                 value={formData.aware}
-                onChange={handleChange}
-                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1"
+                disabled
+                className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm opacity-70 cursor-not-allowed"
               >
                 <option value="">Not specified</option>
                 <option value="ACCESS">ACCESS</option>
@@ -206,16 +233,16 @@ export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescript
                 <option value="RESERVE">RESERVE</option>
               </select>
             </div>
-            <div className="flex-1 flex items-start gap-3 sm:pb-2">
+            <div className="flex-1 flex items-start gap-3 sm:pb-2 opacity-70">
               <input 
                 type="checkbox"
                 id="cia_checkbox"
                 name="cia"
                 checked={formData.cia}
-                onChange={handleChange}
-                className="mt-1 w-4 h-4 text-[var(--color-primary)] rounded border-[var(--color-border)] focus:ring-[var(--color-primary)]"
+                disabled
+                className="mt-1 w-4 h-4 text-[var(--color-primary)] rounded border-[var(--color-border)] focus:ring-[var(--color-primary)] cursor-not-allowed"
               />
-              <label htmlFor="cia_checkbox" className="flex flex-col">
+              <label htmlFor="cia_checkbox" className="flex flex-col cursor-not-allowed">
                 <span className="text-sm font-bold text-[var(--color-text)]">CIA drug</span>
                 <span className="text-xs text-[var(--color-text-muted)]">Critically important antimicrobial</span>
               </label>

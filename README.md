@@ -358,7 +358,6 @@ All three dashboards are live. Pick a role on login, or open the URL directly. L
 | **Administrator / Inspector** | `admin01` | `/admin` | National dashboard; click a state for `/admin/states/[slug]` |
 
 Direct URLs (login can be skipped):
-
 - Farmer: [http://localhost:3000/farmer/home](http://localhost:3000/farmer/home)
 - Vet: [http://localhost:3000/vet/home](http://localhost:3000/vet/home)
 - Admin: [http://localhost:3000/admin](http://localhost:3000/admin)

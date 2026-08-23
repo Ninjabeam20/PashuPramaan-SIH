@@ -13,33 +13,27 @@ interface MedicineStock {
   status: { text: string; variant: string };
 }
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addMedicineStock } from "@/lib/api/dummy/farm-insights";
+
 export function MedicineStockTable({ initialData }: { initialData: MedicineStock[] }) {
   const [data, setData] = React.useState(initialData);
   const [isAddStockOpen, setIsAddStockOpen] = React.useState(false);
+  const queryClient = useQueryClient();
 
   React.useEffect(() => {
     setData(initialData);
   }, [initialData]);
 
-  const handleAddStock = (medicineName: string, quantity: number, unit: string) => {
-    setData(prev => prev.map(item => {
-      if (item.name === medicineName) {
-        // Simple increment logic for dummy client-side update
-        const currentNumMatch = item.current_stock.match(/^(\d+)\s+(.*)$/);
-        let newStockStr = `${quantity} ${unit}`;
-        if (currentNumMatch) {
-          const num = parseInt(currentNumMatch[1], 10);
-          const currentUnit = currentNumMatch[2];
-          if (currentUnit.toLowerCase() === unit.toLowerCase() || currentUnit.toLowerCase().startsWith(unit.toLowerCase())) {
-            newStockStr = `${num + quantity} ${currentUnit}`;
-          } else {
-            newStockStr = `${num} ${currentUnit} + ${quantity} ${unit}`;
-          }
-        }
-        return { ...item, current_stock: newStockStr };
-      }
-      return item;
-    }));
+  const addStockMutation = useMutation({
+    mutationFn: addMedicineStock,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["farm-insights"] });
+    }
+  });
+
+  const handleAddStock = (drugId: string, quantity: number) => {
+    addStockMutation.mutate({ drug_id: drugId, quantity });
   };
 
   return (
@@ -123,7 +117,6 @@ export function MedicineStockTable({ initialData }: { initialData: MedicineStock
 
       {isAddStockOpen && (
         <AddMedicineStockModal 
-          medicines={(data || []).map(m => m.name)} 
           onClose={() => setIsAddStockOpen(false)} 
           onSubmit={handleAddStock} 
         />

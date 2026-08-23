@@ -8,7 +8,7 @@ from .models import (
     User, UserRole, Vet, Farm, FarmKind, Animal, Species, CareStatus, HealthEvent,
     Prescription, PrescriptionStatus, AwareClass, PrescriptionOption,
     Treatment, TreatmentPhase, LabAssayVerdict, FarmerDispatch, DispatchStatus, ProductType,
-    MedicineStock, StockLevel, LabSample, LabStage, AdminAnomaly, AnomalySeverity
+    MedicineStock, StockLevel, LabSample, LabStage, AdminAnomaly, AnomalySeverity, Drug
 )
 
 # Load data
@@ -109,6 +109,35 @@ def seed_db():
                 db.add(he)
         db.commit()
 
+        # 5.5 Insert Drugs
+        drug_master_list = [
+            {"id": "DRUG-01", "name": "Amoxicillin", "awareClass": AwareClass.WATCH, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-02", "name": "Oxytetracycline", "awareClass": AwareClass.WATCH, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-03", "name": "Meloxicam", "awareClass": AwareClass.ACCESS, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-04", "name": "Enrofloxacin", "awareClass": AwareClass.WATCH, "isCia": True, "formulation": "Oral Liquid"},
+            {"id": "DRUG-05", "name": "Ceftiofur", "awareClass": AwareClass.WATCH, "isCia": True, "formulation": "Injectable"},
+            {"id": "DRUG-06", "name": "Ivermectin", "awareClass": AwareClass.ACCESS, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-07", "name": "Penicillin G", "awareClass": AwareClass.ACCESS, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-08", "name": "Tylosin", "awareClass": AwareClass.WATCH, "isCia": True, "formulation": "Feed Premix"},
+            {"id": "DRUG-09", "name": "Flunixin Meglumine", "awareClass": AwareClass.ACCESS, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-10", "name": "Sulfadimidine", "awareClass": AwareClass.WATCH, "isCia": False, "formulation": "Oral Liquid"},
+            {"id": "DRUG-11", "name": "Gentamicin", "awareClass": AwareClass.WATCH, "isCia": False, "formulation": "Injectable"},
+            {"id": "DRUG-12", "name": "Ciprofloxacin", "awareClass": AwareClass.WATCH, "isCia": True, "formulation": "Oral Liquid"},
+        ]
+        
+        for d in drug_master_list:
+            drug = db.query(Drug).filter_by(id=d['id']).first()
+            if not drug:
+                drug = Drug(
+                    id=d['id'],
+                    name=d['name'],
+                    awareClass=d['awareClass'],
+                    isCia=d['isCia'],
+                    formulation=d['formulation']
+                )
+                db.add(drug)
+        db.commit()
+
         # 6. Insert Prescriptions & Options
         for rx in data['PRESCRIPTIONS']:
             prescription = db.query(Prescription).filter_by(id=rx['id']).first()
@@ -180,7 +209,7 @@ def seed_db():
                 if t.get('withdrawal'):
                     w_data = t['withdrawal']
                     from app.models import Withdrawal
-                    from datetime import datetime
+
                     
                     dose_time_str = t.get('administeredOn') or datetime.utcnow().isoformat()
                     dose_time = parse_date(dose_time_str) or datetime.utcnow()

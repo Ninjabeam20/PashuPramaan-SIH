@@ -5,17 +5,22 @@ import { X } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { useQuery } from "@tanstack/react-query";
+import { getDrugsList } from "@/lib/api/dummy/farm-insights";
 
 interface AddMedicineStockModalProps {
-  medicines: string[];
   onClose: () => void;
-  onSubmit: (medicineName: string, quantity: number, unit: string) => void;
+  onSubmit: (drugId: string, quantity: number) => void;
 }
 
-export function AddMedicineStockModal({ medicines, onClose, onSubmit }: AddMedicineStockModalProps) {
-  const [medicine, setMedicine] = React.useState(medicines[0] || "");
+export function AddMedicineStockModal({ onClose, onSubmit }: AddMedicineStockModalProps) {
+  const { data: drugs = [] } = useQuery({
+    queryKey: ["farmer-drugs"],
+    queryFn: getDrugsList,
+  });
+
+  const [drugId, setDrugId] = React.useState("");
   const [quantity, setQuantity] = React.useState("");
-  const [unit, setUnit] = React.useState("vials");
   
   // Format date as DD-MM-YYYY for input (wait, standard HTML date input uses YYYY-MM-DD, let's stick to standard and assume formatting happens in presentation)
   const [dateReceived, setDateReceived] = React.useState(() => {
@@ -23,18 +28,15 @@ export function AddMedicineStockModal({ medicines, onClose, onSubmit }: AddMedic
     return today.toISOString().split("T")[0];
   });
 
-  const medicineOptions = medicines.map(m => ({ label: m, value: m }));
-  const unitOptions = [
-    { label: "vials", value: "vials" },
-    { label: "doses", value: "doses" },
-    { label: "mL", value: "mL" },
-    { label: "tablets", value: "tablets" }
-  ];
+  const medicineOptions = drugs.map((d: any) => ({ 
+    label: `${d.name} ${d.formulation ? `(${d.formulation})` : ''}`, 
+    value: d.id 
+  }));
 
   const handleAddStock = () => {
     const q = parseInt(quantity, 10);
-    if (medicine && !isNaN(q) && q > 0) {
-      onSubmit(medicine, q, unit);
+    if (drugId && !isNaN(q) && q > 0) {
+      onSubmit(drugId, q);
       onClose();
     }
   };
@@ -58,34 +60,22 @@ export function AddMedicineStockModal({ medicines, onClose, onSubmit }: AddMedic
             </label>
             <Select 
               options={medicineOptions} 
-              value={medicine} 
-              onChange={setMedicine} 
+              value={drugId} 
+              onChange={setDrugId} 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase">
-                Quantity Received
-              </label>
-              <Input 
-                type="number" 
-                placeholder="e.g. 50" 
-                value={quantity} 
-                onChange={e => setQuantity(e.target.value)} 
-                min={1}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase">
-                Unit
-              </label>
-              <Select 
-                options={unitOptions} 
-                value={unit} 
-                onChange={setUnit} 
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase">
+              Quantity Received
+            </label>
+            <Input 
+              type="number" 
+              placeholder="e.g. 50" 
+              value={quantity} 
+              onChange={e => setQuantity(e.target.value)} 
+              min={1}
+            />
           </div>
 
           <div className="flex flex-col gap-2">

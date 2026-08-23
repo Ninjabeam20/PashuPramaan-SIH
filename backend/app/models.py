@@ -206,6 +206,16 @@ class HealthEvent(Base):
         Index('idx_health_animal', 'animalId'),
     )
 
+class Drug(Base):
+    __tablename__ = "drugs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False, unique=True)
+    awareClass = Column(Enum(AwareClass, name="aware_class_enum"), nullable=True)
+    isCia = Column(Boolean, default=False)
+    formulation = Column(String, nullable=True)
+    createdAt = Column(DateTime, default=datetime.utcnow)
+
 class Prescription(Base):
     __tablename__ = "prescriptions"
 

@@ -53,3 +53,27 @@ export const getFarmInsights = async (range: "30d" | "60d" | "90d"): Promise<Far
   }
   return await res.json() as any;
 };
+
+export const getDrugsList = async () => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/drugs`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error("Failed to fetch drugs");
+  return await res.json();
+};
+
+export const addMedicineStock = async (payload: { drug_id: string, quantity: number }) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/inventory/stock`, {
+    method: "POST",
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to add stock");
+  return await res.json();
+};

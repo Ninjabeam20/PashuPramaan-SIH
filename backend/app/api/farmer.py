@@ -591,6 +591,25 @@ def create_treatment(req: CreateTreatmentReq, db: Session = Depends(get_db), cur
         )
         db.add(wd)
         
+        # Deduct from medicine stock
+        import re
+        from app.models import MedicineStock, StockLevel
+        ms = db.query(MedicineStock).filter_by(farmId=farm.id, name=drug).first()
+        if ms:
+            match = re.search(r'(\d+)', dose)
+            qty_used = int(match.group(1)) if match else 1
+            ms.quantity = max(0, ms.quantity - qty_used)
+            ms.recentUsage = (ms.recentUsage or 0) + qty_used
+            ms.usageTotal = (ms.usageTotal or 0) + qty_used
+            
+            # Update stock level indicator
+            if ms.quantity <= 10:
+                ms.level = StockLevel.RESTOCK
+            elif ms.quantity <= 50:
+                ms.level = StockLevel.MONITOR
+            else:
+                ms.level = StockLevel.GOOD
+        
         created_treatments.append({
             "id": trt.id,
             "animal_id": animal.id,
@@ -724,17 +743,47 @@ def get_treatment_detail(treatmentId: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/insights")
-def get_insights(db: Session = Depends(get_db)):
+def get_insights(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm: farm = db.query(Farm).first()
+
+    # Get medicine stock for the farm
+    medicine_stocks = db.query(MedicineStock).filter_by(farmId=farm.id).all()
+    
+    stock_list = []
+    most_used_list = []
+    
+    for ms in medicine_stocks:
+        stock_list.append({
+            "name": ms.name,
+            "current_stock": f"{ms.quantity} {ms.unit}",
+            "recent_usage": f"{ms.recentUsage} {ms.unit}",
+            "status": { "text": ms.level.name, "variant": ms.level.name.lower() }
+        })
+        
+    # Most Used Medicines (derived from MedicineStock usageTotal or recentUsage)
+    sorted_by_usage = sorted(medicine_stocks, key=lambda x: x.usageTotal or x.recentUsage or 0, reverse=True)
+    max_usage = (sorted_by_usage[0].usageTotal or sorted_by_usage[0].recentUsage or 0) if sorted_by_usage else 0
+    
+    for idx, ms in enumerate(sorted_by_usage[:5]):
+        val = ms.usageTotal or ms.recentUsage or 0
+        if val > 0:
+            rel_val = int((val / max_usage) * 100) if max_usage > 0 else 0
+            most_used_list.append({
+                "rank": idx + 1,
+                "name": ms.name,
+                "usage": f"{val} {ms.unit}",
+                "usage_value": rel_val
+            })
+            
+    if not most_used_list:
+        most_used_list = [
+            { "rank": 1, "name": "No data yet", "usage": "0 ml", "usage_value": 0 }
+        ]
+
     return {
         "range": "30d",
-        "medicine_stock": [
-            {
-                "name": "Amoxicillin",
-                "current_stock": "450 ml",
-                "recent_usage": "50 ml",
-                "status": { "text": "GOOD", "variant": "good" }
-            }
-        ],
+        "medicine_stock": stock_list,
         "demand_forecast": {
             "chart_data": [
                 { "month": "Jun", "past_usage": 300, "forecast": None },
@@ -743,14 +792,11 @@ def get_insights(db: Session = Depends(get_db)):
                 { "month": "Sep", "past_usage": None, "forecast": 480 }
             ],
             "now_index": 2,
-            "current_stock": "450 ml",
+            "current_stock": stock_list[0]["current_stock"] if stock_list else "0 ml",
             "expected_requirement": "480 ml",
             "status": { "text": "HIGH DEMAND EXPECTED", "variant": "orange" }
         },
-        "most_used_medicines": [
-            { "rank": 1, "name": "Amoxicillin", "usage": "150 ml", "usage_value": 150 },
-            { "rank": 2, "name": "Meloxicam", "usage": "80 ml", "usage_value": 80 }
-        ],
+        "most_used_medicines": most_used_list,
         "farm_health_map": [
             { "species": "Cows", "level": "High", "detail": "Multiple mastitis cases" },
             { "species": "Buffaloes", "level": "Low", "detail": "Generally healthy" }
@@ -770,3 +816,49 @@ def get_insights(db: Session = Depends(get_db)):
             ]
         }
     }
+
+class AddStockReq(BaseModel):
+    drug_id: str
+    quantity: int
+
+@router.post("/inventory/stock")
+def add_stock(req: AddStockReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models import Drug, StockLevel
+    
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm: farm = db.query(Farm).first()
+    
+    drug = db.query(Drug).filter_by(id=req.drug_id).first()
+    if not drug:
+        raise HTTPException(status_code=400, detail="Invalid drug ID")
+        
+    ms = db.query(MedicineStock).filter_by(farmId=farm.id, name=drug.name).first()
+    if ms:
+        ms.quantity += req.quantity
+    else:
+        unit_val = "mL" if "Liquid" in (drug.formulation or "") or "Injectable" in (drug.formulation or "") else "doses"
+        ms = MedicineStock(
+            farmId=farm.id,
+            name=drug.name,
+            quantity=req.quantity,
+            unit=unit_val,
+            recentUsage=0,
+            usageTotal=0,
+            level=StockLevel.GOOD
+        )
+        db.add(ms)
+        
+    db.commit()
+    return {"success": True}
+
+@router.get("/drugs")
+def get_drugs(db: Session = Depends(get_db)):
+    from app.models import Drug
+    drugs = db.query(Drug).order_by(Drug.name).all()
+    return [
+        {
+            "id": d.id,
+            "name": d.name,
+            "formulation": d.formulation
+        } for d in drugs
+    ]

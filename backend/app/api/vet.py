@@ -390,7 +390,7 @@ class CreateRxReq(BaseModel):
 @router.post("/prescriptions")
 def create_prescription(req: CreateRxReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     import uuid
-    from app.models import Farm, Animal, Prescription, PrescriptionStatus, AwareClass
+    from app.models import Farm, Animal, Prescription, PrescriptionStatus, AwareClass, Drug
     
     farm = db.query(Farm).filter(Farm.name == req.farm).first()
     if not farm:
@@ -400,7 +400,14 @@ def create_prescription(req: CreateRxReq, db: Session = Depends(get_db), current
     if not animal:
         animal = db.query(Animal).first()
         
-    aware_class = AwareClass[req.aware.upper()] if req.aware else None
+    drug = db.query(Drug).filter_by(id=req.drug).first()
+    if not drug:
+        raise HTTPException(status_code=400, detail="Invalid drug ID")
+        
+    aware_class = drug.awareClass
+    cia = drug.isCia
+    drug_name = drug.name
+        
     rx_id = f"RX-{str(uuid.uuid4())[:8].upper()}"
     
     vet_id = None
@@ -421,8 +428,8 @@ def create_prescription(req: CreateRxReq, db: Session = Depends(get_db), current
         diagnosis=req.diagnosis,
         status=PrescriptionStatus.SIGN_REQUIRED,
         aware=aware_class,
-        cia=req.cia,
-        drug=req.drug,
+        cia=cia,
+        drug=drug_name,
         route=req.route,
         dose=f"{req.dose} {req.unit}".strip(),
         frequency=req.frequency,
@@ -439,7 +446,22 @@ def create_prescription(req: CreateRxReq, db: Session = Depends(get_db), current
         "animal_flock": animal.id,
         "diagnosis": req.diagnosis,
         "status_badge": { "text": "SIGN REQUIRED", "variant": "orange" },
-        "aware_badge": { "text": req.aware or "ACCESS", "variant": "green" },
+        "aware_badge": { "text": aware_class.name if aware_class else "ACCESS", "variant": "green" },
         "date_label": "Just now",
-        "action": { "text": "Review", "target": "sign_flow" }
+        "action_text": "Review & Sign",
+        "action_target": "sign_flow"
     }
+
+@router.get("/drugs")
+def get_drugs(db: Session = Depends(get_db)):
+    from app.models import Drug
+    drugs = db.query(Drug).order_by(Drug.name).all()
+    return [
+        {
+            "id": d.id,
+            "name": d.name,
+            "awareClass": d.awareClass.name if d.awareClass else "",
+            "isCia": d.isCia,
+            "formulation": d.formulation
+        } for d in drugs
+    ]
