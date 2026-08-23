@@ -12,6 +12,7 @@ const ROLE_OPTIONS: SelectOption[] = [
   { label: "Farmer / Animal Owner", value: "farmer" },
   { label: "Veterinarian / Vet Officer", value: "vet" },
   { label: "Administrator / Inspector", value: "admin" },
+  { label: "Lab Technician", value: "lab" },
 ];
 
 export default function LoginPage() {
@@ -36,7 +37,9 @@ export default function LoginPage() {
       } else if (role === "vet") {
         router.push("/vet/home");
       } else if (role === "admin") {
-        router.push("/admin");
+        router.push("/admin/overview");
+      } else if (role === "lab") {
+        router.push("/lab/dashboard");
       }
     } catch (error) {
       console.error("Login failed", error);

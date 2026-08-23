@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme inline {
+  --color-background: #faf9f6;
+  --color-foreground: #1a2418;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a2418;
+  --color-primary: #2d5a27;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #eef2ed;
+  --color-secondary-foreground: #2d5a27;
+  --color-muted: #f2f0eb;
+  --color-muted-foreground: #6b7280;
+  --color-accent: #7a9e72;
+  --color-accent-foreground: #1a2418;
+  --color-border: #e4e0d8;
+  --color-ring: #2d5a27;
+  --radius: 12px;
+
+  --color-amber-soft: #b45309;
+  --color-amber-bg: #fef3c7;
+  --color-red-muted: #991b1b;
+  --color-red-bg: #fee2e2;
+  --color-green-deep: #2d5a27;
+  --color-green-bg: #dcfce7;
+
+  --font-serif: 'Lora', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+}
+
+/* safe-area helpers */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 99px;
+}

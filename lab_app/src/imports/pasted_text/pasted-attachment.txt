@@ -1,0 +1,292 @@
+# Create a desktop web dashboard for the **Laboratory Technician role** of an existing government livestock antimicrobial surveillance platform called **PashuPramaan**.
+
+IMPORTANT: This screen must look like it belongs to the **exact same product and design system** as an existing Farmer portal and Veterinarian portal. Do not redesign the brand. Maintain a consistent visual language throughout.
+
+## Overall visual style
+
+Use a calm, premium, trustworthy government-healthcare interface.
+
+* Warm off-white / very light cream page background
+* Deep forest green as the primary brand and action colour
+* Muted sage green for subtle accents
+* White content cards with very subtle warm-grey borders
+* Minimal shadows
+* Rounded corners, approximately 10–14px, not excessively rounded
+* Large elegant serif typography for major page headings
+* Clean modern sans-serif typography for navigation, labels, tables, metadata and buttons
+* Thin-line minimal icons
+* Spacious layout with generous padding and whitespace
+* No gradients
+* No glassmorphism
+* No neon colours
+* Avoid flashy startup/SaaS aesthetics
+* The feeling should be: **professional Indian government digital service + veterinary health + laboratory operations**
+
+Use restrained semantic colours:
+
+* Deep green for compliant, complete and primary actions
+* Soft amber for pending, review required and warnings
+* Muted red for hold, critical or non-compliant states
+* Neutral grey for inactive and informational states
+
+## Desktop layout
+
+Create a full desktop dashboard.
+
+### Left sidebar
+
+Use the same proportions and styling as the existing PashuPramaan Farmer and Veterinarian dashboards.
+
+At the top place the **PashuPramaan logo/mark**.
+
+Below it, add a small role label:
+
+**LABORATORY**
+
+Navigation items with simple thin-line icons:
+
+* Dashboard — active state
+* Dispatches
+* Testing Queue
+* Results
+* Reports
+
+At the bottom, separated by a subtle divider:
+
+* Help & Guidelines
+* User profile section
+
+Show a lab technician profile with a small circular avatar placeholder, name such as **Dr. Priya Sharma**, and role **Laboratory Officer**.
+
+The active Dashboard navigation item should use a very subtle pale green background with deep green icon/text, matching the existing product styling.
+
+## Main content area
+
+At the top:
+
+Small greeting text:
+**Good morning, Dr. Priya**
+
+Large serif heading:
+**Laboratory Dashboard**
+
+Supporting text:
+**Monitor samples, complete required testing, and verify livestock product dispatches.**
+
+On the right show:
+**Saturday, 23 August 2026**
+
+Keep this understated.
+
+## Summary cards
+
+Below the header, create four horizontally aligned metric cards.
+
+### Card 1
+
+Large number:
+**12**
+
+Label:
+**Awaiting Receipt**
+
+Supporting text:
+**3 high priority**
+
+Use a neutral or subtle amber indicator.
+
+### Card 2
+
+Large number:
+**18**
+
+Label:
+**Tests in Progress**
+
+Supporting text:
+**Across 11 dispatches**
+
+Use a muted blue-grey or neutral indicator if needed, but keep the main visual language green.
+
+### Card 3
+
+Large number:
+**7**
+
+Label:
+**Awaiting Verification**
+
+Supporting text:
+**Results ready for review**
+
+Use soft amber.
+
+### Card 4
+
+Large number:
+**2**
+
+Label:
+**Dispatches on Hold**
+
+Supporting text:
+**Action required**
+
+Use restrained muted red.
+
+Cards should be white with thin warm-grey borders, consistent sizing, generous padding, and no heavy shadows.
+
+## Needs Your Attention section
+
+Below the summary cards, create a section with a large serif heading:
+
+**Needs Your Attention**
+
+Supporting text:
+**Priority samples and assessments requiring action.**
+
+Create three stacked or vertically aligned clean action cards.
+
+### Item 1
+
+Small metadata:
+**MLK-2026-00124 · MILK**
+
+Title:
+**Shree Krishna Dairy**
+
+Supporting description:
+**Recent antimicrobial exposure detected. Targeted beta-lactam residue testing is required.**
+
+Status pill:
+**HIGH PRIORITY**
+
+Use soft amber styling.
+
+Right side primary action:
+**Start Testing →**
+
+### Item 2
+
+Metadata:
+**MEAT-2026-00087 · MEAT**
+
+Title:
+**Green Valley Livestock**
+
+Description:
+**Withdrawal verification requires review before the laboratory assessment can proceed.**
+
+Status pill:
+**REVIEW REQUIRED**
+
+Use muted red.
+
+Action:
+**View Dispatch →**
+
+### Item 3
+
+Metadata:
+**EGG-2026-00241 · EGGS**
+
+Title:
+**Sunrise Poultry**
+
+Description:
+**All required tests are complete and the assessment is awaiting verification.**
+
+Status pill:
+**ACTION REQUIRED**
+
+Use amber.
+
+Action:
+**Review Results →**
+
+Each attention item should feel like an operational work queue, not a marketing card.
+
+## Testing Queue
+
+Below or beside the Needs Your Attention section depending on the available desktop space, create a section:
+
+**Testing Queue**
+
+Supporting text:
+**Current laboratory workload by dispatch.**
+
+Use a clean professional table.
+
+Columns:
+
+* Dispatch ID
+* Product
+* Source
+* Required Tests
+* Status
+* Action
+
+Rows:
+
+**MLK-2026-00124**
+Product: Milk
+Source: Shree Krishna Dairy
+Required Tests: Residue + Quality
+Status pill: Ready
+Action: View
+
+**MEAT-2026-00087**
+Product: Meat
+Source: Green Valley Livestock
+Required Tests: Microbiology + Residue
+Status pill: Testing
+Action: Continue
+
+**EGG-2026-00241**
+Product: Eggs
+Source: Sunrise Poultry
+Required Tests: Physical Quality + Residue
+Status pill: Awaiting Verification
+Action: Review
+
+Use subtle row separators and plenty of breathing room. Avoid dense enterprise software styling.
+
+## Recent Activity
+
+Create a clean lower section:
+
+**Recent Activity**
+
+Show a simple vertical activity feed with small minimal icons or dots.
+
+Activities:
+
+* Result submitted for **MLK-2026-00118**
+* Sample **LAB-00921** received and registered
+* **MEAT-2026-00072** placed on hold
+* **EGG-2026-00217** cleared for dispatch
+
+Include timestamps such as:
+**10 minutes ago**, **1 hour ago**, **Yesterday**
+
+## Overall composition
+
+The dashboard should feel calm and structured.
+
+The visual hierarchy should be:
+
+1. Greeting and Laboratory Dashboard heading
+2. Current workload summary
+3. Urgent actions requiring immediate attention
+4. Testing queue
+5. Recent activity
+
+Do not overcrowd the screen.
+
+This is not a generic laboratory dashboard. It is specifically part of a **livestock antimicrobial usage, food safety, residue monitoring and traceability platform**.
+
+The interface must communicate:
+
+**Dispatch ID → Sample → Testing → Result → Verification → Release or Hold**
+
+Keep the design highly polished, realistic, consistent, and production-ready.
