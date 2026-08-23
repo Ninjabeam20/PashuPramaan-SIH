@@ -4,7 +4,8 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-23  
 **Branch:** `feat/stage1-canonical-seed` (branched off `main` @ `43f8e4e`; **do not merge until asked**)  
-**HEAD (main):** `43f8e4e` — docs: record plan commit in MEMORY  
+**HEAD (branch):** `908bfd5` — docs: record stage 1 outcome in plan, MEMORY and README  
+**HEAD (main):** `43f8e4e` — docs: record plan commit in MEMORY (unchanged this session)  
 **Note:** `main` was clean at the start of this session — the "unstaged" navbar/README items listed in earlier revisions of this file had already landed in `400b4f6` / `439b276` / `51fef83`.
 
 **Remotes:**
@@ -15,7 +16,9 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ## Branch `feat/stage1-canonical-seed` — Stage 1 of `docs/plan.md`
 
-Canonical dummy data + read adapters. **No mutations** (stages 2–6 still open). Not merged.
+Two commits, pushed to `origin/feat/stage1-canonical-seed`, **not merged**:
+`907a4ed` feat(seed) · `908bfd5` docs. Canonical dummy data + read adapters, **no mutations**
+(stages 2–6 still open).
 
 **New — `src/lib/seed/`:** the only place entity rows live.
 - `types.ts` canonical entity types · `ids.ts` recurring id constants · `canonical.ts` seed rows with
