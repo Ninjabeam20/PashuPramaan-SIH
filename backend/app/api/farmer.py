@@ -328,36 +328,89 @@ def get_dispatch_detail(dispatchId: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/treatments")
-def get_treatments(db: Session = Depends(get_db)):
-    return {
-        # Field names match TreatmentSummary interface exactly
-        "summary": {
-            "active_treatments": 1,
-            "withdrawal_ongoing": 1,
-            "awaiting_vet_unsigned": 0,
-            "completed": 2
-        },
-        "items": [
-            {
-                "id": "TRT-001",
-                "animal_flock": "MP-087",
-                "species": "Cow",
-                "drug_name": "Amoxicillin",
-                "route_dosage": "IM · 5mg",
-                "administered_time": "Administered 20 Aug 2026",
-                "status": "Withdrawal",
-                "badges": [
-                    { "text": "Withdrawal Active", "variant": "withdrawal_active" },
-                    { "text": "Vet Signed", "variant": "vet_signed" }
-                ],
-                "withdrawal": {
-                    "dose_time": "20 Aug 2026",
-                    "now_pct": 60,
-                    "clear_label": "Clears 25 Aug",
-                    "product_message": "Milk blocked until 25 Aug 2026"
-                }
+def get_treatments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models import Treatment, Farm
+    
+    farms = db.query(Farm).filter_by(ownerId=current_user.id).all()
+    if not farms:
+        # Fallback to all treatments if no mapping yet for the demo
+        treatments = db.query(Treatment).order_by(desc(Treatment.createdAt)).all()
+        # Ensure we have some farm context for species resolution
+        all_farms = db.query(Farm).all()
+    else:
+        farm_ids = [f.id for f in farms]
+        treatments = db.query(Treatment).filter(Treatment.farmId.in_(farm_ids)).order_by(desc(Treatment.createdAt)).all()
+        all_farms = farms
+    
+    active = 0
+    withdrawal = 0
+    unsigned = 0
+    completed = 0
+    
+    items = []
+    for trt in treatments:
+        # compute summary stats
+        if not trt.signed: unsigned += 1
+        if trt.phase.name == "COMPLETED": completed += 1
+        elif trt.phase.name == "WITHDRAWAL": withdrawal += 1
+        elif trt.phase.name == "ACTIVE": active += 1
+        
+        status_val = "Active"
+        if trt.phase.name == "COMPLETED": status_val = "Completed"
+        elif trt.phase.name == "WITHDRAWAL": status_val = "Withdrawal"
+        if not trt.signed: status_val = "Unsigned"
+        
+        badges = []
+        if trt.phase.name == "WITHDRAWAL": badges.append({ "text": "Withdrawal Active", "variant": "withdrawal_active" })
+        if trt.signed: badges.append({ "text": "Vet Signed", "variant": "vet_signed" })
+        elif not trt.signed and trt.emergency: badges.append({ "text": "Unsigned Emergency", "variant": "unsigned_emergency" })
+            
+        withdrawal_data = None
+        if trt.withdrawal:
+            from datetime import datetime
+            now = datetime.utcnow()
+            total_duration = (trt.withdrawal.clearsAt - trt.withdrawal.doseTime).total_seconds()
+            elapsed = (now - trt.withdrawal.doseTime).total_seconds()
+            
+            now_pct = 0
+            if total_duration > 0:
+                now_pct = max(0, min(100, int((elapsed / total_duration) * 100)))
+                
+            withdrawal_data = {
+                "dose_time": trt.withdrawal.doseTime.isoformat(),
+                "now_pct": now_pct,
+                "clear_label": trt.withdrawal.clearLabel,
+                "product_message": f"{trt.withdrawal.productMessage.capitalize()} blocked until {trt.withdrawal.clearsAt.strftime('%d %b')}"
             }
-        ]
+            
+        animal_obj = None
+        for f in all_farms:
+            found = next((a for a in f.animals if a.id == trt.animalId), None)
+            if found:
+                animal_obj = found
+                break
+        species_val = animal_obj.species.name.capitalize() if animal_obj else ""
+        
+        items.append({
+            "id": trt.id,
+            "animal_flock": trt.animalId,
+            "species": species_val,
+            "drug_name": trt.drug,
+            "route_dosage": f"{trt.route} · {trt.dosage}",
+            "administered_time": trt.administeredLabel,
+            "status": status_val,
+            "badges": badges,
+            "withdrawal": withdrawal_data
+        })
+        
+    return {
+        "summary": {
+            "active_treatments": active,
+            "withdrawal_ongoing": withdrawal,
+            "awaiting_vet_unsigned": unsigned,
+            "completed": completed
+        },
+        "items": items
     }
 
 class CreateTreatmentReq(BaseModel):
@@ -456,43 +509,110 @@ def create_treatment(req: CreateTreatmentReq, db: Session = Depends(get_db), cur
     return {"success": False, "detail": "No treatments created"}
 
 @router.get("/treatments/prescriptions")
-def get_rx_options(db: Session = Depends(get_db)):
-    # Must match PrescriptionOption interface: id, drug_name, dosage, route, rx_id, is_emergency_exception
-    return [
-        {
-            "id": "RX-001",
-            "drug_name": "Amoxicillin",
-            "dosage": "5mg",
-            "route": "IM",
-            "rx_id": "RX-001",
+def get_rx_options(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models import Prescription, PrescriptionStatus, Farm, Treatment
+    
+    farms = db.query(Farm).filter_by(ownerId=current_user.id).all()
+    if not farms:
+        return []
+        
+    farm_ids = [f.id for f in farms]
+    
+    # Get signed prescriptions that DO NOT have a matching Treatment
+    prescriptions = db.query(Prescription).filter(
+        Prescription.farmId.in_(farm_ids),
+        Prescription.status == PrescriptionStatus.SIGNED,
+        ~Prescription.id.in_(db.query(Treatment.prescriptionId).filter(Treatment.prescriptionId.isnot(None)))
+    ).all()
+    
+    options = []
+    for rx in prescriptions:
+        options.append({
+            "id": rx.id,
+            "drug_name": rx.drug,
+            "dosage": rx.dose,
+            "route": rx.route,
+            "rx_id": rx.id,
+            "animal_id": rx.animalId,
+            "diagnosis": rx.diagnosis,
             "is_emergency_exception": False
-        }
-    ]
+        })
+        
+    return options
 
 @router.get("/treatments/{treatmentId}")
 def get_treatment_detail(treatmentId: str, db: Session = Depends(get_db)):
-    # Must match TreatmentDetail interface: id, animal_id, species, status_badges, medicine, route, dose, administered_at, reason, withdrawal, timeline
-    return {
-        "id": treatmentId,
-        "animal_id": "MP-087",
-        "species": "Cow",
-        "status_badges": [{ "text": "WITHDRAWAL", "variant": "amber" }],
-        "medicine": "Amoxicillin",
-        "route": "IM",
-        "dose": "5mg",
-        "administered_at": "20 Aug 2026 · 09:00 AM",
-        "reason": "Clinical mastitis",
-        "withdrawal": {
-            "dose_time": "20 Aug 2026",
-            "now_pct": 60,
-            "clear_label": "Clears 25 Aug",
-            "product_message": "Milk blocked until 25 Aug 2026"
-        },
-        "timeline": [
+    from app.models import Treatment, Animal, Withdrawal, TreatmentPhase
+    from datetime import datetime
+    
+    trt = db.query(Treatment).filter(Treatment.id == treatmentId).first()
+    if not trt:
+        return {} # return empty or 404
+        
+    animal = db.query(Animal).filter(Animal.id == trt.animalId).first()
+    species_name = animal.species.name.capitalize() if animal else ""
+    
+    badges = []
+    if trt.phase.name == "WITHDRAWAL":
+        badges.append({"text": "WITHDRAWAL", "variant": "amber"})
+    elif trt.phase.name == "COMPLETED":
+        badges.append({"text": "COMPLETED", "variant": "green"})
+    elif trt.phase.name == "ACTIVE":
+        badges.append({"text": "ACTIVE", "variant": "blue"})
+    
+    if trt.signed:
+        badges.append({"text": "VET SIGNED", "variant": "green"})
+        
+    wd_data = None
+    if trt.withdrawal:
+        wd = trt.withdrawal
+        now = datetime.utcnow()
+        total_duration = (wd.clearsAt - wd.doseTime).total_seconds()
+        elapsed = (now - wd.doseTime).total_seconds()
+        
+        now_pct = 0
+        if total_duration > 0:
+            now_pct = max(0, min(100, int((elapsed / total_duration) * 100)))
+            
+        wd_data = {
+            "dose_time": wd.doseTime.isoformat(),
+            "now_pct": now_pct,
+            "clear_label": wd.clearLabel,
+            "product_message": f"{wd.productMessage.capitalize()} blocked until {wd.clearsAt.strftime('%d %b %Y')}"
+        }
+        
+    timeline = []
+    if trt.phase.name == "ACTIVE":
+        timeline = [
+            { "label": "Treatment Started", "status": "current" },
+            { "label": "Withdrawal Period", "status": "upcoming" },
+            { "label": "Cleared for Dispatch", "status": "upcoming" }
+        ]
+    elif trt.phase.name == "WITHDRAWAL":
+        timeline = [
             { "label": "Treatment Started", "status": "complete" },
             { "label": "Withdrawal Period", "status": "current" },
             { "label": "Cleared for Dispatch", "status": "upcoming" }
         ]
+    elif trt.phase.name == "COMPLETED":
+        timeline = [
+            { "label": "Treatment Started", "status": "complete" },
+            { "label": "Withdrawal Period", "status": "complete" },
+            { "label": "Cleared for Dispatch", "status": "complete" }
+        ]
+
+    return {
+        "id": trt.id,
+        "animal_id": trt.animalId,
+        "species": species_name,
+        "status_badges": badges,
+        "medicine": trt.drug,
+        "route": trt.route,
+        "dose": trt.dosage,
+        "administered_at": trt.administeredLabel,
+        "reason": getattr(trt, 'reason', 'Emergency treatment'),
+        "withdrawal": wd_data,
+        "timeline": timeline
     }
 
 @router.get("/insights")

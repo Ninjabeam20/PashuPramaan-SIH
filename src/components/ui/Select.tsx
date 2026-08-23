@@ -53,7 +53,8 @@ export function Select({ options, value, onChange, placeholder = "Select...", cl
               role="option"
               aria-selected={option.value === value}
               className="flex cursor-pointer items-center justify-start gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)] transition-colors"
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault();
                 onChange?.(option.value);
                 setIsOpen(false);
               }}

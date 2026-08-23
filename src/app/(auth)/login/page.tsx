@@ -87,7 +87,7 @@ export default function LoginPage() {
 
         {/* Form section */}
         <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative z-50">
             <label className="block text-xs font-semibold text-[var(--color-text)]">
               Select your role
             </label>

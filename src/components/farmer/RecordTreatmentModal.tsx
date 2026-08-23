@@ -14,12 +14,15 @@ interface RecordTreatmentModalProps {
   prescriptions: PrescriptionOption[];
   onClose: () => void;
   onSubmit: (data: any) => void;
+  defaultRxId?: string;
+  defaultAnimalId?: string;
 }
 
-export function RecordTreatmentModal({ animals, prescriptions, onClose, onSubmit }: RecordTreatmentModalProps) {
-  const [step, setStep] = React.useState(1);
-  const [selectedAnimalIds, setSelectedAnimalIds] = React.useState<string[]>([]);
-  const [selectedRxId, setSelectedRxId] = React.useState<string | null>(null);
+export function RecordTreatmentModal({ animals, prescriptions, onClose, onSubmit, defaultRxId, defaultAnimalId }: RecordTreatmentModalProps) {
+  // If we have defaults, we can skip straight to step 2 if we want, or stay on step 1 with pre-filled
+  const [step, setStep] = React.useState(defaultAnimalId ? 2 : 1);
+  const [selectedAnimalIds, setSelectedAnimalIds] = React.useState<string[]>(defaultAnimalId ? [defaultAnimalId] : []);
+  const [selectedRxId, setSelectedRxId] = React.useState<string | null>(defaultRxId || null);
   const [timing, setTiming] = React.useState<"now" | "backdated">("now");
   const [backdatedTime, setBackdatedTime] = React.useState("");
 

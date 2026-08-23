@@ -14,6 +14,7 @@ import { MedicineStockAlertsCard } from "@/components/farmer/MedicineStockAlerts
 import { BookVetModal } from "@/components/farmer/BookVetModal";
 import { getFarmDetail } from "@/lib/api/dummy/farm-detail";
 import { getAvailableVets } from "@/lib/api/dummy/vets";
+import { getPrescriptionOptions } from "@/lib/api/dummy/treatments";
 
 interface DashboardData {
   farm: { name: string; status: string; animal_count: number; clear_count: number; under_treatment_count: number; waiting_count: number };
@@ -43,6 +44,11 @@ export default function FarmerHome() {
     enabled: isBookVetOpen, // Only fetch when modal opens
   });
 
+  const { data: pendingPrescriptions } = useQuery({
+    queryKey: ["prescriptions"],
+    queryFn: getPrescriptionOptions,
+  });
+
   if (isLoading) {
     return <div className="flex h-64 items-center justify-center text-[var(--color-text-muted)]">Loading dashboard...</div>;
   }
@@ -55,6 +61,27 @@ export default function FarmerHome() {
 
   return (
     <div className="flex flex-col gap-8 pb-8">
+      {pendingPrescriptions && pendingPrescriptions.length > 0 && (
+        <div className="bg-[#fff7ed] border border-[#ffedd5] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm mb-[-1rem]">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="bg-amber-100 text-amber-600 p-2 rounded-lg">
+              <Activity size={20} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h3 className="text-[#b45309] font-bold text-sm">Action Required</h3>
+              <p className="text-sm text-amber-800">
+                You have {pendingPrescriptions.length} signed prescription{pendingPrescriptions.length !== 1 ? 's' : ''} awaiting administration.
+              </p>
+            </div>
+          </div>
+          <Link href="/farmer/treatments" className="shrink-0 w-full sm:w-auto">
+            <Button variant="outline" className="w-full border-amber-300 text-amber-800 hover:bg-amber-50 h-9 font-semibold text-xs">
+              View & Record
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* 1. Header Section */}
       <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
         <div className="flex-1">

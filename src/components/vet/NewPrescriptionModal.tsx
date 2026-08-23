@@ -75,7 +75,7 @@ export function NewPrescriptionModal({ onClose, onSave, nextRxId }: NewPrescript
               >
                 <option value="">Select farm</option>
                 <option value="Shanti Dairy">Shanti Dairy</option>
-                <option value="Krishna Dairy">Krishna Dairy</option>
+                <option value="Shree Krishna Dairy">Shree Krishna Dairy</option>
                 <option value="Meena Poultry">Meena Poultry</option>
               </select>
             </div>

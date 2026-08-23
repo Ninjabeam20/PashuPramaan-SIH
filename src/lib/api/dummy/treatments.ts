@@ -40,6 +40,8 @@ export interface PrescriptionOption {
   dosage: string;
   route: string;
   rx_id: string | null; // null if pending signature or exception
+  animal_id?: string;
+  diagnosis?: string;
   is_emergency_exception: boolean;
 }
 
@@ -53,7 +55,12 @@ export const getTreatments = async () => {
   const token = getToken();
   const res = await fetch(`http://localhost:8000/api/farmer/treatments`, {
     method: "GET",
-    headers: { "Authorization": `Bearer ${token}` }
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache"
+    },
+    cache: "no-store"
   });
   if (!res.ok) {
     // some fallback just in case or throw
@@ -81,7 +88,12 @@ export const getPrescriptionOptions = async (): Promise<PrescriptionOption[]> =>
   const token = getToken();
   const res = await fetch(`http://localhost:8000/api/farmer/treatments/prescriptions`, {
     method: "GET",
-    headers: { "Authorization": `Bearer ${token}` }
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache"
+    },
+    cache: "no-store"
   });
   if (!res.ok) {
     // some fallback just in case or throw

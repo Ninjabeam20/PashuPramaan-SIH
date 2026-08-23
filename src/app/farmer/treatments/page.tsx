@@ -18,6 +18,9 @@ export default function TreatmentsPage() {
   const [speciesFilter, setSpeciesFilter] = React.useState("All");
   
   const [isRecordModalOpen, setIsRecordModalOpen] = React.useState(false);
+  const [defaultRxId, setDefaultRxId] = React.useState<string | undefined>(undefined);
+  const [defaultAnimalId, setDefaultAnimalId] = React.useState<string | undefined>(undefined);
+  
   const [selectedTreatmentId, setSelectedTreatmentId] = React.useState<string | null>(null);
   const [localTreatments, setLocalTreatments] = React.useState<TreatmentItem[] | null>(null);
 
@@ -43,6 +46,7 @@ export default function TreatmentsPage() {
     mutationFn: createTreatment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treatments"] });
+      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
       setIsRecordModalOpen(false);
     }
   });
@@ -117,12 +121,53 @@ export default function TreatmentsPage() {
         <div className="shrink-0">
           <Button 
             className="w-full sm:w-auto bg-[#f47b59] hover:bg-[#e46a4d] text-white border-none gap-2 font-bold min-h-[44px]"
-            onClick={() => setIsRecordModalOpen(true)}
+            onClick={() => {
+              setDefaultRxId(undefined);
+              setDefaultAnimalId(undefined);
+              setIsRecordModalOpen(true);
+            }}
           >
             <span className="text-lg leading-none">+</span> Record Treatment
           </Button>
         </div>
       </section>
+
+      {/* Awaiting Administration Section */}
+      {prescriptions && prescriptions.length > 0 && (
+        <section className="flex flex-col gap-3 mt-4 mb-2">
+          <h2 className="text-lg font-bold text-[#b45309] flex items-center gap-2">
+            Awaiting Administration
+            <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-bold">
+              {prescriptions.length}
+            </span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {prescriptions.map((rx) => (
+              <div key={rx.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-xs font-bold text-amber-600 mb-1 uppercase tracking-wider">{rx.animal_id || "Animal"}</div>
+                    <div className="font-bold text-amber-900">{rx.drug_name}</div>
+                    <div className="text-sm text-amber-700">Diagnosis: {rx.diagnosis || "Not specified"}</div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-amber-300 text-amber-800 hover:bg-amber-100"
+                    onClick={() => {
+                      setDefaultRxId(rx.id);
+                      setDefaultAnimalId(rx.animal_id);
+                      setIsRecordModalOpen(true);
+                    }}
+                  >
+                    Record Now
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Stats Summary */}
       {/* We use the fetched treatmentsData.summary here instead of a dynamically recalculated one for simplicity of the mock */}
@@ -148,6 +193,8 @@ export default function TreatmentsPage() {
         <RecordTreatmentModal
           animals={farmData?.animals || []}
           prescriptions={prescriptions || []}
+          defaultRxId={defaultRxId}
+          defaultAnimalId={defaultAnimalId}
           onClose={() => setIsRecordModalOpen(false)}
           onSubmit={handleRecordTreatment}
         />

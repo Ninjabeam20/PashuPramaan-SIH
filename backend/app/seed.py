@@ -175,6 +175,32 @@ def seed_db():
                     labAssay=LabAssayVerdict[lab_assay.upper()] if lab_assay else None
                 )
                 db.add(treatment)
+                
+                # Also seed withdrawal if it exists
+                if t.get('withdrawal'):
+                    w_data = t['withdrawal']
+                    from app.models import Withdrawal
+                    from datetime import datetime
+                    
+                    dose_time_str = t.get('administeredOn') or datetime.utcnow().isoformat()
+                    dose_time = parse_date(dose_time_str) or datetime.utcnow()
+                    
+                    # Hack for demo to parse clearsAt if it exists in canonical.json
+                    # For seeded data, we will just make it 3 days from dose_time to ensure it doesn't instantly delete
+                    from datetime import timedelta
+                    clears_at = dose_time + timedelta(days=5)
+                    
+                    wd = db.query(Withdrawal).filter_by(treatmentId=t['id']).first()
+                    if not wd:
+                        wd = Withdrawal(
+                            treatmentId=t['id'],
+                            doseTime=dose_time,
+                            nowPct=w_data.get('nowPct', 0),
+                            clearLabel=w_data.get('clearLabel', 'Clears soon'),
+                            productMessage=w_data.get('productMessage', 'Blocked'),
+                            clearsAt=clears_at
+                        )
+                        db.add(wd)
         db.commit()
 
         # 8. Insert Medicine Stock
