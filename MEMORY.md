@@ -2,10 +2,10 @@
 
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
-**Last updated:** 2026-08-23 (plan: 4-role canonical dummy data)  
+**Last updated:** 2026-08-23  
 **Branch:** `main`  
-**HEAD:** `3f8f95e` — Fea: Added proper logo  
-**Note:** Uncommitted navbar height and type alignment across farmer, vet, and admin shells.
+**HEAD:** `b509fed` — docs: add four-role canonical dummy-data plan  
+**Note:** Uncommitted README backend-direction wording; navbar height/type work from earlier sessions may still be uncommitted or already in prior commits — check `git status`.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -15,7 +15,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ## Current tree (unstaged on `main`)
 
-- Added `docs/plan.md` — 4-role dummy-data audit (farmer, vet, lab, admin), conflict resolutions, and staged execution (Stage 1 first, then 2–6). Pointer: `docs/superpowers/plans/2026-08-23-canonical-dummy-data.md`. Implementation not started.
+- `README.md` — backend-direction sentence (FastAPI vs Express); **not** part of the plan commit.
 - Admin sticky nav height `52` → `64` in `src/app/admin/layout.tsx` and unused `NavBar` in `src/components/admin/AdminShared.tsx` so it matches farmer/vet `h-16`.
 - Vet header now uses `h-16` / `h-full` like farmer (`src/app/vet/layout.tsx`).
 - Navbar type unified to farmer: links `14px` / weight `500`, logo `40px`, EN `12px` / `600`, avatar `32px` / `14px` (vet + admin layouts; AdminShared `NavBar`).
@@ -58,8 +58,6 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ---
 
-## Commit history (oldest → newest)
-
 ### `30fa32b` — Initial scaffold: login, farmer home, vet home (2026-08-22)
 
 Bootstrapped Next.js 16 App Router. Added login (`/login` with farmer / vet / admin role select; admin redirect not wired), farmer shell + home, vet shell + home, UI primitives, dummy auth/dashboard APIs, React Query provider, first `docs/api-contract.md`.
@@ -99,6 +97,10 @@ Admin choropleth uses the pre-2019 unified Jammu & Kashmir outline (J&K + Ladakh
 ### `f3effda` — major frontend remodelling , backend integration , map naming and changes, individual states and districts added-ug (2026-08-23)
 
 National choropleth labels every mainland state/UT. Clicking a state opens `/admin/states/[slug]` (34 district pages) with dummy livestock tables and district GeoJSON. Spec docs under `cursor changes/`. Pushed to `origin/backend`. Fast-forward merged into `main` and pushed `origin/main`.
+
+### `b509fed` — docs: add four-role canonical dummy-data plan (2026-08-23)
+
+Added `docs/plan.md` (audit + staged canonical dummy store for farmer, vet, lab, admin). Pointer at `docs/superpowers/plans/2026-08-23-canonical-dummy-data.md`. No product code.
 
 ---
 
