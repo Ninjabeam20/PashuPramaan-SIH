@@ -102,7 +102,7 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
           </table>
         </div>
         <div className="flex items-center justify-between p-4 border-t border-[var(--color-border)] text-sm text-[var(--color-text-muted)] bg-[var(--color-bg)]">
-          <p>Showing 1–{dispatches.length} of 48 dispatches</p>
+          <p>Showing 1–{dispatches.length} of {dispatches.length} dispatches</p>
           <div className="flex gap-4 items-center">
             <button className="hover:text-[var(--color-text)] transition-colors">Previous</button>
             <div className="flex gap-3">
@@ -178,7 +178,7 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
           </div>
         ))}
         <p className="text-center text-xs text-[var(--color-text-muted)] py-2">
-          Showing 1–{dispatches.length} of 48 dispatches
+          Showing 1–{dispatches.length} of {dispatches.length} dispatches
         </p>
       </div>
     </>

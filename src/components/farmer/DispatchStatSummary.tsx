@@ -4,7 +4,7 @@ import { DispatchStatSummary as SummaryType } from "@/lib/api/dummy/dispatch";
 export function DispatchStatSummary({ stats }: { stats: SummaryType }) {
   return (
     <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 w-full flex-1 md:divide-x md:divide-[var(--color-border)] gap-y-6 md:gap-y-0">
+      <div className="grid grid-cols-2 lg:grid-cols-5 w-full flex-1 md:divide-x md:divide-[var(--color-border)] gap-y-6 md:gap-y-0">
         
         <div className="flex flex-col pr-4 sm:pr-6">
           <div className="flex items-center gap-3">
@@ -41,6 +41,17 @@ export function DispatchStatSummary({ stats }: { stats: SummaryType }) {
             <div className="text-xs text-[var(--color-text-muted)] font-medium">Blocked</div>
           </div>
         </div>
+
+        {stats.lab_pending !== undefined && (
+          <div className="flex flex-col pl-4 sm:px-6 border-t lg:border-t-0 lg:border-l border-[var(--color-border)] pt-4 lg:pt-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-lg">
+                {stats.lab_pending}
+              </div>
+              <div className="text-xs text-[var(--color-text-muted)] font-medium">Lab Result Pending</div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

@@ -96,7 +96,7 @@ export function DispatchDetailModal({ dispatchId, onClose }: DispatchDetailModal
                     Status
                   </div>
                   <div className="font-bold text-[var(--color-text)] text-sm capitalize">
-                    {detail.status}
+                    {detail.status === "lab_pending" ? "Lab Result Pending" : detail.status}
                   </div>
                 </div>
               </div>

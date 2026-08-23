@@ -7,6 +7,7 @@ export interface DispatchStatSummary {
   ready_to_dispatch: number;
   under_withdrawal: number;
   blocked: number;
+  lab_pending?: number;
 }
 
 export interface DispatchItem {
@@ -14,7 +15,7 @@ export interface DispatchItem {
   product: string;
   animal_flock: string;
   date: string;
-  status: "cleared" | "withdrawal" | "blocked";
+  status: "cleared" | "withdrawal" | "blocked" | "lab_pending";
 }
 
 export interface DispatchSafetyOutcome {
@@ -24,7 +25,7 @@ export interface DispatchSafetyOutcome {
     detail: string;
   };
   mrl: {
-    status: "within_limit" | "exceeded";
+    status: "within_limit" | "exceeded" | "pending";
     lab_result_ppm: string;
     permitted_ppm: string;
   } | null;
@@ -67,13 +68,30 @@ export const issuePassport = async (
   animalIds: string[]
 ) => {
   const token = getToken();
+  // We need to fix the request payload for issuePassport while we're at it (it was using product_type, animal_flock_id, instead of product, animal_ids)
   const res = await fetch(`http://localhost:8000/api/farmer/dispatch/passport`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ product_type: product, animal_flock_id: animalIds[0], farm_id: "FARM-01" })
+    body: JSON.stringify({ product: product, animal_ids: animalIds })
   });
   if (!res.ok) {
     throw new Error("Failed to issue passport");
+  }
+  return await res.json();
+};
+
+export const sendToLab = async (
+  product: string,
+  animalIds: string[]
+) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/dispatch/send-to-lab`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ product: product, animal_ids: animalIds })
+  });
+  if (!res.ok) {
+    throw new Error("Failed to send to lab");
   }
   return await res.json();
 };
@@ -113,6 +131,14 @@ const timelineFor = (status: DispatchItem["status"]): DispatchDetail["timeline"]
       { label: "Dispatch", status: "upcoming" },
     ];
   }
+  if (status === "lab_pending") {
+    return [
+      { label: "Treatment", status: "complete" },
+      { label: "Withdrawal", status: "complete" },
+      { label: "Lab Verification", status: "current" },
+      { label: "Dispatch", status: "upcoming" },
+    ];
+  }
   return [
     { label: "Treatment", status: "complete" },
     { label: "Withdrawal", status: "complete" },
@@ -124,5 +150,9 @@ const timelineFor = (status: DispatchItem["status"]): DispatchDetail["timeline"]
 export const getDispatchDetail = async (dispatchId: string): Promise<DispatchDetail> => {
   const token = getToken();
   const res = await fetch(`http://localhost:8000/api/farmer/dispatch/${dispatchId}`, { headers: { Authorization: `Bearer ${token}` } });
-  return (await res.json()) as any;
+  const data = await res.json();
+  if (data) {
+    data.timeline = timelineFor(data.status);
+  }
+  return data as any;
 };

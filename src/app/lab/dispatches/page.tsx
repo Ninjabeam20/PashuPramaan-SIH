@@ -102,10 +102,10 @@ export default function LabDispatchesPage() {
       {/* Dispatch Overview Summary */}
       <div className="flex flex-wrap md:flex-nowrap border-b border-[var(--color-border)] bg-[var(--color-surface)] rounded-2xl md:rounded-b-none mb-4 md:mb-0 shadow-sm md:shadow-none overflow-hidden">
         {[
-          { v: "48", l: "Total Dispatches" },
-          { v: "12", l: "Ready for Testing", indicator: "bg-amber-500" },
-          { v: "18", l: "In Progress", indicator: "bg-slate-400" },
-          { v: "4", l: "Requires Attention", indicator: "bg-red-500" },
+          { v: (data || []).length.toString(), l: "Total Dispatches" },
+          { v: (data || []).filter(d => d.status.toLowerCase() === "ready for testing").length.toString(), l: "Ready for Testing", indicator: "bg-amber-500" },
+          { v: (data || []).filter(d => d.sampleStatus.toLowerCase() === "received" || d.sampleStatus.toLowerCase() === "testing").length.toString(), l: "In Progress", indicator: "bg-slate-400" },
+          { v: (data || []).filter(d => d.risk.toLowerCase() === "high").length.toString(), l: "Requires Attention", indicator: "bg-red-500" },
         ].map(({ v, l, indicator }, i) => (
           <div key={l} className={`flex-1 py-4 md:py-3 px-4 text-center border-b md:border-b-0 md:border-r border-[var(--color-border)] last:border-0 ${i % 2 === 0 ? 'border-r' : ''}`}>
             <p className="font-display text-2xl md:text-xl font-bold text-[var(--color-text)] leading-none flex items-center justify-center gap-2">

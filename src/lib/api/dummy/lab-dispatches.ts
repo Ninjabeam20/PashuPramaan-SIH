@@ -115,41 +115,15 @@ const assessmentList = (sample: LabSample): LabAssessmentItem[] => [
 ];
 
 export async function fetchLabDispatchDetail(dispatchId: string): Promise<LabDispatchDetail | null> {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  // CONFLICT: this used to return the same Shree Krishna milk body for every id, so
-  // opening the meat or egg dispatch showed milk. It now reads the requested lot.
-  const sample = store.getLabSample(dispatchId);
-  if (!sample) return null;
-
-  const view = stageView(sample.stage);
-
-  return {
-    id: sample.dispatchId,
-    product: sample.productLabel,
-    source: sample.sourceName,
-    date: sample.date,
-    time: sample.time,
-    quantity: sample.quantity,
-    linkedAnimal: sample.animalId ?? sample.batchLabel ?? "—",
-    currentSample: sample.sampleId,
-    risk: sample.risk,
-    riskColor: riskColor(sample.risk),
-    riskReason: sample.riskReason,
-    overallStatus: view.overallStatus,
-    stages: STAGE_LABELS.map((label, index) => ({
-      label,
-      state: index < view.stageIndex ? "done" : index === view.stageIndex ? "active" : "upcoming",
-    })),
-    tests: sample.tests.map(testItem),
-    assessment: assessmentList(sample),
-    notes: {
-      condition: sample.receipt.condition,
-      temperature: sample.receipt.temperature,
-      container: sample.receipt.container,
-      receivedBy: sample.receipt.receivedBy,
-      receivedAt: sample.receipt.receivedAt,
-    },
-    activity: sample.activity.map((row) => ({ ...row })),
-  };
+  const token = getToken();
+  try {
+    const res = await fetch(`http://localhost:8000/api/lab/dispatches/${dispatchId}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to fetch lab dispatch detail", err);
+    return null;
+  }
 }

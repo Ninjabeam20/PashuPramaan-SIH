@@ -155,23 +155,53 @@ def get_vets(db: Session = Depends(get_db)):
     }
 
 @router.get("/dispatch")
-def get_dispatches(db: Session = Depends(get_db)):
+def get_dispatches(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models import FarmerDispatch, Farm
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm:
+        return {"summary": {}, "items": []}
+    
+    dispatches = db.query(FarmerDispatch).filter_by(farmId=farm.id).order_by(desc(FarmerDispatch.createdAt)).all()
+    # Remove dummy seeded data
+    dispatches = [d for d in dispatches if len(d.id) > 7]
+    
+    items = []
+    active_dispatches = 0
+    ready_to_dispatch = 0
+    under_withdrawal = 0
+    blocked = 0
+    lab_pending = 0
+    
+    for d in dispatches:
+        status_lower = d.status.name.lower()
+        if d.status.name == "CLEARED":
+            ready_to_dispatch += 1
+            active_dispatches += 1
+        elif d.status.name == "WITHDRAWAL":
+            under_withdrawal += 1
+        elif d.status.name == "BLOCKED":
+            blocked += 1
+        elif d.status.name == "LAB_PENDING":
+            lab_pending += 1
+            status_lower = "lab_pending"
+            
+        items.append({
+            "id": d.id,
+            "product": d.product.name.capitalize(),
+            "animal_flock": d.animalId,
+            "date": d.dateLabel,
+            "status": status_lower
+        })
+        
     return {
         "summary": {
-            "active_dispatches": 2,
-            "ready_to_dispatch": 1,
-            "under_withdrawal": 3,
-            "blocked": 0
+            "active_dispatches": active_dispatches,
+            "ready_to_dispatch": ready_to_dispatch,
+            "under_withdrawal": under_withdrawal,
+            "blocked": blocked,
+            "lab_pending": lab_pending
         },
-        "items": [
-            {
-                "id": "DISP-F2026-0044",
-                "product": "Milk",
-                "animal_flock": "MP-087",
-                "date": "23 Aug 2026",
-                "status": "cleared"
-            }
-        ]
+        "items": items
     }
 
 class SafetyCheckReq(BaseModel):
@@ -210,7 +240,7 @@ def check_safety(req: SafetyCheckReq, db: Session = Depends(get_db)):
                 trt.phase = TreatmentPhase.COMPLETED
                 db.commit()
                 
-    mrl_status = "within_limit"
+    mrl_status = "pending"
     lab_result_ppm = 0.0
     permitted_ppm = 0.1 
     lab_available = False
@@ -223,6 +253,11 @@ def check_safety(req: SafetyCheckReq, db: Session = Depends(get_db)):
         if sample.report.mrlVerdict == "EXCEEDED":
             mrl_status = "exceeded"
             eligible = False
+        else:
+            mrl_status = "within_limit"
+    else:
+        # If no lab result is on file, verification is pending and dispatch is blocked
+        eligible = False
             
     return {
         "eligible": eligible,
@@ -309,22 +344,95 @@ def issue_passport(req: PassportIssueReq, db: Session = Depends(get_db), current
         "qr_verify_url": f"https://pashupramaan.gov.in/verify/{passport_id}"
     }
 
+@router.post("/dispatch/send-to-lab")
+def send_to_lab(req: PassportIssueReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from datetime import datetime
+    import uuid
+    from fastapi import HTTPException
+    from app.models import FarmerDispatch, LabSample, LabStage, ProductType, DispatchStatus
+    
+    if not req.animal_ids:
+        raise HTTPException(status_code=400, detail="No animal specified")
+        
+    animal_id = req.animal_ids[0]
+    
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm: farm = db.query(Farm).first()
+    
+    product_type = ProductType.MILK
+    if req.product.lower() == "meat": product_type = ProductType.MEAT
+    elif req.product.lower() == "eggs": product_type = ProductType.EGGS
+    
+    dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
+    sample_id = f"SMP-{str(uuid.uuid4())[:6].upper()}"
+    
+    fd = FarmerDispatch(
+        id=dsp_id,
+        farmId=farm.id,
+        animalId=animal_id,
+        product=product_type,
+        dateLabel=datetime.utcnow().strftime("%d %b %Y"),
+        status=DispatchStatus.LAB_PENDING,
+        prescriptionSigned=True, # default for now
+        labDispatchId=dsp_id
+    )
+    db.add(fd)
+    
+    ls = LabSample(
+        dispatchId=dsp_id,
+        sampleId=sample_id,
+        product=product_type,
+        productSub="Raw",
+        productLabel=req.product,
+        farmId=farm.id,
+        animalId=animal_id,
+        sourceName=farm.name,
+        quantity="1 Sample",
+        scheduledFor=datetime.utcnow().strftime("%d %b %Y"),
+        priority="Standard",
+        stage=LabStage.AWAITING_RECEIPT
+    )
+    db.add(ls)
+    
+    db.commit()
+    
+    return {
+        "dispatch_id": dsp_id,
+        "sample_id": sample_id,
+        "status": "lab_pending"
+    }
+
 @router.get("/dispatch/{dispatchId}")
 def get_dispatch_detail(dispatchId: str, db: Session = Depends(get_db)):
+    from app.models import FarmerDispatch
+    from fastapi import HTTPException
+    
+    d = db.query(FarmerDispatch).filter_by(id=dispatchId).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+        
+    status_lower = d.status.name.lower()
+    if status_lower == "lab_pending":
+        status_color = "amber"
+    elif status_lower == "cleared":
+        status_color = "green"
+    elif status_lower == "withdrawal":
+        status_color = "amber"
+    else:
+        status_color = "red"
+        
     return {
-        "id": dispatchId,
-        "product": "Milk",
-        "date": "23 Aug 2026",
+        "id": d.id,
+        "product": d.product.name.capitalize(),
+        "animal_flock": d.animalId,
+        "date": d.dateLabel,
         "destination": "Anand Dairy Co-op",
         "quantity": "250 L",
-        "status": "cleared",
-        "statusColor": "green",
-        "qr_data": "https://pashupramaan.gov.in/verify/DISP-F2026-0044",
-        "passport_id": "PP-2026-8812",
-        "history": [
-            {"date": "20 Aug 2026", "action": "Sample dispatched to Regional Lab", "icon": "truck"},
-            {"date": "22 Aug 2026", "action": "Lab Cleared: Beta-Lactam Negative", "icon": "check"}
-        ]
+        "status": status_lower,
+        "statusColor": status_color,
+        "qr_data": f"https://pashupramaan.gov.in/verify/{d.id}",
+        "passport_id": f"PP-{d.id}",
+        "timeline": [] # Frontend handles timeline if not provided
     }
 
 @router.get("/treatments")

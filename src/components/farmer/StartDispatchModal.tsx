@@ -3,13 +3,13 @@ import { X, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/Badge";
-import { checkDispatchSafety, issuePassport, DispatchSafetyOutcome } from "@/lib/api/dummy/dispatch";
+import { checkDispatchSafety, issuePassport, sendToLab, DispatchSafetyOutcome } from "@/lib/api/dummy/dispatch";
 import { AnimalItem } from "@/components/farmer/AnimalTable";
 
 interface StartDispatchModalProps {
   animals: AnimalItem[]; // passed from getFarmDetail
   onClose: () => void;
-  onSuccess: (dispatchData: any) => void;
+  onSuccess?: (dispatchData?: any) => void;
 }
 
 export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatchModalProps) {
@@ -69,7 +69,7 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   };
 
   const handleCloseFinal = () => {
-    onSuccess();
+    onSuccess?.();
   };
 
   // Step 4: Result Screen
@@ -154,12 +154,28 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   // Steps 1-3: Main Wizard Chrome
   const stepLabels = ["Select Product", "Select Animal / Flock", "Safety Check"];
   const products = [
-    { id: "Milk", icon: "🥛" }, // Simplified icons for mock
+    { id: "Milk", icon: "🥛" },
     { id: "Meat", icon: "🥩" },
     { id: "Eggs", icon: "🥚" }
   ];
 
   const filteredAnimals = (animals || []).filter(a => a.id.toLowerCase().includes(searchQuery.toLowerCase()) || a.type.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const sendToLabMutation = useMutation({
+    mutationFn: () => {
+      return sendToLab(selectedProduct!, selectedAnimalIds);
+    },
+    onSuccess: (data) => {
+      onSuccess?.(data);
+      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
+    }
+  });
+
+  const handleSendToLab = () => {
+    sendToLabMutation.mutate();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
@@ -294,24 +310,35 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
                     {/* MRL */}
                     {safetyOutcome.mrl && (
                       <div className={`p-4 rounded-xl border flex flex-col gap-1 ${
-                        safetyOutcome.mrl.status === "within_limit" ? 'bg-[#e2ead8]/40 border-[#e2ead8]' : 'bg-[#fce8e8]/40 border-[#fce8e8]'
+                        safetyOutcome.mrl.status === "within_limit" ? 'bg-[#e2ead8]/40 border-[#e2ead8]' : 
+                        safetyOutcome.mrl.status === "pending" ? 'bg-amber-50/40 border-amber-200' : 'bg-[#fce8e8]/40 border-[#fce8e8]'
                       }`}>
                         <div className="flex justify-between items-center">
                           <div className={`flex items-center gap-2 font-bold ${
-                            safetyOutcome.mrl.status === "within_limit" ? 'text-[#1e6147]' : 'text-[#c93f4e]'
+                            safetyOutcome.mrl.status === "within_limit" ? 'text-[#1e6147]' : 
+                            safetyOutcome.mrl.status === "pending" ? 'text-amber-600' : 'text-[#c93f4e]'
                           }`}>
-                            {safetyOutcome.mrl.status === "within_limit" ? <Check size={18} /> : <X size={18} />}
+                            {safetyOutcome.mrl.status === "within_limit" ? <Check size={18} /> : 
+                             safetyOutcome.mrl.status === "pending" ? <Search size={18} /> : <X size={18} />}
                             MRL
                           </div>
                           <div className={`text-xs font-bold uppercase tracking-wide ${
-                            safetyOutcome.mrl.status === "within_limit" ? 'text-[#1e6147]' : 'text-[#c93f4e]'
+                            safetyOutcome.mrl.status === "within_limit" ? 'text-[#1e6147]' : 
+                            safetyOutcome.mrl.status === "pending" ? 'text-amber-600' : 'text-[#c93f4e]'
                           }`}>
-                            {safetyOutcome.mrl.status === "within_limit" ? 'WITHIN LIMIT' : 'EXCEEDED'}
+                            {safetyOutcome.mrl.status === "within_limit" ? 'WITHIN LIMIT' : 
+                             safetyOutcome.mrl.status === "pending" ? 'LAB VERIFICATION PENDING' : 'EXCEEDED'}
                           </div>
                         </div>
-                        <div className={`text-xs mt-1 ${safetyOutcome.mrl.status === "within_limit" ? 'text-[#358a6f]' : 'text-[#c93f4e]'}`}>
-                          Lab Result: <span className="font-bold">{safetyOutcome.mrl.lab_result_ppm} ppm</span> &nbsp;&nbsp; Permitted: {safetyOutcome.mrl.permitted_ppm} ppm
-                        </div>
+                        {safetyOutcome.mrl.status !== "pending" ? (
+                          <div className={`text-xs mt-1 ${safetyOutcome.mrl.status === "within_limit" ? 'text-[#358a6f]' : 'text-[#c93f4e]'}`}>
+                            Lab Result: <span className="font-bold">{safetyOutcome.mrl.lab_result_ppm} ppm</span> &nbsp;&nbsp; Permitted: {safetyOutcome.mrl.permitted_ppm} ppm
+                          </div>
+                        ) : (
+                          <div className="text-xs mt-1 text-amber-700/80">
+                            Required to confirm residue levels are safe for dispatch.
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -370,15 +397,34 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
               Next &rarr;
             </Button>
           ) : (
-            <Button 
-              className={`min-h-[44px] border-none flex-1 ml-4 ${
-                safetyOutcome?.eligible ? 'bg-[#1e6147] hover:bg-[#164a35] text-white' : 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
-              }`}
-              onClick={handleGenerate}
-              disabled={!safetyOutcome?.eligible || isChecking || issueMutation.isPending}
-            >
-              {issueMutation.isPending ? "Generating..." : safetyOutcome?.eligible ? "Generate PashuPramaan Passport" : "Resolve blocked gates before dispatching"}
-            </Button>
+            <div className="flex flex-1 gap-2">
+              {safetyOutcome?.withdrawal.status === "cleared" && (
+                <Button
+                  variant="outline"
+                  className="min-h-[44px] flex-1 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                  onClick={handleSendToLab}
+                  disabled={isChecking || sendToLabMutation.isPending}
+                >
+                  {sendToLabMutation.isPending ? "Sending..." : "Send to Lab"}
+                </Button>
+              )}
+              {safetyOutcome?.eligible ? (
+                <Button 
+                  className="min-h-[44px] border-none flex-[2] bg-[#1e6147] hover:bg-[#164a35] text-white"
+                  onClick={handleGenerate}
+                  disabled={isChecking || issueMutation.isPending}
+                >
+                  {issueMutation.isPending ? "Generating..." : "Generate Passport"}
+                </Button>
+              ) : (
+                <Button 
+                  className="min-h-[44px] border-none flex-[2] bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed"
+                  disabled
+                >
+                  Resolve Blocked Gates
+                </Button>
+              )}
+            </div>
           )}
         </div>
         

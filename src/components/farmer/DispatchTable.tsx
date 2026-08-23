@@ -12,7 +12,7 @@ export function DispatchTable({ items, onViewAction }: { items: DispatchItem[], 
     );
   }
 
-  const getStatusBadge = (status: DispatchItem["status"]) => {
+  const getStatusBadge = (status: DispatchItem["status"] | "lab_pending") => {
     switch (status) {
       case "cleared":
         return (
@@ -33,6 +33,13 @@ export function DispatchTable({ items, onViewAction }: { items: DispatchItem[], 
           <Badge variant="blocked">
             <div className="w-2 h-2 rounded-full bg-current" />
             Blocked
+          </Badge>
+        );
+      case "lab_pending":
+        return (
+          <Badge variant="blocked" className="bg-amber-100 text-amber-800 border-amber-300">
+            <Hourglass size={12} strokeWidth={3} />
+            Lab Result Pending
           </Badge>
         );
     }

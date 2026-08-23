@@ -67,6 +67,7 @@ class DispatchStatus(str, enum.Enum):
     CLEARED = "CLEARED"
     WITHDRAWAL = "WITHDRAWAL"
     BLOCKED = "BLOCKED"
+    LAB_PENDING = "LAB_PENDING"
 
 class StockLevel(str, enum.Enum):
     RESTOCK = "RESTOCK"
