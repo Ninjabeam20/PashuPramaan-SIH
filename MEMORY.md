@@ -5,7 +5,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 **Last updated:** 2026-08-23  
 **Branch:** `main`  
 **HEAD:** `3f8f95e` — Fea: Added proper logo  
-**Note:** Uncommitted navbar height alignment across farmer, vet, and admin shells.
+**Note:** Uncommitted navbar height and type alignment across farmer, vet, and admin shells.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -17,6 +17,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 - Admin sticky nav height `52` → `64` in `src/app/admin/layout.tsx` and unused `NavBar` in `src/components/admin/AdminShared.tsx` so it matches farmer/vet `h-16`.
 - Vet header now uses `h-16` / `h-full` like farmer (`src/app/vet/layout.tsx`).
+- Navbar type unified to farmer: links `14px` / weight `500`, logo `40px`, EN `12px` / `600`, avatar `32px` / `14px` (vet + admin layouts; AdminShared `NavBar`).
 - Also modified: `package-lock.json` (unrelated to this change).
 
 ---

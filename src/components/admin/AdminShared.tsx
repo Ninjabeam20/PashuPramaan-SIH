@@ -204,8 +204,8 @@ export function NavBar({ activeTab, onTabChange }: { activeTab: TabId; onTabChan
       <div style={{ display:"flex", alignItems:"center", gap:2, overflowX:"auto" }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => onTabChange(t.id)}
-            style={{ padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:13,
-              fontWeight: activeTab === t.id ? 500 : 400,
+            style={{ padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:14,
+              fontWeight: 500,
               background: activeTab === t.id ? "#DCF0E4" : "transparent",
               color: activeTab === t.id ? "#1A3A25" : "#6B7280",
               transition:"background 0.15s, color 0.15s", whiteSpace:"nowrap" }}>
@@ -214,14 +214,14 @@ export function NavBar({ activeTab, onTabChange }: { activeTab: TabId; onTabChan
         ))}
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
-        <span style={{ fontSize:13, color:"#6B7280", fontWeight:500 }}>EN</span>
+        <span style={{ fontSize:12, color:"#6B7280", fontWeight:600 }}>EN</span>
         <button style={{ background:"none", border:"none", cursor:"pointer", position:"relative", padding:4 }}>
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" strokeWidth="1.8">
             <path d="M15 17H20L18.6 15.6A1.5 1.5 0 0118 14.5V11a6 6 0 00-4-5.66V5a2 2 0 00-4 0v.34A6 6 0 006 11v3.5a1.5 1.5 0 01-.6 1.1L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span style={{ position:"absolute", top:2, right:2, width:7, height:7, background:"#EF4444", borderRadius:"50%", border:"1.5px solid #fff" }}/>
         </button>
-        <div style={{ width:30, height:30, borderRadius:"50%", background:"#2D6A4F", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700 }}>DR</div>
+        <div style={{ width:32, height:32, borderRadius:"50%", background:"#2D6A4F", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:14, fontWeight:700 }}>DR</div>
       </div>
     </nav>
   )

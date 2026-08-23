@@ -28,7 +28,7 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
             />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[var(--color-text-muted)] h-full">
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--color-text-muted)] h-full">
             <Link 
               href="/vet/home" 
               className={`h-full flex items-center border-b-2 px-1 ${pathname === '/vet/home' ? 'border-[var(--color-primary)] text-[var(--color-primary-dark)]' : 'border-transparent hover:text-[var(--color-text)] hover:border-[var(--color-border)]'}`}
@@ -51,7 +51,7 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-4">
             
-            <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold border border-[var(--color-border)] rounded-full px-2 py-1 uppercase text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] cursor-pointer">
+            <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-[var(--color-border)] text-xs font-semibold uppercase text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] cursor-pointer">
               EN
             </div>
 
@@ -60,7 +60,7 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
               <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--status-high-text)] border border-[var(--color-surface)]"></span>
             </button>
 
-            <div className="w-8 h-8 rounded-full bg-[#1e40af] text-white flex items-center justify-center text-xs font-bold tracking-wider ml-1 cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-[#1e40af] text-white flex items-center justify-center text-sm font-bold ml-1 cursor-pointer">
               DR
             </div>
           </div>
