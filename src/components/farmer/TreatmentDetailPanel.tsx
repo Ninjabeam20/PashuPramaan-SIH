@@ -82,7 +82,7 @@ export function TreatmentDetailPanel({ treatmentId, onClose }: TreatmentDetailPa
             <>
               {/* Badges */}
               <div className="flex flex-wrap gap-2">
-                {detail.status_badges.map((badge, idx) => (
+                {(detail.status_badges || []).map((badge, idx) => (
                   <Badge key={idx} variant={badge.variant as BadgeVariant}>
                     {badge.text}
                   </Badge>
@@ -157,7 +157,7 @@ export function TreatmentDetailPanel({ treatmentId, onClose }: TreatmentDetailPa
                 <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase">
                   Timeline
                 </div>
-                <TreatmentTimeline steps={detail.timeline} />
+                <TreatmentTimeline steps={detail.timeline || []} />
               </div>
             </>
           )}

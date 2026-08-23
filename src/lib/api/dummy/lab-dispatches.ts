@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import {
   labSourceSub,
@@ -26,29 +27,12 @@ export type LabDispatchItem = {
 };
 
 export async function fetchLabDispatches(): Promise<LabDispatchItem[]> {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  return store.getReceivedLabSamples().map((sample) => {
-    const view = stageView(sample.stage);
-    return {
-      id: sample.dispatchId,
-      date: sample.dateLabel,
-      product: sample.product,
-      productSub: sample.productSub,
-      source: sample.sourceName,
-      sourceSub: labSourceSub(sample),
-      sample: sample.sampleId,
-      sampleStatus: view.sampleStatus,
-      sampleColor: view.sampleColor,
-      risk: sample.risk,
-      riskColor: riskColor(sample.risk),
-      status: view.status,
-      statusColor: view.statusColor,
-      action: view.action,
-      // Every received lot now has a detail page, so every row opens.
-      clickable: true,
-    };
+  const token = getToken();
+  const res = await fetch("http://localhost:8000/api/lab/dispatches", {
+    headers: { "Authorization": `Bearer ${token}` }
   });
+  const data = await res.json();
+  return data as any;
 }
 
 export type LabTestItem = {

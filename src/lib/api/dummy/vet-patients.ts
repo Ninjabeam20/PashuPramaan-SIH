@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { patientTypeLabel } from "@/lib/seed/project";
 import type { CareStatus } from "@/lib/seed/types";
@@ -29,26 +30,13 @@ const CARE_STATUS_BADGE: Record<Exclude<CareStatus, "healthy">, { text: string; 
 };
 
 export const getVetPatients = async (): Promise<PatientsData> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const patients = store.getVetPatients();
-
-  return {
-    summary: {
-      all_count: patients.length,
-      // CONFLICT: Flock P-01 was listed "Recovered" while its emergency Rx was unsigned.
-      // Care status is canonical now (plan resolution 10), so this counter follows it.
-      under_treatment_count: patients.filter((a) => a.careStatus === "under_treatment").length,
-      follow_up_due_count: patients.filter((a) => a.followUpDue).length,
-      recovered_count: patients.filter((a) => a.careStatus === "recovered").length,
-      needs_attention_count: patients.filter((a) => a.careStatus === "no_change").length,
-    },
-    items: patients.map((animal) => ({
-      id: animal.id,
-      type: patientTypeLabel(animal),
-      farm: store.farmName(animal.farmId),
-      status: { ...CARE_STATUS_BADGE[(animal.careStatus ?? "improved") as Exclude<CareStatus, "healthy">], dot: true },
-      last_follow_up: animal.lastFollowUp ?? "—",
-    })),
-  };
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/patients`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
+  }
+  return await res.json() as any;
 };

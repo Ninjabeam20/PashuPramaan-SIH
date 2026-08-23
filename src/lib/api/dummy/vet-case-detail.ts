@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import {
   awareBadge,
@@ -42,55 +43,13 @@ export interface CaseDetail {
 }
 
 export const getCaseDetail = async (caseId: string): Promise<CaseDetail> => {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // CONFLICT: this used to branch on the string "P-01" and otherwise return a fixed
-  // Rx-205 body (with MP-118 typed as a Buffalo). It now resolves whatever id the caller
-  // holds — an Rx id, an animal id from the alerts widget, or an id with a UI suffix.
-  const prescription = store.resolvePrescription(caseId);
-  const animal = store.getAnimal(prescription.animalId);
-  const healthEvent = store.getHealthEventForAnimal(prescription.animalId);
-
-  const detail: CaseDetail = {
-    id: prescription.id,
-    label: prescription.id,
-    title: prescription.diagnosis,
-    animal: {
-      id: prescription.animalId,
-      species_type: animal ? speciesTypeLabel(animal) : "",
-    },
-    farm_name: store.farmName(prescription.farmId),
-    status_badges: [prescriptionStatusBadge(prescription), ...prescriptionAwareBadges(prescription)],
-    prescription: {
-      drug: prescription.drug,
-      route: prescription.route,
-      dose: prescription.dose,
-      frequency: prescription.frequency,
-      duration: prescription.duration,
-      reason: prescription.reason,
-    },
-  };
-
-  if (healthEvent) {
-    detail.health_event = { name: healthEvent.name, onset: healthEvent.onset };
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/cases/${caseId}`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch case detail");
   }
-
-  // Only Watch / Reserve / CIA drugs get the stewardship block.
-  if (requiresStewardshipNotice(prescription)) {
-    detail.stewardship = {
-      ...(prescription.aware ? { aware_badge: awareBadge(prescription.aware) } : {}),
-      ...(prescription.cia ? { cia_badge: { ...CIA_BADGE } } : {}),
-    };
-  }
-
-  if (prescription.treatmentHistory) {
-    detail.treatment_history = {
-      previous_episode: prescription.treatmentHistory.episode,
-      outcome_badge: { text: prescription.treatmentHistory.outcome, variant: prescription.treatmentHistory.outcome.toLowerCase() },
-      completed_date: prescription.treatmentHistory.completedDate,
-    };
-  }
-
-  return detail;
+  return await res.json() as any;
 };

@@ -22,7 +22,7 @@ export function PatientsTable({ patients, onViewClick }: PatientsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
-            {patients.map((item, idx) => (
+            {(patients || []).map((item, idx) => (
               <tr key={idx} className="hover:bg-[var(--color-bg)] transition-colors">
                 <td className="p-4 pl-5">
                   <div className="font-bold text-[13px] text-[var(--color-text)]">{item.id}</div>

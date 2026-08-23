@@ -39,7 +39,7 @@ export default function DispatchDetailPage() {
     );
   }
 
-  const timelineSteps = data.stages.map((s) => ({
+  const timelineSteps = (data.stages || []).map((s) => ({
     label: s.label,
     status: (s.state === "done" ? "complete" : s.state === "active" ? "current" : "upcoming") as "complete" | "current" | "upcoming",
   }));
@@ -229,7 +229,7 @@ export default function DispatchDetailPage() {
             </p>
 
             <div className="space-y-4">
-              {data.tests.map((test) => (
+              {(data.tests || []).map((test) => (
                 <Card 
                   key={test.num} 
                   className={`p-5 transition-colors ${test.active ? 'border-2 border-[var(--color-primary)] shadow-md' : ''}`}
@@ -307,7 +307,7 @@ export default function DispatchDetailPage() {
           <Card>
             <h2 className="font-display text-lg font-semibold text-[var(--color-text)] mb-6">Activity</h2>
             <div className="space-y-0 relative">
-              {data.activity.map((item, idx) => (
+              {(data.activity || []).map((item, idx) => (
                 <div key={idx} className="flex gap-4 relative">
                   <div className="flex flex-col items-center">
                     <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 z-10 bg-[var(--color-surface)] ${
@@ -318,7 +318,7 @@ export default function DispatchDetailPage() {
                       {item.icon === 'active' && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
                       {item.icon === 'neutral' && <div className="w-2 h-2 rounded-full bg-[var(--color-border)]" />}
                     </div>
-                    {idx < data.activity.length - 1 && (
+                    {idx < (data.activity || []).length - 1 && (
                       <div className="w-px h-full bg-[var(--color-border)] -my-1 absolute top-7 left-3.5" />
                     )}
                   </div>
@@ -341,7 +341,7 @@ export default function DispatchDetailPage() {
                 Assessment Summary
               </h3>
               <div className="space-y-3 mb-4">
-                {data.assessment.map(a => (
+                {(data.assessment || []).map(a => (
                   <div key={a.label} className="flex items-center justify-between">
                     <p className="text-sm text-[var(--color-text-muted)]">{a.label}</p>
                     <p className={`text-xs font-semibold ${

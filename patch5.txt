@@ -1,0 +1,1 @@
+- `type: poultry_flock` represents a flock. The `tag_id` field is treated identically in the database as any other animal ID (e.g. `Flock P-01`). For herd count purposes, a flock counts as 1 unit.

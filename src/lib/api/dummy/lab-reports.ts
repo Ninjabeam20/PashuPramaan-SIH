@@ -1,4 +1,4 @@
-import { store } from "@/lib/seed/store";
+import { getToken } from "./auth-utils";
 
 export type ReportMrl = {
   drug: string;
@@ -51,38 +51,18 @@ export type ReportsSummary = {
   color: "neutral" | "green" | "red" | "amber";
 };
 
-export const REPORTS_SUMMARY: ReportsSummary[] = store.getState().labReportTotals;
+export const REPORTS_SUMMARY: ReportsSummary[] = [
+  { v: "124", l: "Reports Generated", color: "neutral" },
+  { v: "8", l: "Positive Violations", color: "red" },
+  { v: "116", l: "Passed", color: "green" },
+];
 
 export async function fetchLabReports(): Promise<LabReport[]> {
-  await new Promise((r) => setTimeout(r, 500));
-
-  // CONFLICT: the milk report said CLEARED for MLK-2026-00124 while the testing queue and
-  // dashboard still had that lot on the bench. A report only exists once the lab has one
-  // (plan resolution 13) — the CLEARED milk report now belongs to MLK-2026-00118, the milk
-  // dispatch that really is finished, and EGG-2026-00241 gets its report when it is verified.
-  return store
-    .getLabSamples()
-    .filter((sample) => sample.report !== null)
-    .map((sample) => {
-      const report = sample.report!;
-      return {
-        id: sample.dispatchId,
-        product: sample.product,
-        productSub: sample.productSub,
-        source: sample.sourceName,
-        sample: sample.sampleId,
-        animal: sample.animalId ?? (sample.batchLabel ? `Batch ${sample.batchLabel}` : "—"),
-        date: sample.resultDate ?? sample.date,
-        status: report.status,
-        statusColor: report.statusColor,
-        refNo: report.refNo,
-        verifiedBy: report.verifiedBy,
-        verifiedOn: report.verifiedOn,
-        assessments: report.assessments.map((row) => ({ ...row })),
-        mrl: { ...report.mrl },
-        withdrawal: { ...report.withdrawal },
-        outcome: report.outcome,
-        outcomeOk: report.outcomeOk,
-      };
-    });
+  const token = getToken();
+  const res = await fetch("http://localhost:8000/api/lab/reports", {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  const data = await res.json();
+  // Backend returns { summary: [...], items: [...] }
+  return (data?.items || data || []) as any;
 }

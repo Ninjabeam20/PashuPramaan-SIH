@@ -68,7 +68,7 @@ export function AttentionCard({ item, onReviewClick }: { item: AttentionItem, on
 export function AttentionList({ items, onReviewClick }: { items: AttentionItem[], onReviewClick?: (caseId: string, actionText: string) => void }) {
   return (
     <div className="flex flex-col gap-4">
-      {items.map((item) => (
+      {(items || []).map((item) => (
         <AttentionCard key={item.id} item={item} onReviewClick={onReviewClick} />
       ))}
     </div>

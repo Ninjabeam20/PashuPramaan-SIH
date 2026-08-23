@@ -86,7 +86,7 @@ export function ListWidget<T>({
             </div>
             
             <div className={modalListClassName}>
-              {items.map((item, i) => renderItem(item, i, true, handleClose))}
+              {(items || []).map((item, i) => renderItem(item, i, true, handleClose))}
             </div>
             
             <div className="sticky bottom-0 z-10 bg-[var(--color-surface)] sm:rounded-b-2xl border-t border-[var(--color-border)] p-4 flex pb-safe sm:pb-4 justify-end">

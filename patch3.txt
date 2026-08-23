@@ -1,0 +1,19 @@
+### GET /api/farmer/vets
+
+Status: `NEEDED` — Fetch list of available veterinarians for consultation.
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": "vet-1",
+      "name": "Dr. Bankey",
+      "designation": "Veterinary Officer",
+      "vci_reg_no": "VCI-12345"
+    }
+  ]
+}
+```
+

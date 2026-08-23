@@ -74,7 +74,7 @@ export function MedicineStockTable({ initialData }: { initialData: MedicineStock
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {data.map((item) => (
+              {(data || []).map((item) => (
                 <tr key={item.name} className="hover:bg-[var(--color-surface)]/50 transition-colors">
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-[#557b4f] hover:underline cursor-pointer">{item.name}</span>
@@ -98,7 +98,7 @@ export function MedicineStockTable({ initialData }: { initialData: MedicineStock
 
         {/* Mobile Stacked Cards View */}
         <div className="sm:hidden flex flex-col divide-y divide-[var(--color-border)]">
-          {data.map((item) => (
+          {(data || []).map((item) => (
             <div key={item.name} className="p-4 flex flex-col gap-3">
               <div className="flex justify-between items-start">
                 <span className="text-sm font-bold text-[#557b4f]">{item.name}</span>
@@ -123,7 +123,7 @@ export function MedicineStockTable({ initialData }: { initialData: MedicineStock
 
       {isAddStockOpen && (
         <AddMedicineStockModal 
-          medicines={data.map(m => m.name)} 
+          medicines={(data || []).map(m => m.name)} 
           onClose={() => setIsAddStockOpen(false)} 
           onSubmit={handleAddStock} 
         />

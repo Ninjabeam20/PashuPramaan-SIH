@@ -1,5 +1,10 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
-import { animalStatus, animalTypeLabel, farmCounts, speciesOverview } from "@/lib/seed/project";
+
+export interface SpeciesCount {
+  species: string;
+  count: number;
+}
 
 export interface FarmDetail {
   farm: {
@@ -11,53 +16,30 @@ export interface FarmDetail {
     goats_count: number;
     under_treatment_count: number;
   };
-  species_overview: Array<{
-    species: string;
-    count: number;
-    healthy_count: number;
-    under_treatment_count: number;
-    waiting_count: number;
-  }>;
-  animals: Array<{
-    id: string;
-    type: string;
-    status: "under_treatment" | "healthy" | "waiting";
-  }>;
-  recent_activity: Array<{
-    icon: string;
-    title: string;
-    subject: string;
-    time_label: string;
-  }>;
+  species_overview: SpeciesCount[];
+  animals: any[];
+  recent_activity: any[];
 }
 
-export const getFarmDetail = async (): Promise<FarmDetail> => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const farm = store.getFarmerFarm();
-  const counts = farmCounts();
-
+export async function getFarmDetail(): Promise<FarmDetail> {
+  const token = getToken();
+  const res = await fetch("http://localhost:8000/api/farmer/animals", {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  const data = await res.json();
+  
   return {
     farm: {
-      name: farm.name,
-      status: counts.underTreatment > 3 ? "ATTENTION" : "GOOD",
-      total_animals: counts.total,
-      cows_count: counts.cows,
-      buffaloes_count: counts.buffaloes,
-      goats_count: counts.goats,
-      under_treatment_count: counts.underTreatment,
+      name: "Shree Krishna Dairy",
+      status: "GOOD",
+      total_animals: data.summary?.all_count || 0,
+      cows_count: 0,
+      buffaloes_count: 0,
+      goats_count: 0,
+      under_treatment_count: data.summary?.under_treatment_count || 0
     },
-    species_overview: speciesOverview(),
-    animals: store.getFarmerRoster().map((animal) => ({
-      id: animal.id,
-      type: animalTypeLabel(animal),
-      status: animalStatus(animal.id),
-    })),
-    recent_activity: store.getState().farmActivity.map((row) => ({
-      icon: row.icon,
-      title: row.title,
-      subject: row.subject,
-      time_label: row.timeLabel,
-    })),
+    species_overview: [],
+    animals: data.items || [],
+    recent_activity: []
   };
-};
+}

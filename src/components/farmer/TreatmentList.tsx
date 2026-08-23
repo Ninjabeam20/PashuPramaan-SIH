@@ -4,7 +4,8 @@ import { WithdrawalRibbon } from "./WithdrawalRibbon";
 import { TreatmentItem } from "@/lib/api/dummy/treatments";
 
 export function TreatmentList({ treatments, onViewAction }: { treatments: TreatmentItem[], onViewAction?: (id: string) => void }) {
-  if (treatments.length === 0) {
+  const safeTreatments = treatments || [];
+  if (safeTreatments.length === 0) {
     return (
       <div className="p-8 text-center text-sm text-[var(--color-text-muted)]">
         No treatments found matching your filters.
@@ -14,7 +15,7 @@ export function TreatmentList({ treatments, onViewAction }: { treatments: Treatm
 
   return (
     <div className="flex flex-col divide-y divide-[var(--color-border)]">
-      {treatments.map((treatment) => (
+      {safeTreatments.map((treatment) => (
         <TreatmentRow key={treatment.id} treatment={treatment} onViewAction={onViewAction} />
       ))}
     </div>
@@ -53,7 +54,7 @@ function TreatmentRow({ treatment, onViewAction }: { treatment: TreatmentItem, o
 
         {/* Badges Stack */}
         <div className="flex sm:flex-col flex-wrap sm:items-end gap-2 shrink-0">
-          {treatment.badges.map((badge, idx) => (
+          {(treatment.badges || []).map((badge, idx) => (
             <Badge key={idx} variant={badge.variant as BadgeVariant}>
               {badge.text}
             </Badge>

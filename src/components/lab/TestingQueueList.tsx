@@ -118,7 +118,7 @@ export function TestingQueueList({
           </div>
 
           <div className="space-y-3 mb-5">
-            {d.tests.map((test, i) => (
+            {(d.tests || []).map((test, i) => (
               <div key={i} className="flex items-center justify-between">
                 <p className={`text-sm ${test.status === 'done' ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)] font-medium'}`}>
                   {test.name}

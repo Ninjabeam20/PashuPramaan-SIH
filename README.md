@@ -289,13 +289,15 @@ The complete frontend-backend contract is documented under [`docs/api-contract.m
 
 ### Installation & Local Run
 
+#### 1. Frontend (Next.js)
+
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/Ninjabeam20/PashuPramaan-SIH.git
    cd PashuPramaan-SIH
    ```
 
-2. **Install dependencies**:
+2. **Install frontend dependencies**:
    ```bash
    npm install
    ```
@@ -307,6 +309,43 @@ The complete frontend-backend contract is documented under [`docs/api-contract.m
 
 4. **Access the application**:
    Open [http://localhost:3000](http://localhost:3000) (or **3001** if 3000 is already taken). `/` redirects to `/login`.
+
+#### 2. Backend (FastAPI + PostgreSQL)
+
+The application uses **PostgreSQL** and **FastAPI** with **SQLAlchemy**. You will need a local PostgreSQL database running.
+
+1. **Setup Python Virtual Environment**:
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Database Configuration**:
+   - Copy the example environment file:
+     ```bash
+     cp .env.example .env
+     ```
+   - Open `.env` and update the `DATABASE_URL` with your local PostgreSQL credentials. (e.g., `postgresql://postgres:password@localhost:5432/pashupramaan`).
+
+3. **Initialize the Database**:
+   Push the schema to your PostgreSQL database using Alembic migrations:
+   ```bash
+   alembic upgrade head
+   ```
+
+4. **Seed the Database**:
+   Populate the database with the canonical test data (farms, animals, health events, lab samples, etc.):
+   ```bash
+   PYTHONPATH=. python3 -m app.seed
+   ```
+
+5. **Start the FastAPI server**:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   The backend will run on [http://localhost:8000](http://localhost:8000).
 
 ### How to access the portals
 
@@ -390,7 +429,7 @@ PashuPramaan utilizes an organic, premium visual design system balancing agricul
 - [x] Prophet Demand & Health Event Trend Visualizations
 - [x] Admin / Researcher dashboard (`/admin`) — national AMU heatmap, anomalies, Health × AMU, forecast, workspace
 - [x] Per-state district maps (`/admin/states/[slug]`) — dummy livestock headcount
-- [ ] Backend FastAPI + PostgreSQL Integration (replacing dummy store)
+- [x] Backend FastAPI + PostgreSQL Integration (replacing dummy store)
 - [ ] ECDSA P-256 Hardware Token / WebAuthn Signature Ceremony
 - [ ] Native Hindi & Regional Language Localization (i18n)
 - [ ] Offline PWA Mode with Background Sync for rural connectivity

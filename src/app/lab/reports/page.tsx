@@ -38,7 +38,7 @@ export default function LabReportsPage() {
   }
 
   // Filter logic matching source exactly
-  const filtered = data.filter((r) => {
+  const filtered = (data || []).filter((r) => {
     const matchProduct =
       productFilter === "All Products" || r.product === productFilter;
     const matchStatus =

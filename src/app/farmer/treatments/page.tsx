@@ -53,7 +53,7 @@ export default function TreatmentsPage() {
     
     // For each animal, create a new treatment row client-side
     const newTreatments = animalIds.map((id: string) => {
-      const animal = farmData.animals.find(a => a.id === id);
+      const animal = (farmData?.animals || []).find(a => a.id === id);
       
       const newTrt: TreatmentItem = {
         id: `trt-new-${Date.now()}-${id}`,
@@ -91,7 +91,7 @@ export default function TreatmentsPage() {
   };
 
   // Client-side filtering
-  const filteredTreatments = localTreatments.filter(trt => {
+  const filteredTreatments = (localTreatments || []).filter(trt => {
     // Search match
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = 
@@ -168,8 +168,8 @@ export default function TreatmentsPage() {
       {/* Record Treatment Modal */}
       {isRecordModalOpen && (
         <RecordTreatmentModal
-          animals={farmData.animals}
-          prescriptions={prescriptions}
+          animals={farmData?.animals || []}
+          prescriptions={prescriptions || []}
           onClose={() => setIsRecordModalOpen(false)}
           onSubmit={handleRecordTreatment}
         />

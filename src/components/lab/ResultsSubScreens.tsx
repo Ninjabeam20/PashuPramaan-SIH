@@ -92,7 +92,7 @@ export function AssessmentScreen({ item, onBack, onSubmit }: AssessmentProps) {
           </div>
           <div className="px-5 pt-4 pb-3">
             <p className="text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase mb-3">Laboratory Results</p>
-            {item.tests.map((t) => (
+            {(item.tests || []).map((t) => (
               <CheckRow key={t.label} label={t.label} ok={t.ok} note={t.result} />
             ))}
           </div>

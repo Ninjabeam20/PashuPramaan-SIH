@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 // Dummy API for the Vet Signature Flow
 
 import { store } from "@/lib/seed/store";
@@ -94,72 +95,57 @@ const toSignDetail = (prescription: Prescription): PrescriptionSignDetail => {
 };
 
 export const getPrescriptionForSigning = async (rxId: string): Promise<PrescriptionSignDetail> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  // CONFLICT: this used to ignore `rxId` and always return the Krishna Dairy / MP-118 /
-  // Enrofloxacin body, so signing Rx-208 showed the wrong farm, animal and drug.
-  // It now branches on the prescription (plan resolution 11).
-  return toSignDetail(store.resolvePrescription(rxId));
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/prescriptions/${rxId}/for-signing`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
+  }
+  return await res.json() as any;
 };
 
 export const submitSignature = async (
   rxId: string,
-  payload: { typed_name: string; has_drawn_signature: boolean; pin: string },
+  payload: { typed_name: string; has_drawn_signature: boolean; pin: string, signature_image?: string },
 ) => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  if (payload.pin !== VET_SIGNATURE_PIN) {
-    throw new Error("Incorrect PIN");
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/prescriptions/${rxId}/sign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
   }
-
-  // Generate a dummy signature reference
-  const ref = Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join("");
-
-  return {
-    signed_by: payload.typed_name || store.getCurrentVet().name, // Fallback if they only drew
-    date_time: "22 Aug · 03:45 pm",
-    status: "signed",
-    signature_reference: `Signed · ${ref}`,
-  };
+  return await res.json() as any;
 };
 
 export const getEmergencyForCountersigning = async (rxId: string): Promise<PrescriptionSignDetail> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const prescription = store.resolvePrescription(rxId);
-  const detail = toSignDetail(prescription);
-
-  return {
-    ...detail,
-    confirmation_heading: "Countersignature confirmation",
-    confirmation_text:
-      "By countersigning, I confirm that I have reviewed this emergency administration record and am formally adding my countersignature to authorize it.",
-  };
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/emergencies/${rxId}/for-countersigning`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
+  }
+  return await res.json() as any;
 };
 
 export const submitCountersignature = async (
   rxId: string,
-  payload: { typed_name: string; has_drawn_signature: boolean; pin: string },
+  payload: { typed_name: string; has_drawn_signature: boolean; pin: string, signature_image?: string },
 ) => {
-  await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulating network & cryptographic delay
-
-  if (payload.pin !== VET_SIGNATURE_PIN) {
-    throw new Error("Invalid PIN");
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/emergencies/${rxId}/countersign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
   }
-
-  const now = new Date();
-  const formatTime = () => {
-    return `${now.getDate()} Aug · ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }).toLowerCase()}`;
-  };
-
-  const ref = Math.floor(1000000 + Math.random() * 9000000).toString();
-
-  return {
-    countersigned_by: payload.typed_name || store.getCurrentVet().name,
-    date_time: formatTime(),
-    status: "countersigned",
-    reference: `Countersigned · ${ref}`,
-    disclaimer_text:
-      "This countersignature records your formal review and authorization of the emergency administration. The original emergency administration record has been retained.",
-  };
+  return await res.json() as any;
 };

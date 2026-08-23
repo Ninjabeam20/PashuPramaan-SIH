@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { animalStatus, signatureBadge, withdrawalDto } from "@/lib/seed/project";
 import { WithdrawalData, BadgeData } from "./treatments";
@@ -22,46 +23,13 @@ export interface AnimalDetail {
 }
 
 export const getAnimalDetail = async (animalId: string): Promise<AnimalDetail> => {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-
-  const animal = store.getAnimal(animalId);
-
-  // Animals added during this session that are not seeded yet fall back to a
-  // healthy placeholder, exactly as before the store existed.
-  if (!animal) {
-    return {
-      id: animalId,
-      type: "Cow",
-      status: "healthy",
-      breed: "Unknown",
-      sex: "Female",
-      date_of_birth: "01 Jan 2020",
-      production_type: "Dairy",
-      registered_on: "15 Jun 2021",
-      current_treatment: null,
-    };
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/animals/${animalId}`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
   }
-
-  const treatment = store.getOpenTreatment(animal.id);
-
-  return {
-    id: animal.id,
-    type: animal.species,
-    status: animalStatus(animal.id),
-    breed: animal.breed,
-    sex: animal.sex,
-    date_of_birth: animal.dateOfBirth,
-    production_type: animal.productionType,
-    registered_on: animal.registeredOn,
-    current_treatment: treatment
-      ? {
-          drug: treatment.drug,
-          route: treatment.route,
-          dosage: treatment.dosage,
-          administered_at: treatment.administeredLabel,
-          signed_badge: signatureBadge(treatment),
-          withdrawal: treatment.withdrawal ? withdrawalDto(treatment.withdrawal) : null,
-        }
-      : null,
-  };
+  return await res.json() as any;
 };

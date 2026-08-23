@@ -110,7 +110,7 @@ function PrescriptionsContent() {
   ];
 
   // Client-side filtering
-  const filteredItems = data.items.filter(item => {
+  const filteredItems = (data.items || []).filter(item => {
     // 1. Search matching
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery || 
@@ -125,7 +125,7 @@ function PrescriptionsContent() {
     if (selectedFilter === "all") return true;
     
     // Simplistic tag matching for the demo
-    const statusBadges = item.status_badges.map(b => b.variant.toLowerCase());
+    const statusBadges = (item.status_badges || []).map(b => b.variant.toLowerCase());
     
     if (selectedFilter === "awaiting_signature" && statusBadges.includes("sign")) return true;
     if (selectedFilter === "unsigned_emergency" && statusBadges.includes("unsigned_emergency")) return true;

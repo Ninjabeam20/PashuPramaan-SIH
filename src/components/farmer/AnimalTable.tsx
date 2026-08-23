@@ -11,6 +11,8 @@ export interface AnimalItem {
 
 export function AnimalTable({ animals, onViewAction }: { animals: AnimalItem[], onViewAction?: (id: string) => void }) {
   const [historyAnimalId, setHistoryAnimalId] = React.useState<string | null>(null);
+  // Defensive: treat undefined/null animals as empty array
+  const safeAnimals = animals || [];
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -42,12 +44,12 @@ export function AnimalTable({ animals, onViewAction }: { animals: AnimalItem[], 
 
       {/* Rows */}
       <div className="flex flex-col divide-y divide-[var(--color-border)]">
-        {animals.length === 0 ? (
+        {safeAnimals.length === 0 ? (
           <div className="p-8 text-center text-sm text-[var(--color-text-muted)]">
             No animals found matching your filters.
           </div>
         ) : (
-          animals.map((animal, idx) => (
+          safeAnimals.map((animal, idx) => (
             <div 
               key={idx} 
               className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 p-4 sm:px-5 sm:py-4 hover:bg-[var(--color-bg)] transition-colors items-start sm:items-center"

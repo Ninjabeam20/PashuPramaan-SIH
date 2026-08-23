@@ -1,0 +1,25 @@
+### POST /api/lab/dispatches/{dispatchId}/receive
+
+Status: `NEEDED` — Marks a dispatched sample as received by the laboratory and moves it into the testing queue.
+
+**Request**
+
+```json
+{
+  "condition": "Acceptable | Compromised | Rejected",
+  "temperature": "string",
+  "container": "Intact | Damaged",
+  "notes": "string, optional"
+}
+```
+
+**Response 200**
+
+```json
+{
+  "success": true,
+  "dispatchId": "MLK-2026-00124",
+  "new_status": "READY FOR TESTING"
+}
+```
+

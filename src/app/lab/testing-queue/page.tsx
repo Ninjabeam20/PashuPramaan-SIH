@@ -46,12 +46,12 @@ export default function TestingQueuePage() {
   }
 
   // Filter Data
-  const filteredAwaiting = data.awaiting.filter((item) => {
+  const filteredAwaiting = (data.awaiting || []).filter((item) => {
     if (productFilter !== "all" && item.product.toLowerCase() !== productFilter) return false;
     return true;
   });
 
-  const filteredReady = data.ready.filter((item) => {
+  const filteredReady = (data.ready || []).filter((item) => {
     if (productFilter !== "all" && item.product.toLowerCase() !== productFilter) return false;
     return true;
   });
@@ -86,9 +86,9 @@ export default function TestingQueuePage() {
       {/* Summary Strip (Desktop only) */}
       <div className="hidden md:flex border-b border-[var(--color-border)] bg-[var(--color-surface)] rounded-b-2xl mb-6 shadow-sm overflow-hidden">
         {[
-          { v: data.awaiting.length.toString(), l: "Awaiting Receipt" },
-          { v: data.ready.length.toString(), l: "Tests Active" },
-          { v: data.awaiting.filter(a => a.priority === "HIGH PRIORITY").length.toString(), l: "High Priority" },
+          { v: (data.awaiting || []).length.toString(), l: "Awaiting Receipt" },
+          { v: (data.ready || []).length.toString(), l: "Tests Active" },
+          { v: (data.awaiting || []).filter(a => a.priority === "HIGH PRIORITY").length.toString(), l: "High Priority" },
         ].map(({ v, l }, i) => (
           <div key={l} className={`flex-1 py-3 text-center border-r border-[var(--color-border)] last:border-0`}>
             <p className="font-display text-xl font-bold text-[var(--color-text)] leading-none">{v}</p>

@@ -28,7 +28,7 @@ export default function DispatchPage() {
 
   React.useEffect(() => {
     if (dispatchData && !localDispatches) {
-      setLocalDispatches(dispatchData.items);
+      setLocalDispatches(dispatchData.items || []);
     }
   }, [dispatchData, localDispatches]);
 
@@ -93,7 +93,7 @@ export default function DispatchPage() {
       {/* Start Dispatch Modal */}
       {isStartModalOpen && farmData && (
         <StartDispatchModal
-          animals={farmData.animals}
+          animals={farmData.animals || []}
           onClose={() => setIsStartModalOpen(false)}
           onSuccess={handleDispatchSuccess}
         />

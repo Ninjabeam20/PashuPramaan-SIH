@@ -22,7 +22,7 @@ export function AnimalOverviewCards({ data }: { data: SpeciesOverview[] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {data.map((item, idx) => (
+      {(data || []).map((item, idx) => (
         <div key={idx} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-sm flex flex-col">
           
           <div className="flex items-center gap-4 mb-6 pb-5 border-b border-[var(--color-border)]">

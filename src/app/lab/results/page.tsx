@@ -44,7 +44,7 @@ export default function LabResultsPage() {
   }
 
   // Filter logic matching the source exactly
-  const filtered = data.filter((r) => {
+  const filtered = (data || []).filter((r) => {
     const matchFilter =
       filter === "All" ||
       (filter === "Awaiting Verification" && r.status === "AWAITING VERIFICATION") ||

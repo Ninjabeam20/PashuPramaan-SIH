@@ -152,7 +152,7 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
     { id: "Eggs", icon: "🥚" }
   ];
 
-  const filteredAnimals = animals.filter(a => a.id.toLowerCase().includes(searchQuery.toLowerCase()) || a.type.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredAnimals = (animals || []).filter(a => a.id.toLowerCase().includes(searchQuery.toLowerCase()) || a.type.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
@@ -317,7 +317,7 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
                     <div className="border border-[var(--color-border)] rounded-xl flex flex-col text-sm">
                       <div className="flex justify-between items-center p-4 border-b border-[var(--color-border)]">
                         <span className="text-[var(--color-text-muted)]">Prescription</span>
-                        {safetyOutcome.prescription.signed ? (
+                        {safetyOutcome.prescription?.signed ? (
                           <Badge variant="vet_signed">Vet Signed</Badge>
                         ) : (
                           <Badge variant="unsigned_emergency">Unsigned</Badge>
@@ -325,8 +325,8 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
                       </div>
                       <div className="flex justify-between items-center p-4">
                         <span className="text-[var(--color-text-muted)]">Lab Assay</span>
-                        <span className={safetyOutcome.lab_assay.available ? "text-[#1e6147] font-medium" : "text-[var(--color-text-muted)]"}>
-                          {safetyOutcome.lab_assay.available ? "Lab result available" : "No lab assay on file"}
+                        <span className={safetyOutcome.lab_assay?.available ? "text-[#1e6147] font-medium" : "text-[var(--color-text-muted)]"}>
+                          {safetyOutcome.lab_assay?.available ? "Lab result available" : "No lab assay on file"}
                         </span>
                       </div>
                     </div>
