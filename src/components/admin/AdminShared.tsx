@@ -320,7 +320,7 @@ export function IndiaMap({ highlightId, onHover, onClick }: { highlightId:string
             {geoName !== row.state && (
               <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, marginBottom: 6 }}>{geoName}</p>
             )}
-            {[{ k: "AMU", v: row.amu.toLocaleString() }, { k: "Change", v: `↑ ${row.change}%` }, { k: "Anomalies", v: row.anomalies }, { k: "Unexplained", v: row.unexplained }].map(({ k, v }) => (
+            {[{ k: "AMU", v: row.amu.toLocaleString('en-IN') }, { k: "Change", v: `↑ ${row.change}%` }, { k: "Anomalies", v: row.anomalies }, { k: "Unexplained", v: row.unexplained }].map(({ k, v }) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
                 <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>{k}</span>
                 <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{v}</span>
@@ -348,7 +348,7 @@ export function DistrictGrid({ stateId, highlightId, onHover }: { stateId:string
             <div key={d.district} onMouseEnter={() => onHover(hid)} onMouseLeave={() => onHover(null)}
               style={{ background:hov?"#2D6A4F":amuFill(d.amu), border:`1px solid ${hov?"#1A4030":amuStroke(d.amu)}`, borderRadius:6, padding:"10px 8px", cursor:"default", transition:"background 0.12s" }}>
               <p style={{ fontSize:11, fontWeight:600, color:hov?"#fff":"#111827", lineHeight:1.2, marginBottom:3 }}>{d.district}</p>
-              <p style={{ fontSize:10, fontFamily:"monospace", color:hov?"rgba(255,255,255,0.8)":"#6B7280" }}>{d.amu.toLocaleString()}</p>
+              <p style={{ fontSize:10, fontFamily:"monospace", color:hov?"rgba(255,255,255,0.8)":"#6B7280" }}>{d.amu.toLocaleString('en-IN')}</p>
             </div>
           )
         })}
@@ -557,7 +557,7 @@ export function OverviewTab({ onNavigate }: { onNavigate?: (tab: TabId, filters?
                             <span style={{ fontSize:13, fontWeight:500, color:"#111827" }}>{row.state}</span>
                           </div>
                         </td>
-                        <td style={{ padding:"10px 16px", textAlign:"right", fontFamily:"monospace", fontSize:13, color:"#374151" }}>{row.amu.toLocaleString()}</td>
+                        <td style={{ padding:"10px 16px", textAlign:"right", fontFamily:"monospace", fontSize:13, color:"#374151" }}>{row.amu.toLocaleString('en-IN')}</td>
                         <td style={{ padding:"10px 16px", textAlign:"right" }}><span style={{ fontSize:11, fontWeight:600, background:cp.bg, color:cp.text, padding:"2px 7px", borderRadius:10 }}>{cp.label}</span></td>
                         <td style={{ padding:"10px 16px", textAlign:"right", fontSize:13, color:"#374151" }}>{row.anomalies}</td>
                         <td style={{ padding:"10px 16px", textAlign:"right", fontSize:12, fontWeight:600, color:row.unexplained>0?"#B91C1C":"#9CA3AF" }}>{row.unexplained>0?row.unexplained:"—"}</td>
@@ -714,7 +714,7 @@ export function AnalyticsTab({ initialMetricFilter = "AMU", initialStateFilter =
           <SL>Summary</SL>
           <p style={{ fontSize:14, fontWeight:600, color:"#111827", marginTop:2, marginBottom:16 }}>{summary.label}</p>
           {[
-            { label:"Total AMU",       value: summary.amu.toLocaleString() },
+            { label:"Total AMU",       value: summary.amu.toLocaleString('en-IN') },
             { label:"Change vs prev.", value:`↑ ${summary.change}%`,          color:"#C2410C" },
             { label:"Active Anomalies",value:`${summary.anomalies}` },
             { label:"Unexplained",     value:`${summary.unexplained}`,         color: summary.unexplained>0?"#B91C1C":undefined },

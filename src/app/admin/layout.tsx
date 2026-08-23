@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, createContext, useContext } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { SAVED_INSIGHTS_INIT, SavedInsight, TabId } from "@/components/admin/AdminShared";
 
@@ -92,14 +93,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div style={{ background:"#F5F3EE", minHeight:"100vh", fontFamily:"Inter, system-ui, sans-serif" }}>
         {/* NavBar */}
         <nav style={{ background:"#fff", borderBottom:"1px solid #E8E4DC", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:52, position:"sticky", top:0, zIndex:10 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-            <div style={{ width:28, height:28, background:"#1A2E24", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2C5.6 2 4 3.8 4 6c0 1.4.6 2.6 1.6 3.4L4.4 14h7.2l-1.2-4.6C11.4 8.6 12 7.4 12 6c0-2.2-1.6-4-4-4z" fill="white" fillOpacity="0.9"/>
-              </svg>
-            </div>
-            <span style={{ fontWeight:600, fontSize:14, color:"#111827", letterSpacing:"-0.01em" }}>PashuPramaan</span>
-          </div>
+          <Link href="/admin/overview" style={{ display:"flex", alignItems:"center", flexShrink:0, textDecoration:"none" }}>
+            <Image src="/images/logo.png" alt="PashuPramaan Logo" width={140} height={40} style={{ objectFit:"contain", height:32, width:"auto" }} priority />
+          </Link>
           <div style={{ display:"flex", alignItems:"center", gap:2, overflowX:"auto" }}>
             {tabs.map(t => {
               const isActive = activeTabId === t.id;

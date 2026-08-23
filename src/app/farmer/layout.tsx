@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Beef, Bell, Home, LayoutGrid, Syringe, Truck, LineChart } from "lucide-react";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
@@ -24,12 +25,17 @@ export default function FarmerLayout({ children }: { children: React.ReactNode }
         <header className="sticky top-0 z-50 bg-[var(--color-surface)] border-b border-[var(--color-border)] shadow-sm h-16">
           <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
             {/* Left: Brand */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[var(--color-primary)] rounded-md flex items-center justify-center text-white">
-                <Beef size={20} />
-              </div>
-              <span className="font-bold text-[var(--color-text)] tracking-tight">PashuPramaan</span>
-            </div>
+            <Link href="/farmer/home" className="flex items-center">
+              <Image 
+                src="/images/logo.png" 
+                alt="PashuPramaan Logo" 
+                width={140} 
+                height={40} 
+                className="object-contain"
+                style={{ width: 'auto', height: '40px' }}
+                priority
+              />
+            </Link>
 
             {/* Center: Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1 h-full">
