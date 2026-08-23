@@ -4,16 +4,22 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Beef, Bell } from "lucide-react";
+import { Beef, Bell, Home, FileText, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+
+const NAV_ITEMS = [
+  { name: "Home", href: "/vet/home", icon: Home },
+  { name: "Prescriptions", href: "/vet/prescriptions", icon: FileText },
+  { name: "Patients", href: "/vet/patients", icon: Users },
+];
 
 export default function VetLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
     <ReactQueryProvider>
-      <div className="min-h-screen flex flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
+      <div className="min-h-screen flex flex-col bg-[var(--color-bg)] text-[var(--color-text)] pb-20 md:pb-0">
         <header className="sticky top-0 z-40 w-full h-16 border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
         <div className="flex h-full items-center px-4 md:px-8 justify-between">
           <Link href="/vet/home" className="flex items-center">
@@ -67,9 +73,29 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 pt-8 pb-16">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 pt-8">
           {children}
         </main>
+
+        {/* Bottom Mobile Nav */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] h-16 flex items-center justify-around px-2 pb-safe z-50">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname.startsWith(item.href) && (item.href !== '/vet/home' || pathname === '/vet/home');
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${
+                  isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"
+                }`}
+              >
+                <Icon size={20} />
+                <span className="text-[10px] font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </ReactQueryProvider>
   );

@@ -527,7 +527,7 @@ export function OverviewTab({ onNavigate }: { onNavigate?: (tab: TabId, filters?
             View full analytics →
           </button>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card style={{ padding:16, overflow:"hidden" }}>
             <IndiaMap 
               highlightId={hoverId} 
@@ -537,8 +537,8 @@ export function OverviewTab({ onNavigate }: { onNavigate?: (tab: TabId, filters?
           </Card>
           <Card style={{ overflow:"hidden" }}>
             <div style={{ padding:"14px 16px", borderBottom:"1px solid #E8E4DC" }}><SL>By State</SL></div>
-            <div style={{ overflowY:"auto", maxHeight:380 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse" }}>
+            <div style={{ overflowY:"auto", overflowX:"auto", maxHeight:380 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", minWidth:400 }}>
                 <thead><tr>
                   {["State","AMU","Change","Anomalies","Unexplained"].map((h,i) => (
                     <th key={h} style={{ ...TH_STYLE, textAlign: i===0?"left":"right" }}>{h}</th>
@@ -689,7 +689,7 @@ export function AnalyticsTab({ initialMetricFilter = "AMU", initialStateFilter =
         </div>
       </Card>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 272px", gap:16 }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_272px] gap-4">
         {/* Map / District vector map */}
         <Card style={{ padding:16, overflow:"hidden" }}>
           {!drillStateId ? (
@@ -883,30 +883,30 @@ export function AnomalyDetail({ anomaly, onBack, onSaveInsight }: { anomaly: Ano
   return (
     <>
     {showTreatment && <TreatmentRecordsModal anomaly={anomaly} onClose={() => setShowTreatment(false)}/>}
-    <div style={{ maxWidth:1100, margin:"0 auto", padding:"28px 24px 48px" }}>
+    <div className="max-w-[1100px] mx-auto px-4 md:px-6 pt-7 pb-12">
       {/* Back + header */}
       <button onClick={onBack} style={{ fontSize:13, fontWeight:500, color:"#2D6A4F", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", padding:0, marginBottom:16, display:"flex", alignItems:"center", gap:4 }}>
         ← Back to anomalies
       </button>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
         <div>
           <SL>Anomaly Investigation</SL>
           <h1 style={{ fontSize:24, fontWeight:700, color:"#111827", margin:"4px 0 4px" }}>{anomaly.farm}</h1>
           <p style={{ fontSize:13, color:"#6B7280" }}>{anomaly.region} · {anomaly.species} · {anomaly.date}</p>
         </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
           <span style={{ fontSize:11, fontWeight:700, background:sv.bg, color:sv.text, padding:"3px 10px", borderRadius:10, letterSpacing:"0.04em" }}>{anomaly.severity}</span>
           <span style={{ fontSize:11, fontWeight:700, background:st.bg, color:st.text, padding:"3px 10px", borderRadius:10, letterSpacing:"0.04em" }}>{anomaly.status}</span>
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 320px", gap:16 }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4">
         {/* Left — main detail */}
         <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
           {/* AMU stats row */}
           <Card style={{ padding:"18px 20px" }}>
             <SL>AMU Usage</SL>
-            <div style={{ display:"flex", alignItems:"center", gap:0, marginTop:8 }}>
+            <div className="grid grid-cols-2 gap-4 md:gap-0 md:flex md:items-center mt-2">
               {[
                 { value:`+${anomaly.amuChange}%`, label:"AMU change", color:"#B91C1C" },
                 { value:`+${anomaly.baseline}%`,   label:"Expected baseline range", color:"#374151" },
@@ -914,7 +914,7 @@ export function AnomalyDetail({ anomaly, onBack, onSaveInsight }: { anomaly: Ano
                 { value: anomaly.species,           label:"Species",   color:"#111827" },
               ].map(({ value, label, color }, i) => (
                 <React.Fragment key={i}>
-                  {i > 0 && <div style={{ width:1, background:"#E8E4DC", height:34, margin:"0 20px" }}/>}
+                  {i > 0 && <div className="hidden md:block w-[1px] bg-[#E8E4DC] h-8 mx-5" />}
                   <div>
                     <p style={{ fontSize:20, fontWeight:700, color, lineHeight:1.1 }}>{value}</p>
                     <p style={{ fontSize:11, color:"#6B7280", marginTop:2 }}>{label}</p>
@@ -926,9 +926,9 @@ export function AnomalyDetail({ anomaly, onBack, onSaveInsight }: { anomaly: Ano
 
           {/* Historical chart */}
           <Card style={{ padding:"16px 20px" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12, flexWrap:"wrap", gap:8 }}>
               <SL>Historical AMU (12 months)</SL>
-              <div style={{ display:"flex", gap:12 }}>
+              <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:5 }}>
                   <div style={{ width:16, height:2, background:"#2D6A4F" }}/><span style={{ fontSize:11, color:"#6B7280" }}>AMU</span>
                 </div>
@@ -1235,7 +1235,7 @@ export function HealthAMUTab() {
   const speciesList = ["All Species","Dairy","Poultry"]
 
   return (
-    <div style={{ maxWidth:1200, margin:"0 auto", padding:"28px 24px 48px" }}>
+    <div className="max-w-[1200px] mx-auto px-4 md:px-6 pt-7 pb-12">
       <div style={{ marginBottom:20 }}>
         <SL>Researcher · Contextual Analysis</SL>
         <h1 style={{ fontSize:26, fontWeight:700, color:"#111827", margin:"4px 0 4px" }}>Health × AMU</h1>
@@ -1253,7 +1253,7 @@ export function HealthAMUTab() {
 
       {/* Summary */}
       <Card style={{ padding:"16px 20px", marginBottom:16 }}>
-        <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap" }}>
+        <div className="grid grid-cols-2 md:flex items-center gap-4 md:gap-0 mt-2">
           {[
             { value:"25",            label:"AMU spikes identified",    color:"#111827" },
             { value:`${explained}`,  label:"Explained by health events",color:"#065F46" },
@@ -1261,7 +1261,7 @@ export function HealthAMUTab() {
             { value:`${mixed}`,      label:"Mixed",                     color:"#92400E" },
           ].map(({ value, label, color }, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <div style={{ width:1, background:"#E8E4DC", height:34, margin:"0 24px" }}/>}
+              {i > 0 && <div className="hidden md:block w-[1px] bg-[#E8E4DC] h-8 mx-5" />}
               <div><p style={{ fontSize:22, fontWeight:700, color, lineHeight:1.1 }}>{value}</p><p style={{ fontSize:12, color:"#6B7280", marginTop:2 }}>{label}</p></div>
             </React.Fragment>
           ))}
@@ -1294,14 +1294,14 @@ export function HealthAMUTab() {
       </Card>
 
       {/* Two columns: table + analytical card */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:16 }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-4">
         {/* Breakdown table */}
-        <Card style={{ overflow:"hidden" }}>
-          <div style={{ padding:"14px 18px", borderBottom:"1px solid #E8E4DC" }}>
+        <Card style={{ overflow:"hidden", overflowX:"auto" }}>
+          <div style={{ padding:"14px 18px", borderBottom:"1px solid #E8E4DC", minWidth: 500 }}>
             <SL>Breakdown by Health Event</SL>
             <p style={{ fontSize:12, color:"#6B7280" }}>{filtered.length} event types · {periodF}</p>
           </div>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", minWidth: 500 }}>
             <thead>
               <tr>
                 {["Health Event","Species","AMU Change","Farms Affected","Classification"].map((h, i) => (
@@ -1553,7 +1553,7 @@ export function ForecastTab() {
   }
 
   return (
-    <div style={{ maxWidth:1200, margin:"0 auto", padding:"28px 24px 48px" }}>
+    <div className="max-w-[1200px] mx-auto px-4 md:px-6 pt-7 pb-12">
       <div style={{ marginBottom:20 }}>
         <SL>Researcher · Decision Support</SL>
         <h1 style={{ fontSize:26, fontWeight:700, color:"#111827", margin:"4px 0 4px" }}>Forecast & Planning</h1>
@@ -1570,12 +1570,12 @@ export function ForecastTab() {
 
       {/* Forecast chart */}
       <Card style={{ padding:"16px 20px", marginBottom:16 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14, flexWrap:"wrap", gap:8 }}>
           <div>
             <SL>30-Day Medicine Demand Forecast</SL>
             <p style={{ fontSize:12, color:"#6B7280" }}>Historical AMU with {periodF.toLowerCase()} projection · normalised index</p>
           </div>
-          <div style={{ display:"flex", gap:14 }}>
+          <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
             <div style={{ display:"flex", alignItems:"center", gap:5 }}>
               <div style={{ width:20, height:2, background:"#374151" }}/><span style={{ fontSize:11, color:"#6B7280" }}>Historical</span>
             </div>
@@ -1591,12 +1591,12 @@ export function ForecastTab() {
       </Card>
 
       {/* Forecast summary table */}
-      <Card style={{ overflow:"hidden", marginBottom:16 }}>
-        <div style={{ padding:"14px 18px", borderBottom:"1px solid #E8E4DC" }}>
+      <Card style={{ overflow:"hidden", overflowX:"auto", marginBottom:16 }}>
+        <div style={{ padding:"14px 18px", borderBottom:"1px solid #E8E4DC", minWidth: 500 }}>
           <SL>Medicine Forecast Summary</SL>
           <p style={{ fontSize:12, color:"#6B7280" }}>{periodF} · {speciesF}</p>
         </div>
-        <table style={{ width:"100%", borderCollapse:"collapse" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", minWidth: 500 }}>
           <thead>
             <tr>
               {["Medicine","Predicted Need","Change","Recommendation"].map((h,i) => (
@@ -1640,7 +1640,7 @@ export function ForecastTab() {
         <p style={{ fontSize:13, color:"#6B7280", marginBottom:16 }}>State-level predicted demand for the {periodF.toLowerCase()}. Hover a state for details.</p>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {/* Demand map */}
         <Card style={{ padding:16, overflow:"hidden" }}>
           <div style={{ marginBottom:8 }}><SL>Predicted Demand Map</SL></div>
@@ -1648,10 +1648,10 @@ export function ForecastTab() {
         </Card>
 
         {/* Regional table */}
-        <Card style={{ overflow:"hidden" }}>
-          <div style={{ padding:"14px 16px", borderBottom:"1px solid #E8E4DC" }}><SL>Planning Signals by State</SL></div>
-          <div style={{ overflowY:"auto", maxHeight:412 }}>
-            <table style={{ width:"100%", borderCollapse:"collapse" }}>
+        <Card style={{ overflow:"hidden", overflowX:"auto" }}>
+          <div style={{ padding:"14px 16px", borderBottom:"1px solid #E8E4DC", minWidth:500 }}><SL>Planning Signals by State</SL></div>
+          <div style={{ overflowY:"auto", overflowX:"auto", maxHeight:412 }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", minWidth:500 }}>
               <thead>
                 <tr>
                   {["State","Predicted","Current AMU","Change","Signal"].map((h,i) => (
@@ -1703,15 +1703,15 @@ export function ForecastTab() {
 
       {/* AI-assisted note */}
       <Card style={{ padding:"16px 20px", borderLeft:"4px solid #E8E4DC" }}>
-        <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
-          <div style={{ flexShrink:0 }}>
+        <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-14">
+          <div className="flex-1">
             <SL>AI-Assisted Resource Planning</SL>
             <p style={{ fontSize:13, color:"#374151", lineHeight:1.55, marginTop:6, maxWidth:720 }}>
               The forecast highlights where antimicrobial demand may rise. Human decision-makers use this information to plan availability and support.
               The model does not allocate subsidies, make enforcement decisions, or prescribe drugs. It is decision support only.
             </p>
           </div>
-          <div style={{ flexShrink:0, display:"flex", flexDirection:"column", gap:6 }}>
+          <div className="flex flex-col gap-2 shrink-0 md:mt-0 mt-2">
             {["Model does not allocate subsidies","Model does not make enforcement decisions","Model does not prescribe drugs"].map(t => (
               <div key={t} style={{ display:"flex", alignItems:"center", gap:6 }}>
                 <div style={{ width:6, height:6, borderRadius:"50%", background:"#9CA3AF", flexShrink:0 }}/>

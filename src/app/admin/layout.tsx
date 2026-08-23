@@ -3,6 +3,7 @@ import React, { useState, createContext, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { Home, BarChart2, AlertTriangle, Activity, TrendingUp, BookOpen } from "lucide-react";
 import { SAVED_INSIGHTS_INIT, SavedInsight, TabId } from "@/components/admin/AdminShared";
 
 type AdminContextType = {
@@ -69,13 +70,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push(`/admin/${tab}`);
   };
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id:"overview",  label:"Overview" },
-    { id:"analytics", label:"AMU & Regional Analytics" },
-    { id:"anomalies", label:"Anomalies" },
-    { id:"health",    label:"Health × AMU" },
-    { id:"forecast",  label:"Forecast & Planning" },
-    { id:"workspace", label:"Research Workspace" },
+  const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
+    { id:"overview",  label:"Overview", icon: <Home size={20} /> },
+    { id:"analytics", label:"AMU & Regional Analytics", icon: <BarChart2 size={20} /> },
+    { id:"anomalies", label:"Anomalies", icon: <AlertTriangle size={20} /> },
+    { id:"health",    label:"Health × AMU", icon: <Activity size={20} /> },
+    { id:"forecast",  label:"Forecast & Planning", icon: <TrendingUp size={20} /> },
+    { id:"workspace", label:"Research Workspace", icon: <BookOpen size={20} /> },
   ];
 
   const activeTabId = pathname.split("/").pop() as TabId;
@@ -90,13 +91,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       analyticsStateFilter, setAnalyticsStateFilter,
       handleNavigate, saveInsight, openAnalysis
     }}>
-      <div style={{ background:"#F5F3EE", minHeight:"100vh", fontFamily:"Inter, system-ui, sans-serif" }}>
+      <div className="pb-16 md:pb-0" style={{ background:"#F5F3EE", minHeight:"100vh", fontFamily:"Inter, system-ui, sans-serif" }}>
         {/* NavBar */}
         <nav style={{ background:"#fff", borderBottom:"1px solid #E8E4DC", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:64, position:"sticky", top:0, zIndex:10 }}>
           <Link href="/admin/overview" style={{ display:"flex", alignItems:"center", flexShrink:0, textDecoration:"none" }}>
             <Image src="/images/logo.png" alt="PashuPramaan Logo" width={140} height={40} style={{ objectFit:"contain", height:40, width:"auto" }} priority />
           </Link>
-          <div style={{ display:"flex", alignItems:"center", gap:2, overflowX:"auto" }}>
+          <div className="hidden md:flex items-center gap-2 overflow-x-auto">
             {tabs.map(t => {
               const isActive = activeTabId === t.id;
               return (
@@ -112,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
-            <span style={{ fontSize:12, color:"#6B7280", fontWeight:600 }}>EN</span>
+            <span className="hidden sm:block" style={{ fontSize:12, color:"#6B7280", fontWeight:600 }}>EN</span>
             <button style={{ background:"none", border:"none", cursor:"pointer", position:"relative", padding:4 }}>
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" strokeWidth="1.8">
                 <path d="M15 17H20L18.6 15.6A1.5 1.5 0 0118 14.5V11a6 6 0 00-4-5.66V5a2 2 0 00-4 0v.34A6 6 0 006 11v3.5a1.5 1.5 0 01-.6 1.1L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" strokeLinecap="round" strokeLinejoin="round"/>
@@ -123,6 +124,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </nav>
         {children}
+
+        {/* Bottom Mobile Nav */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8E4DC] h-16 flex items-center justify-around px-2 pb-safe z-50">
+          {tabs.map((t) => {
+            const isActive = activeTabId === t.id;
+            return (
+              <Link
+                key={t.id}
+                href={`/admin/${t.id}`}
+                className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${
+                  isActive ? "text-[#1A3A25]" : "text-[#6B7280]"
+                }`}
+              >
+                {t.icon}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </AdminContext.Provider>
   );
