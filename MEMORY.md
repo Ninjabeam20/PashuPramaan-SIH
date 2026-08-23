@@ -4,8 +4,8 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-23  
 **Branch:** `main`  
-**HEAD:** `f3effda` — major frontend remodelling , backend integration , map naming and changes, individual states and districts added-ug  
-**Note:** `backend` and `main` both point at `f3effda`. Working-tree deletion of `Create Dashboard Page/` is staged on `main` for the user’s commit (not committed by the agent).
+**HEAD:** `3f8f95e` — Fea: Added proper logo  
+**Note:** Uncommitted navbar height alignment across farmer, vet, and admin shells.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -13,16 +13,11 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ---
 
-## Current tree (staged on `main`, not committed)
+## Current tree (unstaged on `main`)
 
-Checked out `main` (already equal to `backend` at `f3effda`; nothing to merge at commit level). Staged for the user to commit and push:
-
-- Deleted leftover Vite/Figma scaffold `Create Dashboard Page/` (28 tracked files). Live admin UI is `src/app/admin/page.tsx` and did not import that folder.
-- `tsconfig.json`: dropped the `Create Dashboard Page` exclude; exclude is now `node_modules` only.
-- README: directory tree notes that admin lives only under App Router; Vite leftover removed.
-- `cursor changes/Cursor_changes 2.MD` and `Cursor_changes 10.MD`: out-of-scope bullets updated (folder gone).
-
-Local-only (gitignored): `.playwright-mcp/`, root `admin-*.png`. After the user commits, move this section into **Commit history** with `git log -1`.
+- Admin sticky nav height `52` → `64` in `src/app/admin/layout.tsx` and unused `NavBar` in `src/components/admin/AdminShared.tsx` so it matches farmer/vet `h-16`.
+- Vet header now uses `h-16` / `h-full` like farmer (`src/app/vet/layout.tsx`).
+- Also modified: `package-lock.json` (unrelated to this change).
 
 ---
 

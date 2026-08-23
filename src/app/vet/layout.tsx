@@ -14,8 +14,8 @@ export default function VetLayout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProvider>
       <div className="min-h-screen flex flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
-        <header className="sticky top-0 z-40 w-full border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-        <div className="flex h-16 items-center px-4 md:px-8 justify-between">
+        <header className="sticky top-0 z-40 w-full h-16 border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+        <div className="flex h-full items-center px-4 md:px-8 justify-between">
           <Link href="/vet/home" className="flex items-center">
             <Image 
               src="/images/logo.png" 

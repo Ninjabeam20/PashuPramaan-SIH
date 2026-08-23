@@ -192,7 +192,7 @@ export function NavBar({ activeTab, onTabChange }: { activeTab: TabId; onTabChan
     { id:"workspace", label:"Research Workspace" },
   ]
   return (
-    <nav style={{ background:"#fff", borderBottom:"1px solid #E8E4DC", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:52, position:"sticky", top:0, zIndex:10 }}>
+    <nav style={{ background:"#fff", borderBottom:"1px solid #E8E4DC", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:64, position:"sticky", top:0, zIndex:10 }}>
       <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
         <div style={{ width:28, height:28, background:"#1A2E24", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

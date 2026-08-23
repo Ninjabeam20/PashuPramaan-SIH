@@ -92,7 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }}>
       <div style={{ background:"#F5F3EE", minHeight:"100vh", fontFamily:"Inter, system-ui, sans-serif" }}>
         {/* NavBar */}
-        <nav style={{ background:"#fff", borderBottom:"1px solid #E8E4DC", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:52, position:"sticky", top:0, zIndex:10 }}>
+        <nav style={{ background:"#fff", borderBottom:"1px solid #E8E4DC", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:64, position:"sticky", top:0, zIndex:10 }}>
           <Link href="/admin/overview" style={{ display:"flex", alignItems:"center", flexShrink:0, textDecoration:"none" }}>
             <Image src="/images/logo.png" alt="PashuPramaan Logo" width={140} height={40} style={{ objectFit:"contain", height:32, width:"auto" }} priority />
           </Link>
