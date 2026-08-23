@@ -62,6 +62,22 @@ export const checkDispatchSafety = async (
   return (await res.json()) as any;
 };
 
+export const issuePassport = async (
+  product: string,
+  animalIds: string[]
+) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/dispatch/passport`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ product_type: product, animal_flock_id: animalIds[0], farm_id: "FARM-01" })
+  });
+  if (!res.ok) {
+    throw new Error("Failed to issue passport");
+  }
+  return await res.json();
+};
+
 export interface DispatchDetail {
   id: string;
   product: string;

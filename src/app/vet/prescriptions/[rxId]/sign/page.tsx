@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { getPrescriptionForSigning, submitSignature } from "@/lib/api/dummy/vet-sign-flow";
 import { SignStep as SignStepType, StepIndicator } from "@/components/vet/sign-flow/StepIndicator";
@@ -22,6 +22,8 @@ export default function SignPrescriptionPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [pinError, setPinError] = React.useState<string | null>(null);
   const [signResult, setSignResult] = React.useState<any>(null);
+  
+  const queryClient = useQueryClient();
   
   // Signature payload values we want to display on success
   const [typedName, setTypedName] = React.useState("");
@@ -65,6 +67,11 @@ export default function SignPrescriptionPage() {
       setTypedName(payload.typed_name);
       setDrawnImage(payload.drawn_image);
       setSignResult(result);
+      
+      // Invalidate relevant queries so the updated state is reflected everywhere
+      queryClient.invalidateQueries({ queryKey: ["sign-flow", rxId] });
+      queryClient.invalidateQueries({ queryKey: ["vet-prescriptions"] });
+      
       setStep("signed");
     } catch (err: any) {
       setPinError(err.message || "An error occurred");

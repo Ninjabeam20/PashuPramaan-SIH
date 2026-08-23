@@ -228,11 +228,51 @@ class TestSubmission(BaseModel):
 
 @router.post("/workspace/{sampleId}/tests")
 def submit_test(sampleId: str, req: TestSubmission, db: Session = Depends(get_db)):
+    import uuid
+    s = db.query(LabSample).filter_by(dispatchId=sampleId).first()
+    if not s:
+        s = db.query(LabSample).filter_by(sampleId=sampleId).first()
+    if not s: raise HTTPException(status_code=404)
+
+    mrl_limit = 0.1 # Demo default limit
+    
+    # We map the frontend verdict string (which might be FAILED/PASSED) to our expected DB enum string
+    # or re-calculate based on result_value
+    verdict_enum = "EXCEEDED" if req.result_value > mrl_limit else "WITHIN_MRL"
+    
+    # Create the report
+    report = LabReport(
+        dispatchId=s.dispatchId,
+        refNo=f"REP-{str(uuid.uuid4())[:8].upper()}",
+        verifiedBy=req.operator,
+        verifiedOn=datetime.utcnow(),
+        status="VERIFIED",
+        mrlDrug="Tested Drug",
+        mrlMeasured=req.result_value,
+        mrlLimit=mrl_limit,
+        mrlUnit=req.unit,
+        mrlRatio=req.result_value / mrl_limit if mrl_limit > 0 else 0,
+        mrlVerdict=verdict_enum,
+        withdrawalDrug="Tested Drug",
+        withdrawalAdministered="Unknown",
+        withdrawalCompleted="Unknown",
+        withdrawalStatus="Unknown",
+        outcome="Pass" if verdict_enum == "WITHIN_MRL" else "Fail"
+    )
+    
+    # In case there's an existing one, delete it to avoid unique constraint error
+    existing = db.query(LabReport).filter_by(dispatchId=s.dispatchId).first()
+    if existing: db.delete(existing)
+        
+    db.add(report)
+    s.stage = LabStage.VERIFIED
+    db.commit()
+
     return {
         "success": True,
         "sample_id": sampleId,
         "test_id": req.test_id,
-        "verdict": req.verdict,
+        "verdict": verdict_enum,
         "next_step": "verification_required"
     }
 

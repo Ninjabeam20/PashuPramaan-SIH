@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { getTreatments, getPrescriptionOptions, TreatmentItem } from "@/lib/api/dummy/treatments";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { getTreatments, getPrescriptionOptions, createTreatment, TreatmentItem } from "@/lib/api/dummy/treatments";
 import { getFarmDetail } from "@/lib/api/dummy/farm-detail";
 import { TreatmentStatSummary } from "@/components/farmer/TreatmentStatSummary";
 import { TreatmentSearchFilter, TreatmentFilter } from "@/components/farmer/TreatmentSearchFilter";
@@ -37,61 +37,39 @@ export default function TreatmentsPage() {
     queryFn: getPrescriptionOptions,
   });
 
-  // Sync initial fetch to local state
-  React.useEffect(() => {
-    if (treatmentsData && !localTreatments) {
-      setLocalTreatments(treatmentsData.items);
+  const queryClient = useQueryClient();
+  
+  const createTreatmentMutation = useMutation({
+    mutationFn: createTreatment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treatments"] });
+      setIsRecordModalOpen(false);
     }
-  }, [treatmentsData, localTreatments]);
-
-  if (isLoadingTreatments || !localTreatments || !treatmentsData || !farmData || !prescriptions) {
+  });
+  
+  if (isLoadingTreatments || !treatmentsData || !farmData || !prescriptions) {
     return <div className="flex h-64 items-center justify-center text-[var(--color-text-muted)]">Loading treatments...</div>;
   }
 
   const handleRecordTreatment = (data: any) => {
     const { animalIds, prescription, timing, backdatedTime } = data;
     
-    // For each animal, create a new treatment row client-side
-    const newTreatments = animalIds.map((id: string) => {
-      const animal = (farmData?.animals || []).find(a => a.id === id);
-      
-      const newTrt: TreatmentItem = {
-        id: `trt-new-${Date.now()}-${id}`,
-        animal_flock: id,
-        species: animal?.type || "Unknown",
-        drug_name: prescription.drug_name,
-        route_dosage: prescription.is_emergency_exception 
-          ? "Emergency Log" 
-          : `${prescription.route} \u00b7 ${prescription.dosage}`,
-        administered_time: timing === "now" ? "Administered Just Now" : `Administered ${backdatedTime}`,
-        status: "Withdrawal",
-        badges: [
-          { text: "Withdrawal Active", variant: "withdrawal_active" },
-          prescription.is_emergency_exception 
-            ? { text: "Emergency / Unsigned", variant: "emergency_unsigned" } 
-            : { text: "Vet Signed", variant: "vet_signed" }
-        ],
-        // Dummy client-side approximation
-        withdrawal: {
-          dose_time: "Dose",
-          now_pct: 0,
-          clear_label: "Clear",
-          product_message: "Withdrawal calculating..."
-        }
-      };
-      
-      return newTrt;
+    // We send backdated_at in ISO format if timing is backdated
+    let isoBackdatedAt: string | undefined = undefined;
+    if (timing === "backdated" && backdatedTime) {
+      try { isoBackdatedAt = new Date(backdatedTime).toISOString(); } catch(e) {}
+    }
+    
+    createTreatmentMutation.mutate({
+      animal_ids: animalIds,
+      prescription_option_id: prescription.id,
+      timing: timing,
+      backdated_at: isoBackdatedAt
     });
-
-    setLocalTreatments(prev => {
-      return [...newTreatments, ...(prev || [])];
-    });
-
-    setIsRecordModalOpen(false);
   };
 
   // Client-side filtering
-  const filteredTreatments = (localTreatments || []).filter(trt => {
+  const filteredTreatments = (treatmentsData?.items || []).filter((trt: TreatmentItem) => {
     // Search match
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = 

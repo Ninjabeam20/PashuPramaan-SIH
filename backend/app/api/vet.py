@@ -4,7 +4,7 @@ from sqlalchemy import desc
 
 from app.models import (
     User, Vet, Prescription, Animal, Farm, PrescriptionStatus,
-    Treatment, TreatmentPhase, CareStatus
+    Treatment, TreatmentPhase, CareStatus, AwareClass, PrescriptionOption
 )
 from app.api.deps import get_db, get_current_user
 
@@ -373,16 +373,73 @@ def patient_followup(patient_id: str, req: FollowUpRequest, db: Session = Depend
     db.commit()
     return { "success": True, "follow_up_id": "fu-123" }
 
+class CreateRxReq(BaseModel):
+    farm: str
+    animalFlock: str
+    diagnosis: str
+    drug: str
+    dose: str
+    unit: str = ""
+    route: str
+    frequency: str
+    duration: str
+    reason: str = ""
+    aware: str = ""
+    cia: bool = False
+
 @router.post("/prescriptions")
-def create_prescription(req: dict, db: Session = Depends(get_db)):
-    # Since we are just mocking the response for now
+def create_prescription(req: CreateRxReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    import uuid
+    from app.models import Farm, Animal, Prescription, PrescriptionStatus, AwareClass
+    
+    farm = db.query(Farm).filter(Farm.name == req.farm).first()
+    if not farm:
+        farm = db.query(Farm).first() # Fallback for demo
+        
+    animal = db.query(Animal).filter(Animal.id == req.animalFlock).first()
+    if not animal:
+        animal = db.query(Animal).first()
+        
+    aware_class = AwareClass[req.aware.upper()] if req.aware else None
+    rx_id = f"RX-{str(uuid.uuid4())[:8].upper()}"
+    
+    vet_id = None
+    if hasattr(current_user, "vetProfile") and current_user.vetProfile:
+        vet_id = current_user.vetProfile.id
+    else:
+        # Fallback if no profile relation
+        from app.models import Vet
+        vet = db.query(Vet).filter_by(userId=current_user.id).first()
+        if vet: vet_id = vet.id
+        else: vet_id = "vet-1"
+        
+    p = Prescription(
+        id=rx_id,
+        farmId=farm.id,
+        animalId=animal.id,
+        vetId=vet_id,
+        diagnosis=req.diagnosis,
+        status=PrescriptionStatus.SIGN_REQUIRED,
+        aware=aware_class,
+        cia=req.cia,
+        drug=req.drug,
+        route=req.route,
+        dose=f"{req.dose} {req.unit}".strip(),
+        frequency=req.frequency,
+        duration=req.duration,
+        reason=req.reason,
+        dateLabel="Just now"
+    )
+    db.add(p)
+    db.commit()
+    
     return {
-        "rx_id": "RX-999",
-        "farm": req.get("farm", "Unknown"),
-        "animal_flock": req.get("animal_flock_id"),
-        "diagnosis": req.get("diagnosis"),
+        "rx_id": rx_id,
+        "farm": farm.name,
+        "animal_flock": animal.id,
+        "diagnosis": req.diagnosis,
         "status_badge": { "text": "SIGN REQUIRED", "variant": "orange" },
-        "aware_badge": { "text": req.get("aware_classification", "ACCESS"), "variant": "green" },
+        "aware_badge": { "text": req.aware or "ACCESS", "variant": "green" },
         "date_label": "Just now",
         "action": { "text": "Review", "target": "sign_flow" }
     }

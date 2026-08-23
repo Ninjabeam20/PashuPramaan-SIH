@@ -1,8 +1,9 @@
 import * as React from "react";
 import { X, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/Badge";
-import { checkDispatchSafety, DispatchSafetyOutcome } from "@/lib/api/dummy/dispatch";
+import { checkDispatchSafety, issuePassport, DispatchSafetyOutcome } from "@/lib/api/dummy/dispatch";
 import { AnimalItem } from "@/components/farmer/AnimalTable";
 
 interface StartDispatchModalProps {
@@ -19,6 +20,19 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   
   const [isChecking, setIsChecking] = React.useState(false);
   const [safetyOutcome, setSafetyOutcome] = React.useState<DispatchSafetyOutcome | null>(null);
+  
+  const [issuedPassportId, setIssuedPassportId] = React.useState<string | null>(null);
+  
+  const queryClient = useQueryClient();
+  
+  const issueMutation = useMutation({
+    mutationFn: () => issuePassport(selectedProduct!, selectedAnimalIds),
+    onSuccess: (data) => {
+      setIssuedPassportId(data.id);
+      setStep(4);
+      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+    }
+  });
 
   const backdropRef = React.useRef<HTMLDivElement>(null);
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -51,23 +65,16 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
   const handleGenerate = () => {
-    // Move to step 4 (result screen)
-    setStep(4);
+    issueMutation.mutate();
   };
 
   const handleCloseFinal = () => {
-    onSuccess({
-      id: `PP-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-      product: selectedProduct,
-      animal_flock: selectedAnimalIds.length === 1 ? selectedAnimalIds[0] : `${selectedAnimalIds.length} animals`,
-      date: "Today",
-      status: "cleared"
-    });
+    onSuccess();
   };
 
   // Step 4: Result Screen
   if (step === 4) {
-    const passportId = `PP-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    const passportId = issuedPassportId || "PP-GENERATING...";
     return (
       <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
         <div className="bg-[var(--color-surface)] w-full sm:max-w-[440px] sm:mx-auto sm:rounded-2xl rounded-t-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
@@ -368,9 +375,9 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
                 safetyOutcome?.eligible ? 'bg-[#1e6147] hover:bg-[#164a35] text-white' : 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
               }`}
               onClick={handleGenerate}
-              disabled={!safetyOutcome?.eligible || isChecking}
+              disabled={!safetyOutcome?.eligible || isChecking || issueMutation.isPending}
             >
-              {safetyOutcome?.eligible ? "Generate PashuPramaan Passport" : "Resolve blocked gates before dispatching"}
+              {issueMutation.isPending ? "Generating..." : safetyOutcome?.eligible ? "Generate PashuPramaan Passport" : "Resolve blocked gates before dispatching"}
             </Button>
           )}
         </div>

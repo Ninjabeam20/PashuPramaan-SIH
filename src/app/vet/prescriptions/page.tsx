@@ -3,11 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
-import { getPrescriptionsList } from "@/lib/api/dummy/vet-prescriptions";
+import { getPrescriptionsList, createPrescription } from "@/lib/api/dummy/vet-prescriptions";
 import { PrescriptionsFilterBar } from "@/components/vet/PrescriptionsFilterBar";
 import { PrescriptionsTable } from "@/components/vet/PrescriptionsTable";
 import { CaseDetailModal } from "@/components/vet/CaseDetailModal";
@@ -54,42 +54,16 @@ function PrescriptionsContent() {
 
   const queryClient = useQueryClient();
 
-  const handleSaveNewRx = (prescription: any) => {
-    // Note: Real submission is a future backend call, not built here.
-    // For now we just append to the local cache list client-side.
-    
-    queryClient.setQueryData(["vet-prescriptions"], (old: any) => {
-      if (!old) return old;
-      
-      const newRx = {
-        rx_id: prescription.rx_id,
-        farm: prescription.farm,
-        animal_flock: prescription.animalFlock,
-        diagnosis: prescription.diagnosis,
-        status_badges: [{ text: "SIGN-REQ", variant: "sign" }],
-        aware_badges: prescription.aware ? [{ text: prescription.aware, variant: prescription.aware.toLowerCase() }] : [],
-        date_label: "Just now",
-        action_text: "Review",
-        action_target: "sign_flow"
-      };
+  const createRxMutation = useMutation({
+    mutationFn: createPrescription,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vet-prescriptions"] });
+      closeNewRxModal();
+    }
+  });
 
-      // Also append CIA badge if checked
-      if (prescription.cia) {
-        newRx.aware_badges.push({ text: "CIA", variant: "cia" });
-      }
-      
-      return {
-        ...old,
-        summary: {
-          ...old.summary,
-          all_count: old.summary.all_count + 1,
-          awaiting_signature_count: old.summary.awaiting_signature_count + 1
-        },
-        items: [newRx, ...old.items]
-      };
-    });
-    
-    closeNewRxModal();
+  const handleSaveNewRx = (prescription: any) => {
+    createRxMutation.mutate(prescription);
   };
 
   if (isLoading) {

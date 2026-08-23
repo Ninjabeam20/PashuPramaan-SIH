@@ -7,8 +7,9 @@ from pydantic import BaseModel
 from app.models import (
     User, Farm, Animal, HealthEvent, Prescription, Treatment, FarmerDispatch, 
     MedicineStock, AdminAnomaly, CareStatus, PrescriptionStatus, TreatmentPhase, DispatchStatus,
-    StockLevel
+    StockLevel, Withdrawal, ProductType, Species
 )
+from app.formulary import get_withdrawal_hours
 from app.api.deps import get_db, get_current_user
 
 router = APIRouter()
@@ -180,33 +181,132 @@ class SafetyCheckReq(BaseModel):
 
 @router.post("/dispatch/safety-check")
 def check_safety(req: SafetyCheckReq, db: Session = Depends(get_db)):
-    # Standardized on 200 with eligible field per api-contract (3).md notes
-    # prescription.signed must be a boolean, and lab_assay must be present
+    from datetime import datetime
+    from app.models import Animal, Treatment, TreatmentPhase, LabSample
+    
+    active_treatments = db.query(Treatment).filter(
+        Treatment.animalId == req.animal_flock_id,
+        Treatment.phase == TreatmentPhase.WITHDRAWAL
+    ).all()
+    
+    now = datetime.utcnow()
+    eligible = True
+    
+    withdrawal_status = "cleared"
+    withdrawal_detail = None
+    presc_signed = True
+    
+    for trt in active_treatments:
+        if not trt.signed:
+            presc_signed = False
+            eligible = False
+            
+        if trt.withdrawal:
+            if trt.withdrawal.clearsAt > now:
+                withdrawal_status = "active"
+                withdrawal_detail = f"{trt.drug} withdrawal active until {trt.withdrawal.clearsAt.strftime('%d %b %Y, %I:%M %p')}"
+                eligible = False
+            else:
+                trt.phase = TreatmentPhase.COMPLETED
+                db.commit()
+                
+    mrl_status = "within_limit"
+    lab_result_ppm = 0.0
+    permitted_ppm = 0.1 
+    lab_available = False
+    
+    sample = db.query(LabSample).filter_by(animalId=req.animal_flock_id).order_by(desc(LabSample.createdAt)).first()
+    if sample and sample.report:
+        lab_available = True
+        lab_result_ppm = sample.report.mrlMeasured
+        permitted_ppm = sample.report.mrlLimit
+        if sample.report.mrlVerdict == "EXCEEDED":
+            mrl_status = "exceeded"
+            eligible = False
+            
     return {
-        "eligible": False,
+        "eligible": eligible,
         "withdrawal": {
-            "status": "active",
-            "detail": "Amoxicillin withdrawal active until 25 Aug 2026"
+            "status": withdrawal_status,
+            "detail": withdrawal_detail
         },
         "mrl": {
-            "status": "within_limit",
-            "lab_result_ppm": "0.002",
-            "permitted_ppm": "0.004"
+            "status": mrl_status,
+            "lab_result_ppm": lab_result_ppm,
+            "permitted_ppm": permitted_ppm
         },
         "prescription": {
-            "signed": True
+            "signed": presc_signed
         },
         "lab_assay": {
-            "available": False
+            "available": lab_available
         }
     }
 
+class PassportIssueReq(BaseModel):
+    product: str
+    animal_ids: List[str]
+    safety_check_id: Optional[str] = None
+
 @router.post("/dispatch/passport")
-def issue_passport(req: dict, db: Session = Depends(get_db)):
+def issue_passport(req: PassportIssueReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from datetime import datetime
+    import uuid
+    from fastapi import HTTPException
+    
+    if not req.animal_ids:
+        raise HTTPException(status_code=400, detail="No animal specified")
+        
+    animal_id = req.animal_ids[0]
+    
+    # Re-run safety check
+    sc_req = SafetyCheckReq(product_type=req.product, animal_flock_id=animal_id)
+    sc_res = check_safety(sc_req, db)
+    
+    if not sc_res.get("eligible"):
+        raise HTTPException(status_code=409, detail="Safety check failed. Dispatch blocked.")
+        
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm: farm = db.query(Farm).first()
+    
+    # Check ProductType
+    product_type = ProductType.MILK
+    if req.product.lower() == "meat": product_type = ProductType.MEAT
+    elif req.product.lower() == "eggs": product_type = ProductType.EGGS
+    
+    dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
+    passport_id = f"PP-2026-{str(uuid.uuid4())[:4].upper()}"
+    
+    fd = FarmerDispatch(
+        id=dsp_id,
+        farmId=farm.id,
+        animalId=animal_id,
+        product=product_type,
+        dateLabel=datetime.utcnow().strftime("%d %b %Y"),
+        status=DispatchStatus.CLEARED,
+        prescriptionSigned=sc_res["prescription"]["signed"],
+        mrlMeasuredPpm=str(sc_res["mrl"]["lab_result_ppm"]),
+        mrlPermittedPpm=str(sc_res["mrl"]["permitted_ppm"])
+    )
+    db.add(fd)
+    db.commit()
+    
+    lab_status = "No assay on file"
+    if sc_res["lab_assay"]["available"]:
+        lab_status = sc_res["mrl"]["status"].replace("_", " ").title()
+        
     return {
-        "passport_id": "PP-2026-9999",
-        "qr_data": "https://pashupramaan.gov.in/verify/PP-2026-9999",
-        "issued_at": "2026-08-23T14:00:00Z"
+        "passport_id": passport_id,
+        "dispatch_id": dsp_id,
+        "product": product_type.name.capitalize(),
+        "farm": farm.name,
+        "animal_flock": animal_id,
+        "dispatch_date": fd.dateLabel,
+        "withdrawal": sc_res["withdrawal"]["status"].capitalize(),
+        "mrl": lab_status,
+        "prescription": "Vet Signed" if sc_res["prescription"]["signed"] else "Unsigned",
+        "lab": lab_status,
+        "qr_verify_url": f"https://pashupramaan.gov.in/verify/{passport_id}"
     }
 
 @router.get("/dispatch/{dispatchId}")
@@ -259,6 +359,101 @@ def get_treatments(db: Session = Depends(get_db)):
             }
         ]
     }
+
+class CreateTreatmentReq(BaseModel):
+    animal_ids: List[str]
+    prescription_option_id: str
+    timing: str = "now"
+    backdated_at: Optional[str] = None
+
+@router.post("/treatments")
+def create_treatment(req: CreateTreatmentReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from datetime import datetime, timedelta
+    import uuid
+    
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm: farm = db.query(Farm).first() # fallback for demo
+    
+    is_emergency = req.prescription_option_id == "emergency"
+    
+    rx = None
+    if not is_emergency:
+        rx = db.query(Prescription).filter_by(id=req.prescription_option_id).first()
+        if not rx: rx = db.query(Prescription).first()
+            
+    drug = rx.drug if rx else "Oxytetracycline"
+    route = rx.route if rx else "Injection"
+    dose = rx.dose if rx else "10 mL"
+    
+    admin_time = datetime.utcnow()
+    if req.timing == "backdated" and req.backdated_at:
+        admin_time = datetime.fromisoformat(req.backdated_at.replace("Z", "+00:00"))
+        
+    created_treatments = []
+    
+    for a_id in req.animal_ids:
+        animal = db.query(Animal).filter_by(id=a_id).first()
+        if not animal: continue
+        
+        trt_id = f"TRT-{str(uuid.uuid4())[:8].upper()}"
+        trt = Treatment(
+            id=trt_id,
+            animalId=animal.id,
+            farmId=farm.id,
+            prescriptionId=rx.id if rx else None,
+            drug=drug,
+            route=route,
+            dosage=dose,
+            administeredLabel=f"Administered {admin_time.strftime('%d %b %Y')}",
+            administeredOn=admin_time,
+            phase=TreatmentPhase.WITHDRAWAL,
+            signed=True if rx and rx.status == PrescriptionStatus.SIGNED else False,
+            emergency=is_emergency,
+            reason=rx.reason if rx else "Emergency treatment"
+        )
+        db.add(trt)
+        
+        prod_type = ProductType.MILK
+        if "meat" in animal.productionType.lower(): prod_type = ProductType.MEAT
+        elif "egg" in animal.productionType.lower(): prod_type = ProductType.EGGS
+        
+        hours = get_withdrawal_hours(drug, animal.species, route, prod_type)
+        clears_at = admin_time + timedelta(hours=hours)
+        
+        wd = Withdrawal(
+            treatmentId=trt.id,
+            doseTime=admin_time,
+            nowPct=0.0,
+            clearLabel=f"Clears {clears_at.strftime('%d %b, %I:%M %p')}",
+            productMessage=prod_type.name.lower(),
+            clearsAt=clears_at
+        )
+        db.add(wd)
+        
+        created_treatments.append({
+            "id": trt.id,
+            "animal_id": animal.id,
+            "species": animal.species.name.capitalize(),
+            "feed_batch": trt.feedBatch,
+            "drug": trt.drug,
+            "route": trt.route,
+            "dosage": trt.dosage,
+            "administered_at": admin_time.isoformat(),
+            "status_badge": { "text": "Withdrawal Active", "variant": "amber" },
+            "secondary_badges": [],
+            "withdrawal": {
+                "dose_time": admin_time.isoformat(),
+                "now_pct": 0,
+                "clear_label": f"Clears {clears_at.strftime('%d %b, %I:%M %p')}",
+                "product": prod_type.name.lower()
+            }
+        })
+        
+    db.commit()
+    
+    if len(created_treatments) > 0:
+        return created_treatments[0]
+    return {"success": False, "detail": "No treatments created"}
 
 @router.get("/treatments/prescriptions")
 def get_rx_options(db: Session = Depends(get_db)):

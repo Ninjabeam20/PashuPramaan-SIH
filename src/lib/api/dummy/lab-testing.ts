@@ -65,3 +65,19 @@ export async function fetchTestingWorkspace(sampleId: string): Promise<Workspace
   const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}`, { headers: { Authorization: `Bearer ${token}` } });
   return (await res.json()) as any;
 }
+
+export async function submitTestResult(sampleId: string, payload: { test_id: string; result_value: number; unit: string; operator: string; verdict: string }) {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}/tests`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error("Failed to submit test result");
+  }
+  return await res.json();
+}

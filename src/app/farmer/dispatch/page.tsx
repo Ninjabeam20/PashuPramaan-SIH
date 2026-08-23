@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/Button";
 export default function DispatchPage() {
   const [isStartModalOpen, setIsStartModalOpen] = React.useState(false);
   const [selectedDispatchId, setSelectedDispatchId] = React.useState<string | null>(null);
-  const [localDispatches, setLocalDispatches] = React.useState<DispatchItem[] | null>(null);
 
   const { data: dispatchData, isLoading } = useQuery({
     queryKey: ["dispatches"],
@@ -26,18 +25,11 @@ export default function DispatchPage() {
     queryFn: getFarmDetail,
   });
 
-  React.useEffect(() => {
-    if (dispatchData && !localDispatches) {
-      setLocalDispatches(dispatchData.items || []);
-    }
-  }, [dispatchData, localDispatches]);
-
-  const handleDispatchSuccess = (newDispatch: any) => {
-    setLocalDispatches(prev => [newDispatch, ...(prev || [])]);
+  const handleDispatchSuccess = () => {
     setIsStartModalOpen(false);
   };
 
-  if (isLoading || !dispatchData || !localDispatches) {
+  if (isLoading || !dispatchData) {
     return <div className="flex h-64 items-center justify-center text-[var(--color-text-muted)]">Loading dispatch data...</div>;
   }
 
@@ -87,7 +79,7 @@ export default function DispatchPage() {
       {/* List section */}
       <section className="flex flex-col gap-4 mt-6">
         <h2 className="text-xl font-bold font-display text-[var(--color-text)]">Recent Dispatches</h2>
-        <DispatchTable items={localDispatches} onViewAction={(id) => setSelectedDispatchId(id)} />
+        <DispatchTable items={dispatchData?.items || []} onViewAction={(id) => setSelectedDispatchId(id)} />
       </section>
 
       {/* Start Dispatch Modal */}

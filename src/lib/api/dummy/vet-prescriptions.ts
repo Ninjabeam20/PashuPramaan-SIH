@@ -34,3 +34,19 @@ export const getPrescriptionsList = async (): Promise<PrescriptionsData> => {
   }
   return await res.json() as any;
 };
+
+export const createPrescription = async (payload: any) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/prescriptions`, {
+    method: "POST",
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error("Failed to create prescription");
+  }
+  return await res.json();
+};

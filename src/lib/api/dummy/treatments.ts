@@ -61,6 +61,22 @@ export const getTreatments = async () => {
   return await res.json() as any;
 };
 
+export const createTreatment = async (payload: { animal_ids: string[]; prescription_option_id: string; timing: string; backdated_at?: string }) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/treatments`, {
+    method: "POST",
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error("Failed to create treatment");
+  }
+  return await res.json();
+};
+
 export const getPrescriptionOptions = async (): Promise<PrescriptionOption[]> => {
   const token = getToken();
   const res = await fetch(`http://localhost:8000/api/farmer/treatments/prescriptions`, {

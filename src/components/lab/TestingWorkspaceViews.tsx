@@ -21,13 +21,11 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
   const [draftSaved, setDraftSaved] = React.useState(false);
 
   // Form State
-  const [plateCount, setPlateCount] = React.useState("");
-  const [coliform, setColiform] = React.useState("Not Detected");
-  const [pathogen, setPathogen] = React.useState("Not Detected");
-  const [organism, setOrganism] = React.useState("");
+  const [mrlValue, setMrlValue] = React.useState("");
+  const [testMethod, setTestMethod] = React.useState("LC-MS/MS");
   const [notes, setNotes] = React.useState("");
 
-  const plateOk = plateCount !== "" && Number(plateCount) < 100000;
+  const mrlOk = mrlValue !== "" && Number(mrlValue) <= 0.10;
 
   const handleSaveDraft = () => {
     setDraftSaved(true);
@@ -35,7 +33,7 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
   };
 
   const handleComplete = () => {
-    onNext({ plateCount, coliform, pathogen, organism, notes, plateOk });
+    onNext({ mrlValue, testMethod, notes, mrlOk });
   };
 
   const timelineSteps = data.assessments.map(a => ({
@@ -126,53 +124,53 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
         <Card className="overflow-hidden border-l-4 border-l-[var(--color-primary)]">
           <div className="p-5 border-b border-[var(--color-border)] flex items-start justify-between bg-[var(--color-surface)]">
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">TEST 02 OF 03</p>
-              <h2 className="font-display text-2xl font-semibold text-[var(--color-text)]">Microbiological Safety</h2>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">Record the laboratory findings for this sample.</p>
+              <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">TEST 03 OF 03</p>
+              <h2 className="font-display text-2xl font-semibold text-[var(--color-text)]">Antimicrobial Residue (MRL)</h2>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">Record the MRL laboratory findings for this sample.</p>
             </div>
             <Badge variant="amber">IN PROGRESS</Badge>
           </div>
 
           <div className="p-5 space-y-6 bg-[var(--color-bg)]">
             
-            {/* Standard Plate Count */}
+            {/* Antimicrobial MRL */}
             <div>
               <div className="flex items-baseline justify-between mb-2">
-                <label className="text-sm font-bold text-[var(--color-text)]">Standard Plate Count</label>
-                {plateCount !== "" && (
-                  <ResultBadge ok={plateOk} />
+                <label className="text-sm font-bold text-[var(--color-text)]">Antimicrobial Residue (ppm)</label>
+                {mrlValue !== "" && (
+                  <ResultBadge ok={mrlOk} />
                 )}
               </div>
               <div className="flex items-center gap-3">
                 <Input 
                   type="number"
-                  value={plateCount}
-                  onChange={(e) => setPlateCount(e.target.value)}
-                  placeholder="Enter count"
+                  value={mrlValue}
+                  step="0.01"
+                  onChange={(e) => setMrlValue(e.target.value)}
+                  placeholder="Enter MRL ppm"
                   className="flex-1 bg-[var(--color-surface)]"
                 />
                 <span className="text-sm font-semibold text-[var(--color-text-muted)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-2.5">
-                  CFU/mL
+                  ppm
                 </span>
               </div>
-              <p className="text-xs text-[var(--color-text-muted)] mt-2">Reference: within configured laboratory limits</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-2">Reference: ≤ 0.10 ppm permitted</p>
             </div>
 
             <div className="h-px bg-[var(--color-border)]" />
 
-            {/* Coliform Screening */}
+            {/* Test Method */}
             <div>
               <div className="flex items-baseline justify-between mb-3">
-                <label className="text-sm font-bold text-[var(--color-text)]">Coliform Screening</label>
-                <ResultBadge ok={coliform === "Not Detected"} />
+                <label className="text-sm font-bold text-[var(--color-text)]">Testing Method</label>
               </div>
               <div className="flex bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-1">
-                {["Detected", "Not Detected"].map(opt => (
+                {["LC-MS/MS", "ELISA", "Rapid Test"].map(opt => (
                   <button
                     key={opt}
-                    onClick={() => setColiform(opt)}
+                    onClick={() => setTestMethod(opt)}
                     className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors ${
-                      coliform === opt 
+                      testMethod === opt 
                         ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]" 
                         : "text-[var(--color-text-muted)]"
                     }`}
@@ -181,42 +179,6 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="h-px bg-[var(--color-border)]" />
-
-            {/* Pathogen Screen */}
-            <div>
-              <div className="flex items-baseline justify-between mb-3">
-                <label className="text-sm font-bold text-[var(--color-text)]">Pathogen Screen</label>
-                <ResultBadge ok={pathogen === "Not Detected"} />
-              </div>
-              <div className="flex bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-1">
-                {["Detected", "Not Detected"].map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => setPathogen(opt)}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors ${
-                      pathogen === opt 
-                        ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]" 
-                        : "text-[var(--color-text-muted)]"
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-              {pathogen === "Detected" && (
-                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
-                  <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">Organism identified</label>
-                  <Input 
-                    value={organism}
-                    onChange={(e) => setOrganism(e.target.value)}
-                    placeholder="Select or enter organism..."
-                    className="bg-white border-amber-200 focus:border-amber-500 focus:ring-amber-500"
-                  />
-                </div>
-              )}
             </div>
 
             <div className="h-px bg-[var(--color-border)]" />
@@ -275,8 +237,8 @@ function ResultBadge({ ok }: { ok: boolean }) {
 // ----------------------------------------------------------------------
 
 export function WorkspaceReviewView({ payload, onBack, onConfirm }: { payload: any, onBack: () => void, onConfirm: () => void }) {
-  const { plateCount, coliform, pathogen, organism, notes, plateOk } = payload;
-  const isCompliant = plateOk && coliform === "Not Detected" && pathogen === "Not Detected";
+  const { mrlValue, testMethod, notes, mrlOk } = payload;
+  const isCompliant = mrlOk;
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg)]">
@@ -290,31 +252,24 @@ export function WorkspaceReviewView({ payload, onBack, onConfirm }: { payload: a
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-32 max-w-2xl mx-auto w-full space-y-6">
         <div>
           <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">Review</p>
-          <h2 className="font-display text-3xl font-semibold text-[var(--color-text)] mb-2">Microbiological Results</h2>
+          <h2 className="font-display text-3xl font-semibold text-[var(--color-text)] mb-2">Antimicrobial Residue Results</h2>
           <p className="text-sm text-[var(--color-text-muted)]">Confirm findings before marking this test complete.</p>
         </div>
 
         <Card className="divide-y divide-[var(--color-border)] p-0 overflow-hidden">
           <div className="p-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">Standard Plate Count</p>
-              <p className="text-sm font-bold text-[var(--color-text)]">{plateCount ? `${Number(plateCount).toLocaleString()} CFU/mL` : "—"}</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">MRL Residue (ppm)</p>
+              <p className="text-sm font-bold text-[var(--color-text)]">{mrlValue ? `${Number(mrlValue).toLocaleString()} ppm` : "—"}</p>
             </div>
-            <ResultBadge ok={plateOk} />
+            <ResultBadge ok={mrlOk} />
           </div>
           <div className="p-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">Coliform Screening</p>
-              <p className="text-sm font-bold text-[var(--color-text)]">{coliform}</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">Testing Method</p>
+              <p className="text-sm font-bold text-[var(--color-text)]">{testMethod}</p>
             </div>
-            <ResultBadge ok={coliform === "Not Detected"} />
-          </div>
-          <div className="p-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">Pathogen Screen</p>
-              <p className="text-sm font-bold text-[var(--color-text)]">{pathogen}{pathogen === "Detected" && organism ? ` — ${organism}` : ""}</p>
-            </div>
-            <ResultBadge ok={pathogen === "Not Detected"} />
+            <ResultBadge ok={true} />
           </div>
           {notes && (
             <div className="p-4">
@@ -374,25 +329,24 @@ export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
           </div>
         </Card>
 
-        <div className="bg-[var(--status-good-bg)] border border-[var(--status-good-border)] rounded-xl px-5 py-4 flex items-start gap-3">
+          <div className="bg-[var(--status-good-bg)] border border-[var(--status-good-border)] rounded-xl px-5 py-4 flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-[var(--status-good-text)] flex items-center justify-center shrink-0 mt-0.5">
             <Check size={16} strokeWidth={3} className="text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[var(--status-good-text)] mb-1">Microbiological Safety — Completed</h3>
+            <h3 className="text-sm font-bold text-[var(--status-good-text)] mb-1">Testing Complete</h3>
             <p className="text-xs font-medium text-[var(--status-good-text)] opacity-90">All findings recorded and marked compliant.</p>
           </div>
         </div>
 
         <div>
-          <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-3 px-1">Next Required Assessment</p>
+          <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-3 px-1">Next Step</p>
           <Card className="p-5 border-2 border-[var(--color-primary)] shadow-md">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">TEST 03 OF 03</p>
-                <h3 className="font-display text-2xl font-semibold text-[var(--color-text)]">Antimicrobial Residue</h3>
+                <h3 className="font-display text-2xl font-semibold text-[var(--color-text)]">Issue Report</h3>
               </div>
-              <Badge variant="normal">PENDING</Badge>
+              <Badge variant="normal">READY</Badge>
             </div>
             
             <p className="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">
@@ -402,12 +356,10 @@ export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
             <Badge variant="amber" className="mb-5 inline-flex">Triggered by treatment history</Badge>
             
             <div className="space-y-2 text-sm text-[var(--color-text-muted)] font-medium">
-              {["Beta-lactam screen", "Tetracycline screen", "Targeted residue analysis"].map(t => (
-                <div key={t} className="flex items-center gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)]" />
-                  {t}
-                </div>
-              ))}
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)]" />
+                This sample is ready to have its report issued.
+              </div>
             </div>
           </Card>
         </div>
@@ -415,7 +367,6 @@ export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
 
       <div className="fixed bottom-16 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4 flex gap-3 z-30 pb-safe md:relative md:bottom-auto shadow-[0_-4px_10px_rgb(0,0,0,0.05)] md:shadow-none">
         <Button variant="outline" className="px-6" onClick={() => router.push("/lab/testing-queue")}>Queue</Button>
-        <Button className="flex-1" onClick={() => {}}>Start Residue Test &rarr;</Button>
       </div>
     </div>
   );

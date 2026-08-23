@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { fetchTestingWorkspace } from "@/lib/api/dummy/lab-testing";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { fetchTestingWorkspace, submitTestResult } from "@/lib/api/dummy/lab-testing";
 import { WorkspaceFormView, WorkspaceReviewView, WorkspaceNextView } from "@/components/lab/TestingWorkspaceViews";
 
 type WorkspaceView = "form" | "review" | "next";
@@ -48,12 +48,31 @@ export default function TestingWorkspacePage() {
     );
   }
 
+  const queryClient = useQueryClient();
+  
+  const submitMutation = useMutation({
+    mutationFn: (testPayload: any) => submitTestResult(sampleId, testPayload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lab-workspace", sampleId] });
+      queryClient.invalidateQueries({ queryKey: ["lab-queue"] });
+      setView("next");
+    }
+  });
+
   if (view === "review") {
     return (
       <WorkspaceReviewView 
         payload={payload}
         onBack={() => setView("form")}
-        onConfirm={() => setView("next")}
+        onConfirm={() => {
+          submitMutation.mutate({
+            test_id: "mrl-assay",
+            result_value: Number(payload.mrlValue),
+            unit: "ppm",
+            operator: "LAB-TECH-01",
+            verdict: payload.mrlOk ? "WITHIN_LIMIT" : "EXCEEDED"
+          });
+        }}
       />
     );
   }
