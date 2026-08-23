@@ -63,7 +63,7 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
             <h1 className="font-display text-2xl font-semibold text-[var(--color-text)] leading-tight">{data.dispatchId}</h1>
             <p className="text-sm text-[var(--color-text-muted)] mt-1">{data.product} · <span className="text-[var(--color-primary)] font-semibold">{data.sampleId}</span></p>
           </div>
-          <Badge variant="sage" className="mt-1">READY FOR TESTING</Badge>
+          <Badge variant="amber" className="mt-1">READY FOR TESTING</Badge>
         </div>
       </header>
 
@@ -392,7 +392,7 @@ export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
                 <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">TEST 03 OF 03</p>
                 <h3 className="font-display text-2xl font-semibold text-[var(--color-text)]">Antimicrobial Residue</h3>
               </div>
-              <Badge variant="neutral">PENDING</Badge>
+              <Badge variant="normal">PENDING</Badge>
             </div>
             
             <p className="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">

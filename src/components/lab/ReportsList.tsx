@@ -1,8 +1,7 @@
 import * as React from "react";
-import { Milk, Beef, Egg, Check, AlertTriangle } from "lucide-react";
+import { LabReport, ReportsSummary } from "@/lib/api/dummy/lab-reports";
 import { Badge, BadgeVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { LabReport, ReportsSummary } from "@/lib/api/dummy/lab-reports";
 
 const DATE_RANGES = ["All Dates", "Today", "This Week", "This Month"];
 const PRODUCT_FILTERS = ["All Products", "Milk", "Meat", "Eggs"];

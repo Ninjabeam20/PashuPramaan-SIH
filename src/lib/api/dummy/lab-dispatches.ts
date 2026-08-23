@@ -142,6 +142,7 @@ export type LabDispatchDetail = {
   linkedAnimal: string;
   currentSample: string;
   risk: string;
+  riskColor: "amber" | "red" | "green" | "sage" | "blue" | "neutral" | string;
   riskReason: string;
   overallStatus: string;
   stages: Array<{ label: string; state: "done" | "active" | "upcoming" }>;
@@ -171,6 +172,7 @@ export async function fetchLabDispatchDetail(dispatchId: string): Promise<LabDis
     linkedAnimal: "MP-104",
     currentSample: "LAB-MLK-00981",
     risk: "MODERATE",
+    riskColor: "amber",
     riskReason: "Recent antimicrobial exposure",
     overallStatus: "TESTING IN PROGRESS",
     stages: [

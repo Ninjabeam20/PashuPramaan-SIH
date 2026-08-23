@@ -73,20 +73,15 @@ Status: `DUMMY` — mocked in `lib/api/dummy/farmer-dashboard.ts`
     }
   ],
   "quick_actions": ["record_treatment", "health_event", "start_dispatch"],
-  "insight": {
-    "demand_level": "high | medium | low",
-    "window_days": 30,
-    "medicines": [
-      { "name": "Oxytetracycline", "demand_pct": 84, "level": "high" },
-      { "name": "Ivermectin", "demand_pct": 61, "level": "medium" },
-      { "name": "Vitamin B Complex", "demand_pct": 45, "level": "normal" }
-    ],
-    "recommendation": "Oxytetracycline demand is high. Consider restocking in the next 7–10 days."
-  },
-  "top_medicines_by_demand": [
-    { "rank": 1, "name": "Oxytetracycline", "level": "high" },
-    { "rank": 2, "name": "Ivermectin", "level": "medium" },
-    { "rank": 3, "name": "Vitamin B Complex", "level": "normal" }
+  "medicine_stock": [
+    {
+      "name": "Oxytetracycline",
+      "quantity_label": "17 vials",
+      "status": {
+        "text": "Restock recommended",
+        "variant": "red"
+      }
+    }
   ]
 }
 ```
@@ -602,62 +597,81 @@ Open questions for backend:
 
 ## 6. Insights
 
-### GET /api/farmer/insights?range=30d|90d
+### GET /api/farmer/insights?range=30d|60d|90d
 Status: `DUMMY` — mocked in `lib/api/dummy/farm-insights.ts` (`getFarmInsights`)
 
 **Response 200**
 ```json
 {
   "range": "30d",
-  "at_a_glance": {
-    "medicine_demand_level": "moderate",
-    "animals_needing_attention": 3,
-    "upcoming_followups": 2
-  },
-  "medicine_demand": {
-    "level": "moderate",
-    "range_label": "30 days",
-    "summary": "Demand is expected to remain steady over the next 30 days.",
+  "medicine_stock": [
+    {
+      "name": "Oxytetracycline",
+      "current_stock": "17 vials",
+      "recent_usage": "4 used",
+      "status": { "text": "Restock recommended", "variant": "red" }
+    }
+  ],
+  "demand_forecast": {
     "chart_data": [
       { "month": "Mar", "past_usage": 10, "forecast": null },
-      { "month": "Sep", "past_usage": 62, "forecast": null },
-      { "month": "Oct", "past_usage": null, "forecast": 68 },
-      { "month": "Nov", "past_usage": null, "forecast": 70 }
+      { "month": "Sep", "past_usage": 32, "forecast": null },
+      { "month": "Oct", "past_usage": 35, "forecast": 35 },
+      { "month": "Nov", "past_usage": null, "forecast": 38 }
     ],
-    "now_index": 6
+    "now_index": 7,
+    "current_stock": "17 vials",
+    "expected_requirement": "25 vials",
+    "status": { "text": "Restock Recommended", "variant": "red" }
   },
-  "farm_heatmap": [
-    { "entity": "Cow A", "level": "low" },
-    { "entity": "Goat Grp", "level": "high" }
+  "most_used_medicines": [
+    { "rank": 1, "name": "Oxytetracycline", "usage": "25 used", "usage_value": 100 }
   ],
-  "medicines_to_watch": [
-    { "name": "Oxytetracycline", "trend": "up", "subtitle": "Higher demand expected", "level": "higher" },
-    { "name": "Ivermectin", "trend": "flat", "subtitle": "Stable", "level": "stable" },
-    { "name": "Vitamin B Complex", "trend": "down", "subtitle": "Lower demand expected", "level": "lower" }
+  "farm_health_map": [
+    { "species": "Cattle", "level": "Moderate", "detail": "10 animals · 1 under treatment" },
+    { "species": "Poultry", "level": "High", "detail": "Flock P-01 · emergency tx" }
   ],
-  "attention_items": [
-    { "icon": "warning", "title": "Oxytetracycline", "description": "Demand may increase next week." },
-    { "icon": "check", "title": "4 animals", "description": "Cleared for dispatch." },
-    { "icon": "health_event", "title": "Flock P-01", "description": "Health event remains on watch." }
-  ],
-  "why_this_matters": {
-    "text": "Oxytetracycline demand is expected to increase because treatment activity has increased compared with the previous period. Higher usage is associated with an active health event on the farm. Ivermectin and Vitamin B Complex usage remains within normal range.",
-    "highlight": "Higher usage is associated with an active health event on the farm."
+  "farm_performance": {
+    "chart_data": [
+      { "month": "Mar", "milk_output": 100, "medicine_cost": 110 }
+    ]
+  },
+  "health_treatment_trends": {
+    "chart_data": [
+      { "month": "Mar", "health_events": 5, "treatments": 8 }
+    ]
   }
 }
 ```
 
 Open questions for backend:
-- This is presented in the product spec as Prophet's farm-level demand forecast (Layer 1) —
-  confirm `medicine_demand.chart_data` maps directly to Prophet's output rather than being a
-  separately-summarized endpoint (same open question flagged in Section 2 for the dashboard's
-  smaller demand widget — these two are likely the same forecast at different granularity).
-- `why_this_matters.highlight` — sent as an exact substring of `text` for the frontend to
-  highlight inline. Confirm backend can guarantee substring match (encoding/whitespace) rather
-  than frontend needing fuzzy matching.
-- `farm_heatmap` levels — same low/moderate/high vocabulary as the vet/admin national heatmap
-  (G10, "explained vs unexplained")? If the color/level system is meant to be shared across
-  farmer, vet, and admin views, worth standardizing the enum now.
+- Is `demand_forecast.chart_data` still mapped directly to Prophet's output? Does the backend handle the 60d increment, or is that computed differently?
+- `farm_health_map` details — strings like `"10 animals · 1 under treatment"` or `"Flock P-01 · emergency tx"` are sent fully constructed by the backend because rules differ per species (e.g., poultry uses flock ID rather than animal count). Confirm the backend will handle this formatting.
+
+### POST /api/farmer/medicine-stock
+Status: `NEEDED` — powers the "+ Add Stock" modal on the Insights page (and potentially Home page). Frontend currently handles this entirely in local state.
+
+**Request**
+```json
+{
+  "medicine": "Oxytetracycline",
+  "quantity_received": 50,
+  "unit": "vials",
+  "date_received": "2026-08-22"
+}
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "medicine": "Oxytetracycline",
+  "new_stock_label": "67 vials"
+}
+```
+
+Open questions for backend:
+- Does the backend expect normalized units (e.g. converting `mL` to `doses` based on formulary), or does it just blindly append string units if they differ from the current stock?
 
 ## 7. Vet role
 
@@ -1069,10 +1083,585 @@ Open questions for backend (dashboard-level, from earlier draft — still open):
 - `aware_badge` on the prescriptions table/list — is this always present, or only for
   signed/reviewed Rx (RX-207 in the mockups has no aware badge, just its status badge)?
 
-## 8. Admin / Regulator role
-Status: `NEEDED` — pages undecided. Expect: exception queue, national heatmap, anomaly explained/unexplained (G10), planning panel.
+## 8. Vet Patients
+
+### GET /api/vet/patients
+Status: `DUMMY` — mocked in `lib/api/dummy/vet-patients.ts`
+
+**Response 200**
+```json
+{
+  "summary": {
+    "all_count": 6,
+    "under_treatment_count": 1,
+    "follow_up_due_count": 1,
+    "recovered_count": 2,
+    "needs_attention_count": 1
+  },
+  "items": [
+    {
+      "id": "MP-104",
+      "type": "Cow",
+      "farm": "Shanti Dairy",
+      "status": { "text": "Under Treatment", "variant": "patient_under_treatment", "dot": true },
+      "last_follow_up": "22 Aug"
+    }
+  ]
+}
+```
+
+### GET /api/vet/patients/{patient_id}
+Status: `NEEDED` — frontend currently uses hardcoded mock data in `PatientDetailModal.tsx`.
+
+**Response 200**
+```json
+{
+  "id": "MP-104",
+  "type": "Cow",
+  "farm": "Shanti Dairy",
+  "condition": "Clinical mastitis",
+  "status": { "text": "Under Treatment", "variant": "patient_under_treatment", "dot": true },
+  "current_treatment": "Amoxicillin · Intramammary · Twice daily",
+  "last_follow_up": "22 Aug",
+  "health_history": [
+    {
+      "date": "2026-08-22",
+      "logs": [
+        { "type": "health_event", "title": "Clinical mastitis onset" },
+        { "type": "prescription", "title": "Amoxicillin prescribed (Rx-208)", "subtitle": "Vet: Dr. Bankey" },
+        { "type": "follow_up", "title": "Follow-up recorded", "subtitle": "Vet: Dr. Bankey · Outcome: Improved" }
+      ]
+    }
+  ]
+}
+```
+
+### POST /api/vet/patients/{patient_id}/follow-up
+Status: `NEEDED` — frontend uses local state in `RecordFollowUpModal.tsx`.
+
+**Request**
+```json
+{
+  "outcome": "Recovered | Improved | No Change | Worsened | Relapse",
+  "notes": "string"
+}
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "follow_up_id": "uuid"
+}
+```
+
+## 9. Admin / Regulator Dashboard
+
+With the frontend refactored into a hierarchical structure under `/admin/*`, the backend must now support dedicated endpoints for each tab.
+
+### GET /api/admin/overview
+Status: `DUMMY` — derived from static constants in `components/admin/AdminShared.tsx`
+
+**Response 200**
+```json
+{
+  "summary_metrics": {
+    "total_amu_kg": 984500,
+    "amu_change_pct": 12,
+    "active_anomalies": 124,
+    "unexplained_anomalies": 38
+  },
+  "top_attention_items": [
+    {
+      "id": "A001",
+      "type": "anomaly",
+      "level": "HIGH",
+      "title": "Unexplained +68% spike in Oxytetracycline",
+      "subtitle": "Maharashtra · Dairy",
+      "link": "/admin/anomalies?id=A001"
+    }
+  ],
+  "regional_hotspots": [
+    {
+      "state_id": "MH",
+      "state_name": "Maharashtra",
+      "amu_change_pct": 23,
+      "unexplained_anomalies": 5
+    }
+  ],
+  "national_trend": {
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"],
+    "amu_values": [112, 108, 115, 110, 114, 118, 156, 182]
+  }
+}
+```
+
+### GET /api/admin/analytics
+Status: `DUMMY` — derived from `REGION_DATA` and `DISTRICT_DATA`
+
+**Response 200**
+```json
+{
+  "states": [
+    {
+      "id": "UP",
+      "state": "Uttar Pradesh",
+      "zone": "North",
+      "amu": 94200,
+      "change": 18,
+      "anomalies": 22,
+      "unexplained": 8
+    }
+  ],
+  "districts_by_state": {
+    "MH": [
+      {
+        "district": "Pune",
+        "amu": 14500,
+        "change": 23,
+        "anomalies": 4,
+        "unexplained": 2
+      }
+    ]
+  }
+}
+```
+Open question for backend: Do we want to load all district data nationally upfront, or fetch districts on-demand `GET /api/admin/analytics/districts?state=MH` when a state is selected? Currently, the frontend holds all mock data in memory.
+
+### GET /api/admin/anomalies
+Status: `DUMMY` — derived from `ANOMALY_DATA`
+
+**Response 200**
+```json
+{
+  "items": [
+    {
+      "id": "A001",
+      "farm": "Farm 247",
+      "region": "Maharashtra",
+      "medicine": "Oxytetracycline",
+      "amu_change_pct": 68,
+      "baseline": 100,
+      "health_event": null,
+      "status": "UNEXPLAINED",
+      "severity": "HIGH",
+      "species": "Dairy",
+      "date": "2026-08-24",
+      "history": [98, 102, 97, 104, 99, 101, 100, 98, 103, 115, 142, 168]
+    }
+  ]
+}
+```
+
+### GET /api/admin/health-amu
+Status: `DUMMY` — derived from `HEALTH_DATA`
+
+**Response 200**
+```json
+{
+  "items": [
+    {
+      "event": "Gumboro (IBD)",
+      "species": "Poultry",
+      "amu_change_pct": 54,
+      "farms_affected": 21,
+      "classification": "Explained"
+    },
+    {
+      "event": "None recorded",
+      "species": "Poultry",
+      "amu_change_pct": 47,
+      "farms_affected": 9,
+      "classification": "Unexplained"
+    }
+  ],
+  "monthly_trend": [
+    { "month": "Mar", "health_events": 412, "amu_index": 115 }
+  ]
+}
+```
+
+### GET /api/admin/forecast
+Status: `DUMMY`
+
+**Response 200**
+```json
+{
+  "series": [
+    {
+      "label": "Oxytetracycline · National",
+      "historical": [110, 115, 112, 118, 156, 182],
+      "forecast": [182, 195, 210, 205, 190, 175],
+      "demand_level": "High",
+      "expected_change": 32,
+      "current_amu": "High",
+      "signal": "High need"
+    }
+  ],
+  "regional_planning": [
+    {
+      "region": "Maharashtra",
+      "drug": "Oxytetracycline",
+      "prediction": "+45% demand",
+      "action": "Increase supply allocation"
+    }
+  ]
+}
+```
+
+### GET /api/admin/workspace/insights
+Status: `DUMMY` — powers the workspace
+
+**Response 200**
+```json
+{
+  "saved_insights": [
+    {
+      "id": "I001",
+      "title": "Maharashtra — Oxytetracycline anomaly cluster",
+      "summary": "Multiple unexplained spikes across 5 districts.",
+      "tags": ["Maharashtra", "Oxytetracycline", "Unexplained"],
+      "date": "2026-08-24",
+      "linked_to": "Anomalies",
+      "linked_anomaly_id": "A001"
+    }
+  ],
+  "research_notes": [
+    {
+      "id": "N001",
+      "observation": "Correlation between recent unseasonal rains and AMU spike.",
+      "hypothesis": "Possible secondary respiratory infections driving usage.",
+      "evidence": ["Regional weather data", "Health event reports"],
+      "next_investigation": "Cross-reference with state veterinary department reports.",
+      "associated_with": [{ "type": "Region", "value": "Maharashtra" }],
+      "date": "2026-08-23",
+      "author": "Dr. Sharma (Admin)"
+    }
+  ]
+}
+```
+
+### POST /api/admin/workspace/insights
+Status: `NEEDED` — Currently, saving insights from anomalies is handled in local React state (`AdminContext`). Backend must persist this to DB.
+
+**Request**
+```json
+{
+  "title": "string",
+  "summary": "string",
+  "tags": ["string"],
+  "linked_anomaly_id": "string"
+}
+```
+**Response 201**
+```json
+{
+  "id": "I002",
+  "success": true
+}
+```
 
 ---
+
+
+## 10. Lab Technician Role
+
+### GET /api/lab/dashboard
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-dashboard.ts`
+
+**Response 200**
+```json
+{
+  "summary": [
+    { "value": "12", "label": "Awaiting Receipt", "sub": "3 high priority", "color": "amber" }
+  ],
+  "attention": [
+    {
+      "id": "MLK-2026-00124",
+      "type": "MILK",
+      "title": "Shree Krishna Dairy",
+      "desc": "Beta-lactam residue testing required.",
+      "status": "HIGH PRIORITY",
+      "statusColor": "amber",
+      "action": "Start Testing →",
+      "page": "/lab/testing-workspace/MLK-2026-00124"
+    }
+  ],
+  "activity": [
+    {
+      "text": "Result submitted for MLK-2026-00118",
+      "time": "10 min ago",
+      "icon": "check"
+    }
+  ]
+}
+```
+
+### GET /api/lab/dispatches
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-dispatches.ts`
+
+**Response 200**
+```json
+{
+  "items": [
+    {
+      "id": "MLK-2026-00124",
+      "date": "22 Aug · 10:30 AM",
+      "product": "Milk",
+      "productSub": "Raw milk",
+      "source": "Shree Krishna Dairy",
+      "sourceSub": "Animal: MP-104",
+      "sample": "LAB-MLK-00981",
+      "sampleStatus": "Received",
+      "sampleColor": "green",
+      "risk": "MODERATE",
+      "riskColor": "amber",
+      "status": "READY FOR TESTING",
+      "statusColor": "amber",
+      "action": "View →",
+      "clickable": true
+    }
+  ]
+}
+```
+
+### GET /api/lab/dispatches/{dispatchId}
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-dispatches.ts` (`fetchLabDispatchDetail`)
+
+**Response 200**
+```json
+{
+  "id": "MLK-2026-00124",
+  "product": "Raw Milk",
+  "source": "Shree Krishna Dairy",
+  "date": "22 Aug 2026",
+  "time": "10:30 AM",
+  "quantity": "850 L",
+  "linkedAnimal": "MP-104",
+  "currentSample": "LAB-MLK-00981",
+  "risk": "MODERATE",
+  "riskReason": "Recent antimicrobial exposure",
+  "overallStatus": "TESTING IN PROGRESS",
+  "stages": [
+    { "label": "Testing", "state": "active" }
+  ],
+  "tests": [
+    {
+      "num": "02",
+      "title": "Microbiological Safety",
+      "checks": ["Standard plate count", "Coliform screening", "Pathogen screen"],
+      "status": "IN PROGRESS",
+      "statusColor": "amber",
+      "action": "Continue Testing →",
+      "active": true,
+      "badge": null
+    }
+  ],
+  "assessment": [
+    { "label": "Traceability", "status": "Complete", "color": "green" }
+  ],
+  "notes": {
+    "condition": "Acceptable",
+    "temperature": "4.2°C",
+    "container": "Intact",
+    "receivedBy": "Dr. Priya Sharma",
+    "receivedAt": "22 Aug · 11:05 AM"
+  },
+  "activity": [
+    {
+      "time": "12:10 PM",
+      "title": "Microbiological testing started",
+      "desc": "Status updated to In Progress.",
+      "icon": "active"
+    }
+  ]
+}
+```
+
+### GET /api/lab/queue
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-testing.ts` (`fetchTestingQueue`)
+
+**Response 200**
+```json
+{
+  "awaiting": [
+    {
+      "id": "MLK-2026-00131",
+      "product": "Milk",
+      "productSub": "Raw Milk",
+      "source": "Mahalaxmi Dairy",
+      "sourceSub": "Animal: MP-087",
+      "sample": "LAB-MLK-00992",
+      "arrival": "Expected today · 10:45 AM",
+      "priority": "HIGH PRIORITY",
+      "priorityColor": "red",
+      "reason": "Targeted residue test required",
+      "action": "Receive Sample →",
+      "highlighted": true
+    }
+  ],
+  "ready": [
+    {
+      "id": "MLK-2026-00124",
+      "product": "Milk",
+      "source": "Shree Krishna Dairy",
+      "sample": "LAB-MLK-00981",
+      "tests": [
+        { "name": "Product Quality", "status": "done" },
+        { "name": "Microbiological Safety", "status": "active" },
+        { "name": "Antimicrobial Residue", "status": "pending" }
+      ],
+      "action": "Continue Testing →"
+    }
+  ]
+}
+```
+
+### GET /api/lab/workspace/{sampleId}
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-testing.ts` (`fetchTestingWorkspace`)
+
+**Response 200**
+```json
+{
+  "dispatchId": "MLK-2026-00124",
+  "sampleId": "LAB-MLK-00981",
+  "product": "Raw Milk",
+  "productSub": "Milk",
+  "source": "Shree Krishna Dairy",
+  "sourceSub": "MP-104",
+  "condition": "✓ Acceptable",
+  "temperature": "4.2°C",
+  "riskLevel": "MODERATE",
+  "antimicrobialContext": "Amoxicillin · Last administered 15 Aug 2026",
+  "antimicrobialStatus": "✓ Withdrawal completed before dispatch. Residue testing still required.",
+  "assessments": [
+    { "num": 1, "label": "Product Quality", "state": "done" },
+    { "num": 2, "label": "Microbiological Safety", "state": "active" },
+    { "num": 3, "label": "Antimicrobial Residue", "state": "pending" }
+  ]
+}
+```
+
+### POST /api/lab/workspace/{sampleId}/tests
+Status: `NEEDED` — Single atomic submission per assay category.
+
+**Request**
+```json
+{
+  "test_category": "Microbiological Safety",
+  "plateCount": 4200,
+  "coliform": "Not Detected",
+  "pathogen": "Not Detected",
+  "organism": null,
+  "notes": "Sample looks consistent.",
+  "is_compliant": true
+}
+```
+**Response 200**
+```json
+{
+  "success": true,
+  "message": "Test results submitted."
+}
+```
+Open questions for backend:
+- Do these microbiological safety fields (plateCount, coliform, pathogen) map directly to the `lab_assay` / `mrl.lab_result_ppm` fields mentioned in Section 5? The API contract focuses heavily on antimicrobial MRLs for dispatch safety logic. If these pathogen results need to be tracked on the dispatch passport or queried centrally, the backend `lab_assay` schema may need to explicitly include non-MRL tests (pathogen flags, CFU limits).
+
+### GET /api/lab/results
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-results.ts`
+
+**Response 200**
+```json
+{
+  "items": [
+    {
+      "id": "MLK-2026-00124",
+      "product": "Raw Milk",
+      "source": "Shree Krishna Dairy",
+      "sample": "LAB-MLK-00981",
+      "date": "23 Aug 2026",
+      "tests": [
+        { "label": "Product Quality", "result": "COMPLIANT", "ok": true },
+        { "label": "Microbiological Safety", "result": "COMPLIANT", "ok": true },
+        { "label": "Antimicrobial Residue", "result": "WITHIN LIMIT", "ok": true }
+      ],
+      "status": "AWAITING VERIFICATION",
+      "statusColor": "amber",
+      "action": "Review Assessment →",
+      "outcome": "released"
+    }
+  ]
+}
+```
+
+### POST /api/lab/results/{resultId}/verify
+Status: `NEEDED` — Final assessment submission to clear or hold the dispatch.
+
+**Request**
+```json
+{
+  "outcome": "released | hold",
+  "remarks": "All checks passed successfully."
+}
+```
+**Response 200**
+```json
+{
+  "success": true,
+  "new_status": "CLEARED FOR DISPATCH"
+}
+```
+
+### GET /api/lab/reports
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-reports.ts`
+
+**Response 200**
+```json
+{
+  "summary": [
+    { "v": "128", "l": "Completed", "color": "neutral" }
+  ],
+  "items": [
+    {
+      "id": "MLK-2026-00124",
+      "product": "Milk",
+      "productSub": "Raw Milk",
+      "source": "Shree Krishna Dairy",
+      "sample": "LAB-MLK-00981",
+      "animal": "MP-104",
+      "date": "23 Aug 2026",
+      "status": "CLEARED",
+      "statusColor": "green",
+      "refNo": "LAB-REF-2026-00124",
+      "verifiedBy": "Laboratory Authority",
+      "verifiedOn": "23 Aug 2026 · 4:20 PM",
+      "assessments": [
+        { "label": "Microbiological Safety", "result": "Compliant", "ok": true, "detail": "SPC 4,200 CFU/mL · Coliform ND · Pathogen ND" }
+      ],
+      "mrl": {
+        "drug": "Amoxicillin (Beta-lactam)",
+        "measured": 3.2,
+        "limit": 4.0,
+        "unit": "μg/kg",
+        "ratio": 0.80,
+        "verdict": "WITHIN MRL",
+        "verdictOk": true
+      },
+      "withdrawal": {
+        "drug": "Amoxicillin",
+        "administered": "15 Aug 2026",
+        "completed": "20 Aug 2026",
+        "status": "Completed before dispatch"
+      },
+      "outcome": "CLEARED FOR DISPATCH",
+      "outcomeOk": true
+    }
+  ]
+}
+```
+Open questions for backend:
+- **MRL Consistency:** The `ReportMrl` struct contains `ratio` and `verdictOk` fields. Ensure the backend returns these pre-computed for consistency with the frontend.
+- **Dispatch Safety Check Consistency:** The Farmer `POST /api/farmer/dispatch/safety-check` API returns an `mrl` object (e.g. `{"status": "within_limit", "lab_result_ppm": 0.04, "permitted_ppm": 0.10}`). The backend needs to ensure that when a Lab `CLEARED FOR DISPATCH` status is generated here, it maps accurately to `lab_assay: {available: true}` and sets the corresponding `mrl` status in the farmer's safety check API.
 
 ## Conventions for all future endpoints
 - Auth: `Authorization: Bearer <jwt>` on every call except `/api/auth/login`.
@@ -1082,18 +1671,19 @@ Status: `NEEDED` — pages undecided. Expect: exception queue, national heatmap,
 
 ---
 *Last updated: both Farmer and Vet roles are now functionally complete on dummy data —
-all 5 farmer pages (Home, My Farm, Treatments, Dispatch, Insights) and both vet pages (Home,
-Prescriptions), including every modal/panel/flow built so far: farmer side — Add Animal,
+all 5 farmer pages (Home, My Farm, Treatments, Dispatch, Insights) and all 3 vet pages (Home,
+Prescriptions, Patients), including every modal/panel/flow built so far: farmer side — Add Animal,
 Record Treatment wizard, Start Dispatch wizard + passport, Animal Detail, Treatment Detail
-panel, Dispatch Detail; vet side — CaseDetailModal, the 3-step Review & Sign pipeline
+panel, Dispatch Detail, Add Medicine Stock modal; vet side — CaseDetailModal, the 3-step Review & Sign pipeline
 (Review → Notice → Sign → Signed), the 2-step Review & Countersign pipeline (Review → Sign →
-Countersigned), and the New Prescription modal. Alerts/Insights/Recent Activity/Recent Outcomes
+Countersigned), New Prescription modal, PatientDetailModal, and RecordFollowUpModal. Alerts/Insights/Recent Activity/Recent Outcomes
 on vet home now use a shared capped-list-with-View-More pattern.
 
 Remaining gaps: the real cryptographic sign/countersign ceremony (both endpoints are `NEEDED`,
 current frontend uses dummy PIN "1234" validation only — flagged throughout as non-production),
 the dispatch safety-check 200-vs-409 conflict (Section 5, unresolved), the RESERVE-vs-CIA badge
-distinction (Section 7, unresolved), and the entire Admin/Regulator role (undesigned).
+distinction (Section 7, unresolved). The Admin/Regulator dashboard is now designed with full hierarchical endpoints.
 
 Update this file every time a new page's data shape is decided — don't let it drift from the
 frontend dummy data.*
+

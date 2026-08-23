@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { useRouter } from "next/navigation";
 
 interface SampleReceiptFlowProps {
   dispatch: AwaitingSample;
@@ -15,6 +16,7 @@ type ReceiptStep = "step1" | "step2" | "step3" | "success";
 const STEPS = ["Identify", "Inspect", "Confirm"];
 
 export function SampleReceiptFlow({ dispatch, onBack, onComplete }: SampleReceiptFlowProps) {
+  const router = useRouter();
   const [step, setStep] = React.useState<ReceiptStep>("step1");
   
   // Step 1
@@ -64,7 +66,10 @@ export function SampleReceiptFlow({ dispatch, onBack, onComplete }: SampleReceip
         </Card>
         
         <div className="w-full max-w-sm flex flex-col gap-3">
-          <Button className="w-full" onClick={onComplete}>Start Testing &rarr;</Button>
+          <Button className="w-full" onClick={() => {
+            router.push(`/lab/testing-workspace/${dispatch.sample}`);
+            onComplete();
+          }}>Start Testing &rarr;</Button>
           <Button variant="outline" className="w-full" onClick={onComplete}>Back to Queue</Button>
         </div>
       </div>

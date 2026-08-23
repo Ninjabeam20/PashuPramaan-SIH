@@ -95,7 +95,7 @@ export default function DispatchDetailPage() {
         
         {/* Primary Action Area */}
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
-          <Button className="w-full sm:w-auto" onClick={() => {}}>
+          <Button className="w-full sm:w-auto" onClick={() => router.push("/lab/testing-workspace/" + data.currentSample)}>
             Continue Testing &rarr;
           </Button>
           <Button className="w-full sm:w-auto bg-transparent border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)]" onClick={() => {}}>
@@ -357,7 +357,7 @@ export default function DispatchDetailPage() {
                 <p className="text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase mb-2">Overall Status</p>
                 <Badge variant="amber" className="mb-2 w-fit">{data.overallStatus}</Badge>
                 <p className="text-xs text-[var(--color-text-muted)] mb-4">2 of 3 required test categories are complete or active.</p>
-                <Button className="w-full">
+                <Button className="w-full" onClick={() => router.push("/lab/testing-workspace/" + data.currentSample)}>
                   Continue Testing &rarr;
                 </Button>
               </div>
