@@ -1,465 +1,853 @@
-# Canonical dummy data + cross-page writes
+# PashuPramaan — PostgreSQL Database Migration & API Implementation Plan
 
-**Canonical copy:** this file (`docs/plan.md`). Dated mirror: `docs/superpowers/plans/2026-08-23-canonical-dummy-data.md`.
-
-## Execution flow (first → next)
-
-Do **one stage per agent session**. Do not skip ahead. After each stage, run the click-through in that stage’s **Verify** list, then stop and wait for confirmation.
-
-| Order | Stage | What to implement | Stop when |
-|-------|--------|-------------------|-----------|
-| **FIRST** | Stage 1 | `src/lib/seed/` + dummy GETs read the store. **No mutations.** | Read-only click-through across farmer, vet, lab, admin passes |
-| **NEXT** | Stage 2 | Farmer writes (add animal, treatment, stock, health event, dispatch) | Farmer cross-page updates work |
-| Then | Stage 3 | Vet writes (new Rx, sign, countersign) | Vet home + prescriptions stay in sync |
-| Then | Stage 4 | Lab writes (receive, complete, verify) | Lab queues/results/reports stay in sync |
-| Then | Stage 5 | Admin `farm_id` join + leftover writes | Anomalies still join Meena Poultry |
-| Last | Stage 6 | Contract freeze (no dropped DTO fields; grep leftover `local*` state) | Ready to merge |
-
-Dummy modules live at **`src/lib/api/dummy/*.ts`** (imports `@/lib/api/dummy/...`). Login is **`src/app/(auth)/login/page.tsx`**.
-
-Copy-paste agent prompts: **[Appendix: agent prompts](#appendix-agent-prompts)** at the bottom of this file.
+**Canonical copy:** this file (`docs/plan.md`).  
+**Status:** Stage 1 Completed (Canonical seed & conflict audit verified). PostgreSQL database setup, relational schema, Next.js API routes, and full persistence ready for implementation.
 
 ---
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+## 1. Executive Summary & Architecture
 
-**Goal:** One in-memory canonical dataset per entity (all four roles), dummy GET adapters that keep today’s return shapes, and mutations that write the store then invalidate TanStack Query so other pages update.
-
-**Architecture:** Introduce `src/lib/seed/` as the only place entity rows live. Keep every function in `src/lib/api/dummy/*.ts` as a **view adapter** (map store → existing DTO). Mutations update the store and `queryClient.invalidateQueries`. No new UI, no DTO field renames. Pause after each stage for a click-through check.
-
-**Tech Stack:** Next.js App Router, TypeScript, TanStack Query (`src/providers/ReactQueryProvider.tsx`), existing dummy modules under `src/lib/api/dummy/`.
-
-## Global Constraints
-
-- **Audit first (done in this file):** do not invent new farms/animals to “fill gaps” except IDs that already appear on screen.
-- **One canonical row per entity id.**
-- **Conflict comments:** at the seed row, `// CONFLICT:` what disagreed and what we kept.
-- **Preserve GET/mutation response shapes** already consumed by pages (`docs/api-contract (3).md` + TypeScript interfaces in dummy files). Adapters may *compute* fields; they must not change keys/nesting components already read.
-- **Writes persist across pages** via the store + query invalidation — not `useState` copies of fetched lists.
-- **Incremental stages** with a click-through gate between stages.
-- **No visual/UI refactors.** Page files may change only data wiring (remove `localData` / `setQueryData` list hacks; call store mutations). Do not restyle, reorder layout, or rewrite JSX structure beyond that.
-- **All four roles:** Farmer, Veterinarian, Lab Technician, Administrator/Researcher. Older notes (`cursor changes/Cursor_changes 1.MD`) scoped **three** roles and omitted lab; this plan includes lab + admin.
-- **Out of scope:** `lab_app/` (legacy Vite), PostgreSQL/Express from old Cursor_changes docs, JWT, visual redesign.
-
----
-
-## How this repo is actually laid out (all roles)
-
-Login (`src/app/(auth)/login/page.tsx`) offers four roles and routes:
-
-| Role | Login value | First URL (`src/app/(auth)/login/page.tsx`) | Layout |
-|------|-------------|---------------------------------------------|--------|
-| Farmer | `farmer` | `/farmer/home` | `src/app/farmer/layout.tsx` |
-| Veterinarian | `vet` | `/vet/home` | `src/app/vet/layout.tsx` |
-| Administrator | `admin` | `/admin/overview` | `src/app/admin/layout.tsx` |
-| Lab | `lab` | `/lab/dashboard` | `src/app/lab/layout.tsx` |
-
-**Dummy import alias used in pages:** `@/lib/api/dummy/...` → files on disk: `src/lib/api/dummy/*.ts`.
-
-**This repo’s recurring IDs (use these in seed, not invented MP-101-style aliases):** animals `MP-104`…`MP-111`, `MP-118`, `MP-112`, `MP-097`, `MP-088`, `MP-101`, flocks `Flock P-01` / `Flock P-02` / `Flock-07`; treatments `trt-1`…`trt-5`; farmer dispatches `DSP-024`…; Rx `Rx-208`…; lab `MLK-2026-00124`, samples `LAB-MLK-00981`.
-
-Dummy HTTP layer (all under `src/lib/api/dummy/`):
-
-| File | Role | Exported reads (keep signatures) |
-|------|------|----------------------------------|
-| `auth.ts` | all | `loginUser` |
-| `farmer-dashboard.ts` | farmer | `getFarmerDashboard` |
-| `farm-detail.ts` | farmer | `getFarmDetail` |
-| `animal-detail.ts` | farmer | `getAnimalDetail` |
-| `treatments.ts` | farmer | `getTreatments`, `getPrescriptionOptions`, `getTreatmentDetail` |
-| `dispatch.ts` | farmer | `getDispatches`, `checkDispatchSafety`, `getDispatchDetail` |
-| `farm-insights.ts` | farmer | `getFarmInsights` |
-| `vets.ts` | farmer | `getAvailableVets` |
-| `vet-dashboard.ts` | vet | `getVetDashboard` |
-| `vet-prescriptions.ts` | vet | `getPrescriptionsList` |
-| `vet-case-detail.ts` | vet | `getCaseDetail` |
-| `vet-sign-flow.ts` | vet | `getPrescriptionForSigning`, `submitSignature`, `getEmergencyForCountersigning`, `submitCountersignature` |
-| `vet-patients.ts` | vet | `getVetPatients` |
-| `lab-dashboard.ts` | lab | `fetchLabDashboard` |
-| `lab-dispatches.ts` | lab | `fetchLabDispatches`, `fetchLabDispatchDetail` |
-| `lab-testing.ts` | lab | `fetchTestingQueue`, `fetchTestingWorkspace` |
-| `lab-results.ts` | lab | `fetchLabResults` |
-| `lab-reports.ts` | lab | `fetchLabReports` |
-| *(no admin dummy module)* | admin | Hardcoded datasets in `src/components/admin/AdminShared.tsx`; choropleth in `src/lib/admin/state-stats.ts` |
-
-Live App Router (product UI — not `lab_app/`):
-
-**Farmer** — `src/app/farmer/home`, `my-farm`, `treatments`, `dispatch`, `insights`
-
-**Vet** — `src/app/vet/home`, `prescriptions`, `prescriptions/[rxId]`, `prescriptions/[rxId]/sign`, `prescriptions/[rxId]/countersign`, `patients`
-
-**Lab** — `src/app/lab/dashboard`, `dispatches`, `dispatches/[dispatchId]`, `testing-queue`, `testing-workspace/[sampleId]`, `results`, `reports`
-
-**Admin** — `src/app/admin/page.tsx` (national map), `overview`, `analytics`, `anomalies`, `health`, `forecast`, `workspace`, `states/[slug]`
-
----
-
-## Stage 0 audit (constraint 1) — entity map
-
-### Farms / sources (many display names, overlapping identities)
-
-| Display name (as coded) | Where defined | Likely same real farm? |
-|-------------------------|---------------|------------------------|
-| Shree Krishna Dairy | `farmer-dashboard.ts`, `farm-detail.ts` | Farmer home farm |
-| Krishna Dairy | `vet-prescriptions.ts`, `vet-dashboard.ts`, `vet-case-detail.ts`, `vet-patients.ts` | Same as Shree Krishna **if** we treat “Krishna” as one dairy — **conflict:** farmer never says “Krishna Dairy” |
-| Shanti Dairy | vet dashboard + prescriptions + patients | Separate dairy in vet caseload |
-| Meena Poultry / Meena Poultry | vet files vs `vet-dashboard.ts` alerts (`Meena Poultry`) | Same poultry; **spelling conflict** |
-| Shree Krishna Dairy / Shree Krishna Dairy / Shree Krishna Dairy | `lab-dispatches.ts`, `lab-testing.ts`, `lab-dashboard.ts`, `lab-results.ts`, `lab-reports.ts` | Same dairy as farmer, **three spellings** |
-| Green Valley Livestock / Green Valley Livestock | lab meat rows | One livestock source |
-| Sunrise Poultry / Sunrise Poultry | lab egg rows | One poultry source |
-| Mahalaxmi Dairy | lab milk `MLK-2026-00118` / `MLK-2026-00131` | Separate |
-| Raj Farms | lab `MEAT-2026-00072` | Separate |
-| Farm 247, Farm 334, Farm 512, Sunrise Poultry, … | `AdminShared.tsx` `ANOMALY_DATA` | National demo farms; **A002 Meena Poultry** should join vet Meena Poultry |
-
-### Animals / flocks
-
-| ID | Files | Conflicting facts |
-|----|-------|-------------------|
-| **MP-104** | farm-detail (Cow, under_treatment); animal-detail (Buffalo, Gir, oxytet); treatments `trt-1` (Buffalo, oxytet, withdrawal); farmer-dashboard attention; dispatch DSP-024 milk cleared; vet Rx-208 Shanti Dairy Cow; lab milk source “Animal: MP-104”; reports `animal: "MP-104"` | **Species Cow vs Buffalo.** **Farm Shree Krishna vs Shanti Dairy.** **Dispatch cleared vs withdrawal active.** |
-| MP-105 | farm-detail Cow healthy; health-event modal option `MP-105` | Modal uses `MP-105` not farm’s `MP-105` |
-| MP-106 | farm-detail Buffalo healthy; treatments `trt-3` **Goat** Amoxicillin | **Species + health vs under treatment** |
-| MP-108 | farm-detail **Goat** healthy; treatments `trt-5` **Cow** Ivermectin completed; dispatch DSP-023 milk withdrawal | **Species goat vs cow.** Milk dispatch on a goat is a plot hole unless dairy goat. |
-| MP-109 | farm-detail Buffalo waiting; treatments `trt-4` Vitamin B12 unsigned | Status waiting vs active treatment |
-| MP-101 | vet Rx-201 / dashboard signed mastitis — **not on farm-detail roster** | Orphan ID |
-| MP-118 | vet patients Cow Krishna Dairy; case-detail **Buffalo**; sign-flow animal **MP-118** (typo vs MP-118); dashboard **MP-118** | **Cow vs Buffalo; MP-118 vs MP-118** |
-| MP-112, MP-097, MP-088 | vet patients + prescriptions | Not on farmer farm list (OK if other farms) |
-| Flock P-01 | treatments unsigned emergency oxytet; vet Rx-207; patients Recovered; case-detail UNSIGNED EMERGENCY; dashboard Flock P-01 / Flock P-01 | **Recovered vs unsigned emergency.** **P-01 vs P-01 spelling.** |
-| Flock P-02, Flock P-03 | prescriptions / dashboard outcomes | Not in farmer farm |
-| Flock-07 | dispatch DSP-022 blocked meat | Not in farm-detail |
-| FLK-2026-042 / FLK-2026-051 | lab eggs | Not linked to Flock P-01 |
-
-### Prescriptions (`Rx-*`)
-
-| ID | `vet-prescriptions.ts` | `vet-dashboard.ts` | Other |
-|----|------------------------|--------------------|-------|
-| Rx-208 | SIGN-REQ, Shanti, MP-104, mastitis | SIGN-REQ, Shanti, MP-104 | sign-flow **ignores id**, always Krishna / MP-118 / Enrofloxacin |
-| Rx-207 | **COUNTERSIGNED**, Meena, Flock P-01, Gumboro | **UNSIGNED EMERGENCY**, Meena, Flock P-01, Gumboro (IBD) | case-detail unsigned emergency oxytet |
-| Rx-205 | SIGN-REQ, Krishna, MP-118 | SIGN-REQ, Krishna, **MP-118** | case-detail Enrofloxacin intramammary vs sign-flow Enrofloxacin IM |
-| Rx-201 | SIGNED, Shanti, MP-101 | SIGNED, Shanti, MP-101 | |
-| Rx-198, 194, 189, 183 | list only | — | farmer `getPrescriptionOptions` uses **numeric** `201`, `198`, `195`, `189` not `Rx-201` |
-
-### Treatments
-
-| ID | List (`treatments.ts`) | Detail (`getTreatmentDetail`) | Dispatch link |
-|----|------------------------|-------------------------------|---------------|
-| trt-1 | MP-104 Buffalo oxytet withdrawal | matches | DSP-024 is MP-104 **cleared** (contradicts withdrawal) |
-| trt-2 | Flock P-01 unsigned | fallback detail is **MP-106 Goat** if id ≠ trt-1 | DSP-023 `treatment_id: "trt-2"` but animal **MP-108** |
-| trt-3..5 | list only | generic fallback (always MP-106 Goat) | |
-
-### Farmer / lab dispatches (different ID namespaces)
-
-Farmer `DSP-024` / `DSP-023` / `DSP-022` in `dispatch.ts` are **not** lab `MLK-2026-00124` / `MEAT-2026-00087` / `EGG-2026-00241`. They must become **linked** rows (farmer dispatch → lab sample) rather than remaining parallel universes.
-
-### Lab samples (same business object, drifting ids/status)
-
-| Business object | Dispatches | Testing | Results | Reports | Dashboard |
-|-----------------|------------|---------|---------|---------|-----------|
-| Milk 124 | `MLK-2026-00124`, sample `LAB-MLK-00981`, Shree Krishna, MP-104, READY FOR TESTING | ready `MLK-2026-00124`, sample **LAB-MLK-00981**, Shree Krishna Dairy; workspace animal **MP-104** | id **MLK-2026-00124**, sample LAB-MLK-00981, Shree Krishna Dairy | same as results, animal MP-104, **CLEARED**, amoxicillin MRL | attention Start Testing MLK-2026-00124 |
-| Meat 087 | `MEAT-2026-00087`, LAB-MT-00472, Green Valley, IN PROGRESS | — (not in ready list) | **MEAT-2026-00087**, LAB-MT-00472, ACTION REQUIRED | ON HOLD tetracycline | View Dispatch |
-| Eggs 241 | `EGG-2026-00241`, LAB-EGG-01128, Sunrise Poultry, AWAITING VERIFICATION | — | **EGG-2026-00241**, VERIFIED | CLEARED enrofloxacin, animal FLK-2026-042 | dashboard **EGG-2026-00241** Sunrise Poultry (id digit drift 241 vs 241) |
-| Meat 091 | — | awaiting **and** ready `MEAT-2026-00091` (duplicate states) | — | — | |
-
-### Medicine stock
-
-| Name | Home (`farmer-dashboard.ts`) | Insights (`farm-insights.ts`) |
-|------|------------------------------|-------------------------------|
-| Oxytetracycline | 17 vials, Restock recommended | 17 vials, Restock recommended |
-| Ivermectin | 32 doses | 32 doses |
-| Vitamin B Complex | 60 doses | 60 doses |
-| Amoxicillin | 8 vials Monitor | 8 vials Monitor |
-| Attention item | title **"Medicine A"** | should be Oxytetracycline |
-
-Home and insights **match numbers** today but are **duplicated literals**. Add-stock on insights (`MedicineStockTable.tsx`) does not update home.
-
-### Vets
-
-`vets.ts`: vet-1 Dr. Bankey, vet-2 Dr. Sofia Abidi, vet-3 Dr. Anil Sharma. Dashboard vet name Dr. Bankey. Sign PIN `1234` in `vet-sign-flow.ts`.
-
-### Health events
-
-No `health-events.ts`. Modal `RecordHealthEventModal.tsx` hardcodes animals `MP-104`, `MP-105` and **does not persist**. Insights charts are static series. Vet case-detail inlines Gumboro / mastitis onset.
-
-### Admin
-
-`AdminShared.tsx` national aggregates + anomalies. **A002 Meena Poultry + Gumboro + Oxytetracycline** is the only clear join to vet/farmer poultry story. `state-stats.ts` is hashed dummy headcount, not animal rows.
-
-### Page-local writes (do not survive navigation)
-
-| Action | File | Today |
-|--------|------|--------|
-| Add Animal | `src/app/farmer/my-farm/page.tsx` | `localData` / `setLocalData` |
-| Record Treatment | `src/app/farmer/treatments/page.tsx` | `localTreatments` |
-| Start Dispatch | `src/app/farmer/dispatch/page.tsx` | `localDispatches` |
-| Add Stock | `src/components/farmer/MedicineStockTable.tsx` | component `useState` |
-| Health Event | `RecordHealthEventModal.tsx` | close only |
-| Book Vet | home modal | no store |
-| New Rx | `src/app/vet/prescriptions/page.tsx` | `queryClient.setQueryData(["vet-prescriptions"])` only |
-| Sign / Countersign | sign + countersign pages | `submit*` returns payload; **lists unchanged** |
-| Lab receive / complete / verify | lab components | local view state / empty handlers |
-| Admin save insight / note | `AdminShared.tsx` + `admin/layout.tsx` | React state, lost on refresh (acceptable to persist in store for demo) |
-
----
-
-## Conflict resolutions (constraint 3) — implement as seed comments
-
-Put each `// CONFLICT:` on the canonical row in `src/lib/seed/`.
-
-1. **Farmer dairy name:** keep `Shree Krishna Dairy`. Treat vet `Krishna Dairy` as the same `farm_id`. Comment that vet strings said “Krishna Dairy”.
-2. **Shanti Dairy / Meena Poultry:** separate `farm_id`s. Spell poultry **Meena Poultry** (prescriptions/patients); comment dashboard `Meena Poultry`.
-3. **MP-104 species + farm:** **Buffalo**, farm **Shree Krishna Dairy** (animal-detail + treatments win over farm-detail Cow and over vet Shanti). Vet Rx-208 remains on MP-104 at this farm (comment: vet list said Shanti).
-4. **MP-104 withdrawal vs DSP-024 cleared:** keep **active withdrawal** on `trt-1`. Set DSP-024 status to **`withdrawal`** (comment: list said cleared).
-5. **DSP-023 `treatment_id`:** point to **`trt-5`** (MP-108), not `trt-2` (comment).
-6. **MP-106:** **Buffalo** on Shree Krishna; `trt-3` species from animal (comment: list said Goat).
-7. **MP-108:** **Goat**, dairy (milk OK). Treatment `trt-5` species Goat (comment: list said Cow).
-8. **MP-118 vs MP-118:** canonical **`MP-118`**, species **Cow** (patients + prescriptions). Sign-flow/dashboard `MP-118` is a typo. Case-detail Buffalo → Cow.
-9. **Rx-207:** **unsigned emergency** (dashboard + case-detail + farmer `trt-2`). Prescriptions “COUNTERSIGNED” was ahead of the story.
-10. **Flock P-01 patient “Recovered”:** **Under treatment** while unsigned emergency exists.
-11. **Sign-flow default body:** must **branch on `rxId`** (Rx-208 oxytet mastitis MP-104; Rx-205 CIA enrofloxacin MP-118). Comment: old function returned one Krishna/MP-118 payload for every id.
-12. **Farmer Rx option ids:** store `rx_id: "Rx-201"` etc.; adapter may still show `201` in `PrescriptionOption.rx_id` **only if** current UI types require it — prefer mapping `"Rx-201"` → keep interface `string \| null` and pass `"Rx-201"` if components only display it. If any comparison assumes `"201"`, comment and keep adapter emitting `"201"` for that field until a safe check.
-13. **Lab milk 124:** one sample `LAB-MLK-00981`, dispatch `MLK-2026-00124`, farm Shree Krishna Dairy, animal MP-104. Status **ready for testing** (not already CLEARED on reports). Reports row can exist as **draft/in progress** or omit until verify mutation; **do not** show CLEARED while queue says Start Testing. Comment: reports said CLEARED.
-14. **Lab results ids:** use **MLK-2026-00124** (same as dispatch), not `MLK-2026-00124` vs `MLK-2026-00124` drift — unify to dispatch id `MLK-2026-00124`. Adapter maps to whatever `LabResult.id` the results table already displays; if UI shows `MLK-2026-00124`, keep that string as canonical.
-15. **EGG dashboard 241 vs 241:** canonical `EGG-2026-00241`.
-16. **MEAT-2026-00091:** **awaiting receipt only** (not also ready).
-17. **Medicine A:** attention title **Oxytetracycline**.
-18. **Health modal animals:** options from store (MP-104…), not MP-104.
-19. **Admin A002:** `farm_id` = Meena Poultry. A001 Farm 247 stays distinct unless we later alias; comment no farmer farm named Farm 247.
-20. **Link farmer DSP-024 milk → lab MLK-2026-00124** (same milk lot). Meat DSP-022 / Flock-07 may map to MEAT-2026-00087 **only with a comment** if species/source disagree (Flock-07 vs Green Valley Batch M-42) — **do not silently merge**; keep two meat entities until a comment chooses: **keep both**, relate DSP-022 as farmer-side blocked meat **without** overwriting lab Green Valley sample.
-
----
-
-## Recommended state approach (constraint 5)
-
-**Module-level mutable store in `src/lib/seed/store.ts`**, not Zustand/Redux.
-
-- Dummy APIs already live in modules; a singleton store matches that and stays testable.
-- TanStack Query is already the fetch cache (`ReactQueryProvider`).
-- Persistence = JS heap for the tab session (enough for SIH demo). Optional `sessionStorage` later; not required in stage 1.
-- Pages: `useMutation` → store function → `invalidateQueries` for affected keys (`farm-detail`, `treatments`, `dispatches`, `farmer-dashboard`, `vet-prescriptions`, `vet-dashboard`, lab keys, etc.).
-
-Do **not** keep `localTreatments` / `localDispatches` / `localData` after stage 3+.
-
----
-
-## Target files
-
-**Create**
-
-- `src/lib/seed/types.ts` — canonical types (`Farm`, `Animal`, `Prescription`, `Treatment`, `Dispatch`, `HealthEvent`, `Vet`, `MedicineStock`, `LabSample`, `LabResult`, `AdminAnomaly`, …)
-- `src/lib/seed/ids.ts` — string unions / constants
-- `src/lib/seed/canonical.ts` — initial arrays + CONFLICT comments
-- `src/lib/seed/store.ts` — `getState()`, `resetStore()`, mutations
-- `src/lib/seed/project.ts` — optional helpers to build DTOs
-- `src/lib/seed/query-keys.ts` — exported query key list for invalidation
-- `src/lib/seed/seed.test.ts` — uniqueness + adapter smoke tests (vitest or node:test; use whatever the repo already has — if none, a small `node --test` script)
-
-**Modify (adapters only + mutations):** every `src/lib/api/dummy/*.ts` listed above.
-
-**Modify (write wiring, no layout rewrite):** farmer my-farm, treatments, dispatch, insights `MedicineStockTable`, home health modal; vet prescriptions page, sign, countersign; lab receive/complete/verify handlers; optionally admin workspace save → store.
-
-**Do not modify:** CSS, map GeoJSON, `lab_app/`, login visual.
-
----
-
-## Execution stages (constraint 6)
-
-Stop after each stage. User click-through is the gate.
-
-### Stage 1 — Store + read adapters (no mutation wiring)
-
-**Files:** create `src/lib/seed/*`; rewrite dummy GET bodies to read store; keep `await delay`.
-
-**Tests:** every entity id unique per collection; `getFarmDetail().animals.find(MP-104).type === 'Buffalo'`; `getPrescriptionsList()` Rx-207 not COUNTERSIGNED.
-
-- [ ] **Step 1:** Add `src/lib/seed/types.ts` with canonical interfaces (fields richer than DTOs; adapters slice/rename).
-- [ ] **Step 2:** Add `canonical.ts` with farms, animals, prescriptions, treatments, dispatches, stock, vets, lab samples, admin anomalies copied from current literals then patched per resolutions + `// CONFLICT:` comments.
-- [ ] **Step 3:** Add `store.ts` with `let state = structuredClone(initial)` and getters.
-- [ ] **Step 4:** Point `getFarmDetail`, `getAnimalDetail`, `getTreatments`, `getFarmerDashboard`, `getDispatches`, `getFarmInsights`, vet GETs, lab GETs at the store. **Admin:** extract `REGION_DATA` / `ANOMALY_DATA` into seed and re-export from `AdminShared.tsx` so the file still exports the same names (UI import path can stay `AdminShared` to avoid JSX churn — re-export is allowed).
-- [ ] **Step 5:** Run app, **read-only** click-through (below). Do not implement writes yet.
-
-**Verify Stage 1**
-
-1. Login farmer → Home: farm **Shree Krishna Dairy**, attention **MP-104** and **Oxytetracycline** (not Medicine A).
-2. My Farm: MP-104 is **Buffalo** / under treatment; counts still add up visually (totals may shift slightly if we fix under_treatment_count — **recompute from animals** so UI numbers match roster).
-3. Treatments: trt-1 buffalo oxytet; open detail for trt-2 and confirm flock P-01 not goat fallback.
-4. Dispatch: DSP-024 **withdrawal** (not cleared).
-5. Login vet → Home vs Prescriptions: Rx-207 **unsigned emergency** on both; Rx-205 animal **MP-118** everywhere.
-6. Open sign for Rx-208: farm/animal/drug match list (not generic MP-118).
-7. Login lab → Dashboard, Dispatches, Testing, Results, Reports: milk id/sample/farm/animal **one story**; meat 091 not in both awaiting and ready.
-8. Login admin → Anomalies: Meena Poultry / Gumboro still visible.
-
-If Stage 1 looks wrong, fix seed — do not start Stage 2.
-
----
-
-### Stage 2 — Farmer writes
-
-Mutations on store: `addAnimal`, `addTreatment`, `addHealthEvent`, `addDispatch`, `addMedicineStock`. Invalidations: `["farm-detail"]`, `["farmer-dashboard"]`, `["treatments"]`, `["dispatches"]`, `["farm-insights"]`, `["animal-detail", id]`.
-
-Replace `localData` / `localTreatments` / `localDispatches` / stock `useState` with `useMutation` + invalidate. Health modal: `onSubmit` → store; animal `<select>` from `getFarmDetail` animals.
-
-- [ ] Implement store mutations.
-- [ ] Wire pages/modals.
-- [ ] Keep modal JSX as-is aside from submit/options.
-
-**Verify Stage 2**
-
-1. My Farm → Add Animal `MP-199` → appear in table → Home animal_count +1 → Treatments modal animal list includes MP-199.
-2. Record Treatment on MP-105 → Treatments list + My Farm status + Home attention if withdrawal.
-3. Insights Add Stock oxytet → Home stock label increases.
-4. Record Health Event on MP-104 → My Farm recent activity (and insights count if derived).
-5. Start Dispatch eligible animal → Dispatch table → lab **not** required yet.
-
----
-
-### Stage 3 — Vet writes
-
-`addPrescription`, `signPrescription`, `countersignPrescription`. Invalidate `["vet-prescriptions"]`, `["vet-dashboard"]`, `["vet-patients"]`, `["sign-flow", rxId]`, farmer treatments if badges depend on signature.
-
-Remove `setQueryData` append-only hack; append in store so Home prescriptions widget matches after refresh of queries.
-
-Sign/countersign `submit*` must update prescription status in store (PIN still `1234`).
-
-**Verify Stage 3**
-
-1. New Rx → appears on `/vet/prescriptions` **and** `/vet/home`.
-2. Sign Rx-208 → list SIGNED; farmer treatment MP-104 still signed; reopen sign read-only or signed state if UI supports it.
-3. Countersign Rx-207 → dashboard unsigned emergency count drops; prescriptions status matches.
-
----
-
-### Stage 4 — Lab writes
-
-`receiveSample`, `completeTest`, `submitAssessment`, `verifyResult`. Invalidate lab query keys + farmer dispatch safety if MRL gates read lab rows.
-
-**Verify Stage 4**
-
-1. Receive awaiting sample → disappears from awaiting, appears in ready / dispatch status Received.
-2. Complete workspace test → results list updates.
-3. Verify result → reports status + farmer `checkDispatchSafety` for linked animal if applicable.
-
----
-
-### Stage 5 — Admin join + leftover writes
-
-Seed anomalies with `farm_id`. Saving workspace insight/note writes store. Book-vet can append `vetAppointments` if a list exists; else skip.
-
-**Verify Stage 5**
-
-1. Admin anomaly A002 still Gumboro / Meena Poultry.
-2. Save insight → still there after switching admin tabs (same layout state or store).
-
----
-
-### Stage 6 — Contract freeze
-
-- [ ] Diff dummy **exported interfaces** vs `main`; no field dropped.
-- [ ] Grep `localTreatments|localDispatches|localData|setQueryData\(\[\"vet-prescriptions\"\]`.
-- [ ] Update `MEMORY.md` Live endpoints if lab routes missing from the table.
-- [ ] Optionally add a short “canonical ids” section to `docs/api-contract (3).md` without changing JSON examples’ **keys**.
-
----
-
-## Query keys (use consistently)
+### Goal
+Transition PashuPramaan from the in-memory canonical dummy store (`src/lib/seed/`) to a production-ready **PostgreSQL relational database** with **Prisma ORM**, full relational models across all four roles (**Farmer**, **Veterinarian**, **Lab Technician**, **Administrator/Regulator**), Next.js App Router API Route Handlers (`src/app/api/...`), and live TanStack Query client integration.
 
 ```
-["farmer-dashboard"]
-["farm-detail"]
-["animal-detail", animalId]
-["treatments"]
-["treatment-detail", treatmentId]
-["prescription-options"]
-["dispatches"]
-["dispatch-detail", id]
-["dispatch-safety", product, animalIds]
-["farm-insights", range]
-["available-vets"]
-["vet-dashboard"]
-["vet-prescriptions"]
-["vet-case", caseId]
-["sign-flow", rxId]
-["vet-patients"]
-["lab-dashboard"]
-["lab-dispatches"]
-["lab-dispatch", id]
-["lab-queue"]
-["lab-workspace", sampleId]
-["lab-results"]
-["lab-reports"]
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                             FRONTEND UI (App Router)                             │
+│      Farmer (/farmer/*)  │  Vet (/vet/*)  │  Lab (/lab/*)  │  Admin (/admin/*)   │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │ TanStack Query (Hooks & Invalidation)
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                           API CLIENT LAYER (@/lib/api/*)                         │
+│             Replaces dummy in-memory adapters with real fetch() to /api/*        │
+│                    (Preserves exact DTO signatures & contracts)                  │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │ JSON over HTTP REST
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                   NEXT.JS APP ROUTER API ROUTES (src/app/api/*)                  │
+│   /api/auth/*   /api/farmer/*   /api/vet/*   /api/lab/*   /api/admin/*           │
+└────────────────────────────────────────┬─────────────────────────────────────────┘
+                                         │ Prisma Client (@/lib/db/prisma.ts)
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                        POSTGRESQL RELATIONAL DATABASE                            │
+│  Farms ── Animals ── HealthEvents ── Prescriptions ── Treatments ── Withdrawals  │
+│  Stock ── Vets ── LabSamples ── LabTests ── LabReports ── Dispatches ── Anomalies│
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Pillars
+1. **Preserve Validated Domain Rules & Resolutions:** All 20 conflict resolutions from Stage 1 audit (e.g. `MP-104` Buffalo at `Shree Krishna Dairy`, `Rx-208` Oxytetracycline, `DSP-024` withdrawal, monotonic lab pipeline) are encoded as relational constraints and default seed state.
+2. **Strict DTO Compatibility:** API Route Handlers return the exact JSON contracts expected by the UI and defined in `docs/api-contract (3).md`. No UI visual restructuring or component renaming is required.
+3. **Relational Integrity & Enums:** Foreign keys link Farms, Animals, Prescriptions, Treatments, Withdrawals, Farmer Dispatches, Lab Samples, Lab Tests, and Lab Reports with cascading behavior and index optimization.
+4. **Idempotent Seeding:** `prisma/seed.ts` imports the canonical dataset from `src/lib/seed/canonical.ts` to instantly restore clean, verified demo state.
+
+---
+
+## 2. Execution Flow & Stages
+
+| Order | Stage | Core Deliverables | Verification Gate |
+|-------|-------|-------------------|-------------------|
+| **DONE** | **Stage 1** | Canonical seed (`src/lib/seed/`), conflict audit, 17 dummy read view adapters | ✅ 27/27 click-through checks & 15 vitest tests pass |
+| **STAGE 2** | **PostgreSQL & Prisma Setup** | Prisma installation, `.env` config, `prisma/schema.prisma` with all entities & relations, database migrations | `prisma migrate dev` runs cleanly; tables & foreign keys created in Postgres |
+| **STAGE 3** | **Database Seeding & Test Suite** | `prisma/seed.ts` reading `src/lib/seed/canonical.ts`, DB integration tests | `prisma db seed` populates all rows; entity count & relational tests pass |
+| **STAGE 4** | **Next.js API Route Handlers** | Implement `src/app/api/...` route handlers for Farmer, Vet, Lab, Admin, and Auth | Automated API tests (GET / POST / PATCH) return valid DTOs from Postgres |
+| **STAGE 5** | **Frontend API Client Rewiring & Writes** | Switch `@/lib/api/*` to fetch from `/api/*`, wire React Query mutations + cache invalidation | Mutations persist to Postgres; UI updates across tabs & routes |
+| **STAGE 6** | **Full End-to-End Verification & Contract Freeze** | End-to-end multi-role verification across Farmer, Vet, Lab, and Admin; clean build | Zero UI regressions, persistent database state across restarts |
+
+---
+
+## 3. PostgreSQL Relational Entity Schema
+
+### 3.1 Entity Relationship Overview
+- **Farms & Animals**: `Farm` (1) ── (N) `Animal`
+- **Health Events**: `Animal` (1) ── (N) `HealthEvent`
+- **Prescriptions**: `Vet` (1) ── (N) `Prescription`, `Animal` (1) ── (N) `Prescription`, `Farm` (1) ── (N) `Prescription`
+- **Treatments & Withdrawals**: `Animal` (1) ── (N) `Treatment`, `Prescription` (0..1) ── (N) `Treatment`, `Treatment` (1) ── (0..1) `Withdrawal`
+- **Farmer Dispatches & Gatekeeping**: `Farm` (1) ── (N) `FarmerDispatch`, `Animal` (1) ── (N) `FarmerDispatch`, `Treatment` (0..1) ── (N) `FarmerDispatch`, `FarmerDispatch` (0..1) ── (0..1) `LabSample`
+- **Lab Pipeline**: `LabSample` (1) ── (N) `LabTest`, `LabSample` (1) ── (0..1) `LabReport`, `LabReport` (1) ── (N) `LabAssessment`
+- **Medicine Inventory**: `Farm` (1) ── (N) `MedicineStock`
+- **Admin Surveillance**: `Farm` (0..1) ── (N) `AdminAnomaly`
+
+---
+
+### 3.2 Prisma Schema Specification (`prisma/schema.prisma`)
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  FARMER
+  VET
+  LAB_TECHNICIAN
+  ADMIN
+}
+
+enum Species {
+  COW
+  BUFFALO
+  GOAT
+  POULTRY
+}
+
+enum FarmKind {
+  DAIRY
+  POULTRY
+  LIVESTOCK
+  MIXED
+}
+
+enum ProductType {
+  MILK
+  MEAT
+  EGGS
+}
+
+enum CareStatus {
+  UNDER_TREATMENT
+  IMPROVED
+  RECOVERED
+  NO_CHANGE
+  HEALTHY
+}
+
+enum PrescriptionStatus {
+  SIGN_REQUIRED
+  UNSIGNED_EMERGENCY
+  SIGNED
+  COUNTERSIGNED
+  VOIDED
+}
+
+enum AwareClass {
+  ACCESS
+  WATCH
+  RESERVE
+}
+
+enum TreatmentPhase {
+  ACTIVE
+  WITHDRAWAL
+  COMPLETED
+}
+
+enum LabAssayVerdict {
+  WITHIN_MRL
+  UNAVAILABLE
+  EXCEEDED
+}
+
+enum DispatchStatus {
+  CLEARED
+  WITHDRAWAL
+  BLOCKED
+}
+
+enum StockLevel {
+  RESTOCK
+  MONITOR
+  GOOD
+}
+
+enum LabStage {
+  AWAITING_RECEIPT
+  RECEIVED
+  TESTING
+  AWAITING_VERIFICATION
+  VERIFIED
+  ON_HOLD
+}
+
+enum LabTestState {
+  DONE
+  ACTIVE
+  PENDING
+}
+
+enum AnomalySeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+// ─── AUTH & USERS ───────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String?   @unique
+  phone        String?   @unique
+  username     String    @unique
+  passwordHash String
+  fullName     String
+  role         UserRole
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  vetProfile   Vet?
+  farms        Farm[]    @relation("FarmerFarms")
+}
+
+model Vet {
+  id            String         @id
+  userId        String?        @unique
+  name          String
+  designation   String
+  vciRegNo      String?
+  pin           String         @default("1234")
+  isCurrentUser Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User?          @relation(fields: [userId], references: [id])
+  prescriptions Prescription[]
+}
+
+// ─── FARMS & ANIMALS ────────────────────────────────────────────────────────
+
+model Farm {
+  id               String           @id
+  name             String
+  kind             FarmKind
+  region           String
+  district         String?
+  state            String?
+  aliases          String[]         @default([])
+  operatedByFarmer Boolean          @default(false)
+  ownerId          String?
+  
+  // Herd counts for aggregate reporting
+  cowsCount        Int              @default(0)
+  buffaloesCount   Int              @default(0)
+  goatsCount       Int              @default(0)
+  
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  owner            User?            @relation("FarmerFarms", fields: [ownerId], references: [id])
+  animals          Animal[]
+  prescriptions    Prescription[]
+  treatments       Treatment[]
+  dispatches       FarmerDispatch[]
+  medicineStocks   MedicineStock[]
+  labSamples       LabSample[]
+  anomalies        AdminAnomaly[]
+}
+
+model Animal {
+  id             String           @id
+  farmId         String
+  species        Species
+  isFlock        Boolean          @default(false)
+  breed          String
+  sex            String
+  dateOfBirth    DateTime?
+  productionType String
+  registeredOn   DateTime         @default(now())
+  onFarmerRoster Boolean          @default(true)
+  careStatus     CareStatus?
+  lastFollowUp   DateTime?
+  followUpDue    Boolean          @default(false)
+  
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  farm           Farm             @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  healthEvents   HealthEvent[]
+  prescriptions  Prescription[]
+  treatments     Treatment[]
+  dispatches     FarmerDispatch[]
+  labSamples     LabSample[]
+
+  @@index([farmId])
+  @@index([species])
+  @@index([careStatus])
+}
+
+model HealthEvent {
+  id          String    @id @default(uuid())
+  animalId    String
+  name        String
+  category    String?
+  description String?
+  onset       DateTime
+  createdAt   DateTime  @default(now())
+
+  animal      Animal    @relation(fields: [animalId], references: [id], onDelete: Cascade)
+
+  @@index([animalId])
+}
+
+// ─── PRESCRIPTIONS & FORMULARY ──────────────────────────────────────────────
+
+model Prescription {
+  id                  String             @id // e.g. "Rx-208"
+  farmId              String
+  animalId            String
+  vetId               String?
+  diagnosis           String
+  status              PrescriptionStatus
+  aware               AwareClass?
+  cia                 Boolean            @default(false)
+  drug                String
+  route               String
+  dose                String
+  frequency           String
+  duration            String
+  reason              String
+  dateLabel           String
+  stewardshipGuidance String[]           @default([])
+  
+  // Previous treatment & history as structured JSON
+  previousTreatment   Json?
+  treatmentHistory    Json?
+  
+  // Digital signature audit
+  signedBy            String?
+  signedAt            DateTime?
+  signatureRef        String?
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  farm                Farm               @relation(fields: [farmId], references: [id])
+  animal              Animal             @relation(fields: [animalId], references: [id])
+  vet                 Vet?               @relation(fields: [vetId], references: [id])
+  treatments          Treatment[]
+  prescriptionOptions PrescriptionOption[]
+
+  @@index([farmId])
+  @@index([animalId])
+  @@index([status])
+}
+
+model PrescriptionOption {
+  id                   String        @id
+  drugName             String
+  dosage               String
+  route                String
+  prescriptionId       String?
+  isEmergencyException Boolean       @default(false)
+
+  prescription         Prescription? @relation(fields: [prescriptionId], references: [id])
+}
+
+// ─── TREATMENTS & WITHDRAWALS ───────────────────────────────────────────────
+
+model Treatment {
+  id                 String           @id // e.g. "trt-1"
+  animalId           String
+  farmId             String
+  prescriptionId     String?
+  drug               String
+  route              String
+  dosage             String
+  administeredLabel  String
+  administeredOn     DateTime
+  phase              TreatmentPhase
+  signed             Boolean          @default(false)
+  emergency          Boolean          @default(false)
+  labAssay           LabAssayVerdict?
+  feedBatch          String?
+  reason             String
+  
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  animal             Animal           @relation(fields: [animalId], references: [id])
+  farm               Farm             @relation(fields: [farmId], references: [id])
+  prescription       Prescription?    @relation(fields: [prescriptionId], references: [id])
+  withdrawal         Withdrawal?
+  dispatches         FarmerDispatch[]
+
+  @@index([farmId])
+  @@index([animalId])
+  @@index([phase])
+}
+
+model Withdrawal {
+  id             String    @id @default(uuid())
+  treatmentId    String    @unique
+  doseTime       DateTime
+  nowPct         Float     @default(0)
+  clearLabel     String
+  productMessage String
+  clearsAt       DateTime
+
+  treatment      Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+}
+
+// ─── FARMER DISPATCHES ──────────────────────────────────────────────────────
+
+model FarmerDispatch {
+  id                 String          @id // e.g. "DSP-024"
+  farmId             String
+  animalId           String
+  product            ProductType
+  dateLabel          String
+  status             DispatchStatus
+  treatmentId        String?
+  labDispatchId      String?
+  
+  // Gate check details (MRL & safety)
+  mrlMeasuredPpm     String?
+  mrlPermittedPpm    String?
+  prescriptionSigned Boolean         @default(true)
+
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  farm               Farm            @relation(fields: [farmId], references: [id])
+  animal             Animal          @relation(fields: [animalId], references: [id])
+  treatment          Treatment?      @relation(fields: [treatmentId], references: [id])
+  labSample          LabSample?      @relation(fields: [labDispatchId], references: [dispatchId])
+
+  @@index([farmId])
+  @@index([status])
+}
+
+// ─── MEDICINE INVENTORY ─────────────────────────────────────────────────────
+
+model MedicineStock {
+  id          String     @id @default(uuid())
+  farmId      String
+  name        String
+  quantity    Int
+  unit        String
+  recentUsage Int        @default(0)
+  level       StockLevel @default(GOOD)
+  usageTotal  Int?
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  farm        Farm       @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([farmId, name])
+}
+
+// ─── LAB PIPELINE ───────────────────────────────────────────────────────────
+
+model LabSample {
+  dispatchId   String           @id // e.g. "MLK-2026-00124"
+  sampleId     String           @unique // e.g. "LAB-MLK-00981"
+  product      ProductType
+  productSub   String
+  productLabel String
+  farmId       String?
+  animalId     String?
+  sourceName   String
+  quantity     String
+  scheduledFor String
+  priority     String           @default("Standard")
+  stage        LabStage         @default(AWAITING_RECEIPT)
+  receivedOn   DateTime?
+  
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  farm         Farm?            @relation(fields: [farmId], references: [id])
+  animal       Animal?          @relation(fields: [animalId], references: [id])
+  farmerDispatch FarmerDispatch[]
+  tests        LabTest[]
+  report       LabReport?
+
+  @@index([stage])
+}
+
+model LabTest {
+  id         String       @id @default(uuid())
+  dispatchId String
+  name       String
+  checks     String[]     @default([])
+  state      LabTestState @default(PENDING)
+  result     String?
+  ok         Boolean      @default(true)
+  trigger    String?
+
+  sample     LabSample    @relation(fields: [dispatchId], references: [dispatchId], onDelete: Cascade)
+
+  @@index([dispatchId])
+}
+
+model LabReport {
+  id           String          @id @default(uuid())
+  dispatchId   String          @unique
+  refNo        String          @unique
+  verifiedBy   String
+  verifiedOn   DateTime
+  status       String
+  statusColor  String          @default("green")
+  
+  mrlDrug      String
+  mrlMeasured  Float
+  mrlLimit     Float
+  mrlUnit      String          @default("mg/kg")
+  mrlRatio     Float
+  mrlVerdict   String
+  mrlVerdictOk Boolean         @default(true)
+  
+  withdrawalDrug         String
+  withdrawalAdministered String
+  withdrawalCompleted    String
+  withdrawalStatus       String
+  
+  outcome      String
+  outcomeOk    Boolean         @default(true)
+
+  createdAt    DateTime        @default(now())
+
+  sample       LabSample       @relation(fields: [dispatchId], references: [dispatchId], onDelete: Cascade)
+  assessments  LabAssessment[]
+}
+
+model LabAssessment {
+  id          String    @id @default(uuid())
+  reportId    String
+  label       String
+  result      String
+  ok          Boolean   @default(true)
+  detail      String
+
+  report      LabReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+// ─── ADMIN & SURVEILLANCE ───────────────────────────────────────────────────
+
+model AdminAnomaly {
+  id          String          @id // e.g. "A002"
+  farmId      String?
+  farmName    String
+  species     Species
+  issue       String
+  drug        String
+  severity    AnomalySeverity
+  confidence  Int
+  dateLabel   String
+  createdAt   DateTime        @default(now())
+
+  farm        Farm?           @relation(fields: [farmId], references: [id])
+}
+
+model DistrictStat {
+  id              String   @id // e.g. "anand"
+  name            String
+  state           String
+  activeFarms     Int
+  totalHeadcount  Int
+  riskLevel       String
+  topConcern      String
+  complianceRate  Float
+  dataSeries      Json?
+}
+
+model RegionMetric {
+  id              String   @id // e.g. "north-zone"
+  name            String
+  amrIndex        Float
+  activeAlerts    Int
+  complianceRate  Float
+  samplingRate    Float
+}
 ```
 
 ---
 
-## Adapter sketch (preserve FarmDetail shape)
+## 4. API Endpoints Map (Next.js App Router)
 
-```ts
-// src/lib/api/dummy/farm-detail.ts — keep FarmDetail interface unchanged
-import { store } from "@/lib/seed/store";
+All endpoints live under `src/app/api/...` as standard Next.js Route Handlers (`route.ts`).
 
-export const getFarmDetail = async (): Promise<FarmDetail> => {
-  await new Promise((r) => setTimeout(r, 500));
-  const farm = store.getFarmerFarm(); // Shree Krishna Dairy
-  const animals = store.getAnimalsByFarm(farm.id);
-  // derive species_overview + under_treatment_count from animals
-  return { farm: { name: farm.name, /* same keys */ }, species_overview: ..., animals: animals.map(a => ({ id: a.id, type: a.type, status: a.status })), recent_activity: store.activityForFarm(farm.id) };
+### 4.1 Auth & Session
+- `POST /api/auth/login` — authenticate role, username, password; return token & user profile.
+- `GET /api/auth/me` — current authenticated session profile.
+
+### 4.2 Farmer Role (`/api/farmer/*`)
+- `GET /api/farmer/dashboard` — returns farm stats, attention items, medicine stock.
+- `GET /api/farmer/farm` — farm profile, herd breakdown, full animal roster.
+- `POST /api/farmer/animals` — add new animal to roster (`MP-###`).
+- `GET /api/farmer/animals/[animalId]` — single animal history, treatments, health events.
+- `GET /api/farmer/treatments` — list treatments & prescription selection options.
+- `POST /api/farmer/treatments` — record treatment / emergency log, compute withdrawal clock.
+- `GET /api/farmer/treatments/[treatmentId]` — treatment detail, dosage, withdrawal progress.
+- `GET /api/farmer/dispatch` — dispatches list + safety check rules.
+- `POST /api/farmer/dispatch` — start dispatch, validate MRL & withdrawal gates.
+- `GET /api/farmer/dispatch/[dispatchId]` — single dispatch certificate & passport status.
+- `GET /api/farmer/insights` — stock levels, usage history, health events timeline.
+- `POST /api/farmer/stock` — add / update medicine inventory.
+- `POST /api/farmer/health-events` — log animal symptoms / health event.
+- `GET /api/farmer/vets` — list available veterinarians for consultation.
+
+### 4.3 Veterinarian Role (`/api/vet/*`)
+- `GET /api/vet/dashboard` — caseload stats, pending emergency alerts, sign requests.
+- `GET /api/vet/prescriptions` — active prescriptions list, status filter.
+- `POST /api/vet/prescriptions` — issue new prescription (`Rx-###`).
+- `GET /api/vet/prescriptions/[rxId]` — prescription details, clinical reason, guidance.
+- `POST /api/vet/prescriptions/[rxId]/sign` — digitally sign prescription with PIN.
+- `POST /api/vet/prescriptions/[rxId]/countersign` — countersign emergency treatment.
+- `GET /api/vet/patients` — clinical registry of patient animals across assigned farms.
+- `GET /api/vet/cases/[caseId]` — case history, diagnostics, antimicrobial stewardship log.
+
+### 4.4 Laboratory Role (`/api/lab/*`)
+- `GET /api/lab/dashboard` — testing queue summary, urgent actions, completed count.
+- `GET /api/lab/dispatches` — incoming lots, intake stage, product filters.
+- `GET /api/lab/dispatches/[dispatchId]` — lot detail, linked farm/animal, test checklist.
+- `POST /api/lab/dispatches/[dispatchId]/receive` — mark sample received, queue for testing.
+- `GET /api/lab/queue` — samples ready for testing in laboratory workspace.
+- `GET /api/lab/workspace/[sampleId]` — testing workspace, assay inputs, controls.
+- `POST /api/lab/workspace/[sampleId]/complete` — submit test assay results & MRL readings.
+- `GET /api/lab/results` — verified & on-hold assay results list.
+- `GET /api/lab/reports` — finalized compliance certificates & MRL audit reports.
+- `POST /api/lab/reports/[dispatchId]/verify` — sign off verification and publish report.
+
+### 4.5 Administrator / Regulatory Role (`/api/admin/*`)
+- `GET /api/admin/overview` — national aggregate metrics, state heatmaps, risk indices.
+- `GET /api/admin/anomalies` — anomaly surveillance list (e.g. `A002` Meena Poultry).
+- `GET /api/admin/analytics` — AMU consumption trends, AWaRe class distribution.
+- `GET /api/admin/health` — zoonotic / epidemic health alerts, district outbreak tracker.
+- `POST /api/admin/workspace/notes` — persist policy notes and surveillance insights.
+
+---
+
+## 5. Detailed Implementation Roadmap
+
+```mermaid
+flowchart TD
+    subgraph Stage2[Stage 2: Database Setup]
+        S2_1[Install Prisma & @prisma/client] --> S2_2[Configure DATABASE_URL in .env]
+        S2_2 --> S2_3[Create prisma/schema.prisma]
+        S2_3 --> S2_4[Run prisma migrate dev]
+        S2_4 --> S2_5[Create singleton src/lib/db/prisma.ts]
+    end
+
+    subgraph Stage3[Stage 3: Data Seeding]
+        S3_1[Write prisma/seed.ts using src/lib/seed/canonical.ts]
+        S3_1 --> S3_2[Run prisma db seed]
+        S3_2 --> S3_3[Run vitest DB integration tests]
+    end
+
+    subgraph Stage4[Stage 4: API Route Handlers]
+        S4_1[Implement Auth / User endpoints]
+        S4_2[Implement Farmer endpoints]
+        S4_3[Implement Vet endpoints]
+        S4_4[Implement Lab endpoints]
+        S4_5[Implement Admin endpoints]
+    end
+
+    subgraph Stage5[Stage 5: Client Rewiring & Writes]
+        S5_1[Rewire @/lib/api/* to fetch /api/*]
+        S5_2[Wire React Query mutations with invalidations]
+        S5_3[Remove local useState copy hacks]
+    end
+
+    subgraph Stage6[Stage 6: Verification & Freeze]
+        S6_1[Multi-role click-through verification]
+        S6_2[Vitest + Playwright end-to-end testing]
+        S6_3[Contract freeze & Documentation update]
+    end
+
+    Stage2 --> Stage3
+    Stage3 --> Stage4
+    Stage4 --> Stage5
+    Stage5 --> Stage6
+```
+
+### Stage 2 — PostgreSQL & Prisma Setup
+- [ ] Install `prisma` (devDependencies) and `@prisma/client` (dependencies).
+- [ ] Configure `DATABASE_URL` in `.env` and `.env.example` (PostgreSQL connection string).
+- [ ] Create `prisma/schema.prisma` with all entities, enums, indexes, and relations detailed in Section 3.2.
+- [ ] Run `npx prisma migrate dev --name init_pashupramaan_schema`.
+- [ ] Create `src/lib/db/prisma.ts` with global client singleton for Next.js App Router hot reloading.
+
+### Stage 3 — Seeding from Canonical Seed
+- [ ] Create `prisma/seed.ts` script importing canonical data from `src/lib/seed/canonical.ts`.
+- [ ] Insert entities in topological order:
+  1. Users & Vets (`Dr. Bankey`, `Dr. Sofia Abidi`, `Dr. Anil Sharma`).
+  2. Farms (`Shree Krishna Dairy`, `Meena Poultry`, `Shanti Dairy`, `Green Valley`, etc.).
+  3. Animals (`MP-104`…`MP-111`, `MP-118`, `Flock P-01`, etc.).
+  4. Health Events.
+  5. Prescriptions (`Rx-208`, `Rx-207`, `Rx-205`, `Rx-201`, `Rx-195`, etc.).
+  6. Treatments (`trt-1`…`trt-5`) & Withdrawals.
+  7. Medicine Stocks (`Oxytetracycline`, `Ivermectin`, `Amoxicillin`, `Vitamin B Complex`).
+  8. Lab Samples (`MLK-2026-00124`, `MEAT-2026-00087`, `EGG-2026-00241`, `MEAT-2026-00091`, etc.), Lab Tests, Lab Reports.
+  9. Farmer Dispatches (`DSP-024`, `DSP-023`, `DSP-022`).
+  10. Admin Anomalies (`A001`…`A005`).
+- [ ] Configure `package.json` with `"prisma": { "seed": "tsx prisma/seed.ts" }`.
+- [ ] Run `npx prisma db seed` and verify 100% entity insertion without foreign key errors.
+- [ ] Add `src/lib/db/db.test.ts` to test entity queries and relationship joins directly against Postgres.
+
+### Stage 4 — Next.js API Route Handlers
+- [ ] Create API routes in `src/app/api/` matching the contracts:
+  - Auth: `src/app/api/auth/login/route.ts`, `src/app/api/auth/me/route.ts`.
+  - Farmer: `src/app/api/farmer/dashboard/route.ts`, `farm/route.ts`, `animals/route.ts`, `treatments/route.ts`, `dispatch/route.ts`, `insights/route.ts`, `stock/route.ts`, `health-events/route.ts`, `vets/route.ts`.
+  - Vet: `src/app/api/vet/dashboard/route.ts`, `prescriptions/route.ts`, `prescriptions/[rxId]/route.ts`, `prescriptions/[rxId]/sign/route.ts`, `prescriptions/[rxId]/countersign/route.ts`, `patients/route.ts`, `cases/[caseId]/route.ts`.
+  - Lab: `src/app/api/lab/dashboard/route.ts`, `dispatches/route.ts`, `dispatches/[dispatchId]/route.ts`, `dispatches/[dispatchId]/receive/route.ts`, `queue/route.ts`, `workspace/[sampleId]/route.ts`, `workspace/[sampleId]/complete/route.ts`, `results/route.ts`, `reports/route.ts`, `reports/[dispatchId]/verify/route.ts`.
+  - Admin: `src/app/api/admin/overview/route.ts`, `anomalies/route.ts`, `analytics/route.ts`, `health/route.ts`, `workspace/route.ts`.
+- [ ] Ensure all responses exactly match the existing DTO schemas in `@/lib/api/dummy/*.ts` and `docs/api-contract (3).md`.
+
+### Stage 5 — Frontend API Client Rewiring & Writes
+- [ ] Update API modules in `src/lib/api/` (or refactor `src/lib/api/dummy/*.ts` to become the real API client `@/lib/api/client/`):
+  - Replace in-memory `store.ts` calls with `fetch('/api/...')`.
+  - Maintain identical function signatures (`getFarmDetail()`, `getTreatments()`, `submitSignature()`, etc.).
+- [ ] Wire mutations in page components:
+  - Farmer My-Farm: `addAnimal` mutation → `POST /api/farmer/animals` → invalidate `["farm-detail"]`, `["farmer-dashboard"]`.
+  - Farmer Treatments: `addTreatment` mutation → `POST /api/farmer/treatments` → invalidate `["treatments"]`, `["farm-detail"]`, `["farmer-dashboard"]`.
+  - Farmer Dispatches: `addDispatch` mutation → `POST /api/farmer/dispatch` → invalidate `["dispatches"]`.
+  - Farmer Insights: `addMedicineStock` mutation → `POST /api/farmer/stock` → invalidate `["farm-insights"]`, `["farmer-dashboard"]`.
+  - Farmer Health Modal: `logHealthEvent` mutation → `POST /api/farmer/health-events` → invalidate `["farm-detail"]`.
+  - Vet Prescriptions: `addPrescription` mutation → `POST /api/vet/prescriptions` → invalidate `["vet-prescriptions"]`, `["vet-dashboard"]`.
+  - Vet Sign Flow: `signPrescription` mutation → `POST /api/vet/prescriptions/[rxId]/sign` → invalidate `["vet-prescriptions"]`, `["vet-dashboard"]`, `["sign-flow", rxId]`.
+  - Vet Countersign: `countersignPrescription` mutation → `POST /api/vet/prescriptions/[rxId]/countersign` → invalidate `["vet-prescriptions"]`, `["vet-dashboard"]`.
+  - Lab Workflow: `receiveSample`, `completeTest`, `verifyReport` mutations → `/api/lab/*` → invalidate `["lab-dashboard"]`, `["lab-dispatches"]`, `["lab-queue"]`, `["lab-results"]`, `["lab-reports"]`.
+- [ ] Remove temporary UI state hacks (`localData`, `localTreatments`, `localDispatches`, manual `setQueryData` appends).
+
+### Stage 6 — End-to-End Verification & Contract Freeze
+- [ ] Execute comprehensive multi-role click-through on live PostgreSQL database.
+- [ ] Confirm cross-role database reflections:
+  1. Farmer logs emergency dose → Vet dashboard receives countersignature alert.
+  2. Vet signs `Rx-208` with PIN `1234` → Farmer treatment reads "Vet Signed" → prescription status in DB is `SIGNED`.
+  3. Farmer adds animal `MP-199` → appears in My Farm, increments herd count, available in treatment dropdowns.
+  4. Lab completes test on `MLK-2026-00124` → verified report published → Farmer dispatch gate unlocks with official MRL reading.
+  5. Admin anomaly `A002` queries `Meena Poultry` live from DB.
+- [ ] Run full test suite (`npm test`, `npx tsc --noEmit`, ESLint).
+
+---
+
+## 6. Comprehensive Multi-Role Verification Checklist
+
+### 1. Farmer Flow (Live DB)
+- [ ] **Home Dashboard**: Farm displays **Shree Krishna Dairy**, head count **48** (45 clear, 2 under treatment, 1 waiting), attention items show **MP-104** (withdrawal active) and **Oxytetracycline** (Restock recommended).
+- [ ] **Add Animal**: Add `MP-199` (Cow, Holstein, Female) → table shows new row, count becomes 49, persists across browser refreshes.
+- [ ] **Record Treatment**: Select `MP-105` + `Oxytetracycline` → withdrawal clock initiates; Home attention items increment; status changes to "under treatment".
+- [ ] **Medicine Stock**: Add 10 vials of Oxytetracycline → Insights table updates to 27 vials; Home dashboard reflects new quantity.
+- [ ] **Dispatch Gate**: Start dispatch for `MP-104` → blocked due to active withdrawal; start dispatch for cleared animal → succeeds and creates `FarmerDispatch` record in Postgres.
+
+### 2. Vet Flow (Live DB)
+- [ ] **Dashboard**: Caseload shows Dr. Bankey; alerts show 1 emergency requiring countersignature (`Rx-207` on `Flock P-01`).
+- [ ] **Prescriptions Registry**: Lists all seeded prescriptions (`Rx-208`, `Rx-207`, `Rx-205`, `Rx-201`, `Rx-195`, etc.).
+- [ ] **New Prescription**: Submit prescription for `MP-110` → new `Rx-209` created in Postgres; appears immediately in prescriptions table and dashboard summary.
+- [ ] **Digital Sign Flow**: Open `Rx-208` → displays `Shree Krishna Dairy`, `MP-104`, `Oxytetracycline` → enter PIN `1234` + sign → status updates to `SIGNED` with timestamp and signature reference hash.
+- [ ] **Countersignature**: Open `Rx-207` → submit countersignature → status updates to `COUNTERSIGNED`; alert dismisses from vet dashboard.
+
+### 3. Lab Flow (Live DB)
+- [ ] **Dashboard**: Urgent attention shows `MLK-2026-00124` ready for testing; 2 lots on hold.
+- [ ] **Dispatches Table**: Displays live lots (`MLK-2026-00124`, `MEAT-2026-00087`, `EGG-2026-00241`, `MEAT-2026-00091`).
+- [ ] **Sample Intake**: Receive `MEAT-2026-00091` → moves from "Awaiting Receipt" to "Testing Queue".
+- [ ] **Testing Workspace**: Perform assay on `MLK-2026-00124` → input MRL measured `0.02 ppm` (limit `0.10 ppm`) → submit test.
+- [ ] **Report Verification**: Verify `EGG-2026-00241` → generates official signed report; status changes to `VERIFIED`; report visible on `/lab/reports`.
+
+### 4. Admin Flow (Live DB)
+- [ ] **Overview**: Renders national headcount, compliance rate, and state risk metrics queried from DB.
+- [ ] **Anomalies**: `A002` correctly joins `Meena Poultry` with `Gumboro (IBD)` and `Oxytetracycline`.
+- [ ] **Workspace Notes**: Save policy memo → stored in database and persists across page reloads.
+
+---
+
+## 7. Query Keys for Cache Invalidation
+
+Maintain these exact query keys across all React Query hooks to ensure instant reactivity:
+
+```typescript
+export const QUERY_KEYS = {
+  farmer: {
+    dashboard: ["farmer-dashboard"],
+    farm: ["farm-detail"],
+    animal: (id: string) => ["animal-detail", id],
+    treatments: ["treatments"],
+    treatmentDetail: (id: string) => ["treatment-detail", id],
+    prescriptionOptions: ["prescription-options"],
+    dispatches: ["dispatches"],
+    dispatchDetail: (id: string) => ["dispatch-detail", id],
+    dispatchSafety: (product: string, animalIds: string[]) => ["dispatch-safety", product, animalIds],
+    insights: (range?: string) => ["farm-insights", range],
+    vets: ["available-vets"],
+  },
+  vet: {
+    dashboard: ["vet-dashboard"],
+    prescriptions: ["vet-prescriptions"],
+    prescriptionDetail: (id: string) => ["vet-prescription", id],
+    signFlow: (rxId: string) => ["sign-flow", rxId],
+    caseDetail: (caseId: string) => ["vet-case", caseId],
+    patients: ["vet-patients"],
+  },
+  lab: {
+    dashboard: ["lab-dashboard"],
+    dispatches: ["lab-dispatches"],
+    dispatchDetail: (id: string) => ["lab-dispatch", id],
+    queue: ["lab-queue"],
+    workspace: (sampleId: string) => ["lab-workspace", sampleId],
+    results: ["lab-results"],
+    reports: ["lab-reports"],
+  },
+  admin: {
+    overview: ["admin-overview"],
+    anomalies: ["admin-anomalies"],
+    analytics: ["admin-analytics"],
+    health: ["admin-health"],
+  },
 };
 ```
 
 ---
 
-## Why not Postgres in this plan
+## Appendix: Agent Execution Prompts
 
-`cursor changes/Cursor_changes 1.MD` planned Express + Docker Postgres and **explicitly excluded lab**. This request is a **frontend canonical dummy** fix so farmer/vet/lab/admin tell one story **before** a backend. Postgres remains a later branch.
-
----
-
-## Spec coverage
-
-| Constraint | Where |
-|------------|--------|
-| 1 Audit | this file Stage 0 |
-| 2 One source | `src/lib/seed/` |
-| 3 Visible conflicts | `canonical.ts` comments + list above |
-| 4 Same DTOs | adapter files keep interfaces |
-| 5 Cross-page writes | stages 2–5 |
-| 6 Incremental | stages 1–6 + verify lists |
-| 7 No UI restyle | global constraints |
-| 4th dashboard | Lab routes + `lab-*.ts` + admin |
-
----
-
-## Pause rule
-
-Implement **Stage 1 only**, then wait for confirmation before Stage 2.
-
----
-
-## Appendix: agent prompts
-
-### FIRST — Stage 1 only (paste this next)
-
+### NEXT — Stage 2: PostgreSQL & Prisma Setup
 ```
-Implement ONLY Stage 1 from docs/plan.md (Canonical dummy data + cross-page writes).
+Implement Stage 2 from docs/plan.md (PostgreSQL & Prisma Setup).
 
-Do not implement Stages 2–6. Do not restyle UI. Do not change dummy GET/DTO shapes.
+1. Install prisma and @prisma/client.
+2. Configure DATABASE_URL in .env and .env.example.
+3. Create prisma/schema.prisma matching the exact relational specification in docs/plan.md Section 3.2.
+4. Run prisma migrate dev to generate the database schema and TypeScript types.
+5. Create src/lib/db/prisma.ts client singleton.
+6. Verify schema compiles cleanly with npx prisma validate.
 
-Create src/lib/seed/ (types, canonical data with // CONFLICT comments from the plan, store getters, query keys). Rewrite src/lib/api/dummy/*.ts GET functions to read the store while keeping exported interfaces and return shapes identical. Re-export admin datasets from seed if needed without changing AdminShared UI structure.
-
-Then run the Stage 1 Verify click-through in docs/plan.md (farmer home/my-farm/treatments/dispatch, vet home/prescriptions/sign, lab dashboard/dispatches/testing/results/reports, admin anomalies). Fix seed conflicts if anything still disagrees.
-
-Stop when Stage 1 verify passes and wait for confirmation.
+Stop after Stage 2 is verified and wait for confirmation.
 ```
 
-### NEXT — Stage 2 (paste after Stage 1 is confirmed)
-
+### Then — Stage 3: Database Seeding
 ```
-Continue docs/plan.md. Stage 1 is done. Implement ONLY Stage 2: farmer writes into the canonical store (addAnimal, addTreatment, addHealthEvent, addDispatch, addMedicineStock) with TanStack Query invalidation. Remove page-local list state on my-farm, treatments, dispatch, and medicine stock. Keep JSX/layout unchanged aside from data wiring.
+Implement Stage 3 from docs/plan.md (Database Seeding from Canonical Seed).
 
-Run the Stage 2 Verify list in docs/plan.md. Do not start Stage 3.
+1. Create prisma/seed.ts reading canonical entity data from src/lib/seed/canonical.ts.
+2. Insert all entities (Users, Vets, Farms, Animals, HealthEvents, Prescriptions, Treatments, Withdrawals, Stocks, LabSamples, Tests, Reports, Dispatches, Anomalies) preserving all IDs and relations.
+3. Configure package.json with the seed command and run npx prisma db seed.
+4. Add automated test (src/lib/db/db.test.ts) verifying all entity counts and joins.
+
+Stop after Stage 3 is verified and wait for confirmation.
 ```
 
-### After that (one prompt per stage)
+### Then — Stage 4: Next.js API Route Handlers
+```
+Implement Stage 4 from docs/plan.md (Next.js API Route Handlers).
 
-- Stage 3: vet writes only (new Rx, sign, countersign) per docs/plan.md; verify; stop.
-- Stage 4: lab writes only; verify; stop.
-- Stage 5: admin join + leftover writes; verify; stop.
-- Stage 6: contract freeze / grep; stop.
+1. Create route handlers under src/app/api/ for Farmer, Vet, Lab, Admin, and Auth.
+2. Query the PostgreSQL database using prisma.
+3. Ensure every endpoint returns JSON matching the existing frontend DTO contracts.
+4. Verify all endpoints respond correctly with automated API route tests.
+
+Stop after Stage 4 is verified and wait for confirmation.
+```
+
+### Then — Stage 5 & 6: Client Rewiring, Writes & Freeze
+```
+Implement Stage 5 and 6 from docs/plan.md.
+
+1. Rewire @/lib/api/* to call fetch('/api/...') instead of the in-memory store.
+2. Wire all mutation handlers (add animal, treatment, dispatch, stock, sign, countersign, lab tests) with React Query invalidation.
+3. Execute the full multi-role click-through checklist on live Postgres.
+4. Verify npm test, tsc, and lint.
+```
+

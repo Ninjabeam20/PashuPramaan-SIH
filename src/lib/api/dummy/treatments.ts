@@ -1,3 +1,6 @@
+import { store } from "@/lib/seed/store";
+import { routeDosage, treatmentBadges, treatmentStatus, withdrawalDto } from "@/lib/seed/project";
+
 export interface TreatmentSummary {
   active_treatments: number;
   withdrawal_ongoing: number;
@@ -39,111 +42,59 @@ export interface PrescriptionOption {
   is_emergency_exception: boolean;
 }
 
+/** Species column: an animal's own species, or "Poultry" for a flock. */
+const speciesLabel = (animalId: string): string => {
+  const animal = store.getAnimal(animalId);
+  return animal ? animal.species : "";
+};
+
 export const getTreatments = async () => {
   await new Promise((resolve) => setTimeout(resolve, 400));
-  return {
-    summary: {
-      active_treatments: 2,
-      withdrawal_ongoing: 2,
-      awaiting_vet_unsigned: 2,
-      completed: 1
-    } as TreatmentSummary,
-    items: [
-      {
-        id: "trt-1",
-        animal_flock: "MP-104",
-        species: "Buffalo",
-        drug_name: "Oxytetracycline",
-        route_dosage: "Injection \u00b7 10 mg/kg",
-        administered_time: "Administered Today, 08:15 AM",
-        status: "Withdrawal",
-        badges: [
-          { text: "Withdrawal Active", variant: "withdrawal_active" },
-          { text: "Vet Signed", variant: "vet_signed" },
-          { text: "Lab \u2264 MRL", variant: "lab_mrl" },
-        ],
-        withdrawal: {
-          dose_time: "Dose",
-          now_pct: 30,
-          clear_label: "Clear",
-          product_message: "Milk clears tomorrow, 10:30 AM"
-        }
-      },
-      {
-        id: "trt-2",
-        animal_flock: "Flock P-01",
-        species: "Poultry",
-        feed_batch: "Feed Batch FB-012",
-        drug_name: "Oxytetracycline",
-        route_dosage: "Medicated Feed \u00b7 200 mg/L water",
-        administered_time: "Administered 2 days ago",
-        status: "Unsigned",
-        badges: [
-          { text: "Withdrawal Active", variant: "withdrawal_active" },
-          { text: "Emergency / Unsigned", variant: "emergency_unsigned" },
-          { text: "No lab assay", variant: "no_lab_assay" },
-        ],
-        withdrawal: {
-          dose_time: "Dose",
-          now_pct: 55,
-          clear_label: "Clear",
-          product_message: "Eggs clear in 4 days"
-        }
-      },
-      {
-        id: "trt-3",
-        animal_flock: "MP-106",
-        species: "Goat",
-        drug_name: "Amoxicillin",
-        route_dosage: "Injection \u00b7 7 mg/kg",
-        administered_time: "Administered Yesterday, 14:00",
-        status: "Active",
-        badges: [
-          { text: "Active", variant: "active" },
-          { text: "Vet Signed", variant: "vet_signed" },
-        ]
-      },
-      {
-        id: "trt-4",
-        animal_flock: "MP-109",
-        species: "Buffalo",
-        drug_name: "Vitamin B12",
-        route_dosage: "Injection \u00b7 5 mL",
-        administered_time: "Administered Today, 09:00 AM",
-        status: "Unsigned",
-        badges: [
-          { text: "Active", variant: "active" },
-          { text: "Pending Vet Signature", variant: "pending_vet_signature" },
-        ]
-      },
-      {
-        id: "trt-5",
-        animal_flock: "MP-108",
-        species: "Cow",
-        drug_name: "Ivermectin",
-        route_dosage: "Pour-on \u00b7 500 mcg/kg",
-        administered_time: "Administered 5 days ago",
-        status: "Completed",
-        badges: [
-          { text: "Completed", variant: "completed" },
-          { text: "Vet Signed", variant: "vet_signed" },
-          { text: "Lab \u2264 MRL", variant: "lab_mrl" },
-        ]
-      }
-    ] as TreatmentItem[]
+
+  const treatments = store.getFarmerTreatments();
+
+  const items: TreatmentItem[] = treatments.map((treatment) => ({
+    id: treatment.id,
+    animal_flock: treatment.animalId,
+    species: speciesLabel(treatment.animalId),
+    ...(treatment.feedBatch ? { feed_batch: treatment.feedBatch } : {}),
+    drug_name: treatment.drug,
+    route_dosage: routeDosage(treatment),
+    administered_time: treatment.administeredLabel,
+    status: treatmentStatus(treatment),
+    badges: treatmentBadges(treatment),
+    ...(treatment.withdrawal ? { withdrawal: withdrawalDto(treatment.withdrawal) } : {}),
+  }));
+
+  const summary: TreatmentSummary = {
+    active_treatments: treatments.filter((t) => t.phase === "active").length,
+    withdrawal_ongoing: treatments.filter((t) => t.phase === "withdrawal").length,
+    awaiting_vet_unsigned: treatments.filter((t) => !t.signed && t.phase !== "completed").length,
+    completed: treatments.filter((t) => t.phase === "completed").length,
   };
+
+  return { summary, items };
 };
 
 export const getPrescriptionOptions = async (): Promise<PrescriptionOption[]> => {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return [
-    { id: "opt-1", drug_name: "Oxytetracycline", dosage: "10 mg/kg", route: "Injection", rx_id: "201", is_emergency_exception: false },
-    { id: "opt-2", drug_name: "Amoxicillin", dosage: "7 mg/kg", route: "Injection", rx_id: "198", is_emergency_exception: false },
-    { id: "opt-3", drug_name: "Ivermectin", dosage: "500 mcg/kg", route: "Pour-on", rx_id: "195", is_emergency_exception: false },
-    { id: "opt-4", drug_name: "Vitamin B12", dosage: "5 mL", route: "Injection", rx_id: null, is_emergency_exception: false },
-    { id: "opt-5", drug_name: "Oxytetracycline", dosage: "Medicated Feed", route: "", rx_id: "189", is_emergency_exception: false },
-    { id: "opt-6", drug_name: "No signed Rx \u2014 Emergency Log", dosage: "", route: "", rx_id: null, is_emergency_exception: true },
-  ];
+
+  return store.getPrescriptionOptions().map((option) => {
+    const prescription = option.prescriptionId ? store.getPrescription(option.prescriptionId) : undefined;
+    const isSigned = prescription?.status === "signed" || prescription?.status === "countersigned";
+
+    return {
+      id: option.id,
+      drug_name: option.drugName,
+      dosage: option.dosage,
+      route: option.route,
+      // CONFLICT: canonical ids read "Rx-201"; `RecordTreatmentModal` renders
+      // "Vet Rx #{rx_id}", so the adapter still emits the bare number
+      // (plan resolution 12). Unsigned prescriptions stay null → "Pending Signature".
+      rx_id: prescription && isSigned ? prescription.id.replace(/^Rx-/, "") : null,
+      is_emergency_exception: option.isEmergencyException,
+    };
+  });
 };
 
 export interface TreatmentTimelineStep {
@@ -166,58 +117,34 @@ export interface TreatmentDetail {
 }
 
 export const getTreatmentDetail = async (treatmentId: string): Promise<TreatmentDetail> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
-  if (treatmentId === "trt-1") {
-    return {
-      id: "trt-1",
-      animal_id: "MP-104",
-      species: "Buffalo",
-      status_badges: [
-        { text: "Withdrawal Active", variant: "withdrawal_active" },
-        { text: "Vet Signed", variant: "vet_signed" },
-        { text: "Lab \u2264 MRL", variant: "lab_mrl" },
-      ],
-      medicine: "Oxytetracycline",
-      route: "Injection",
-      dose: "10 mg/kg",
-      administered_at: "Today, 08:15 AM",
-      reason: "Respiratory infection",
-      withdrawal: {
-        dose_time: "Dose",
-        now_pct: 30,
-        clear_label: "Clear",
-        product_message: "Milk clears tomorrow, 10:30 AM"
-      },
-      timeline: [
-        { label: "Prescription", status: "complete" },
-        { label: "Dose Given", status: "complete" },
-        { label: "Withdrawal", status: "current" },
-        { label: "Clear", status: "upcoming" }
-      ]
-    };
-  }
+  // CONFLICT: the old fallback returned an MP-106 Goat body for every id except trt-1,
+  // so opening trt-2..trt-5 showed the wrong animal. Every treatment now reads its own row.
+  const treatment = store.getTreatment(treatmentId) ?? store.getFarmerTreatments()[0];
 
-  // Generic fallback
+  const timeline: TreatmentTimelineStep[] = [
+    { label: "Prescription", status: "complete" },
+    { label: "Dose Given", status: "complete" },
+    {
+      label: "Withdrawal",
+      status:
+        treatment.phase === "withdrawal" ? "current" : treatment.phase === "completed" ? "complete" : "upcoming",
+    },
+    { label: "Clear", status: treatment.phase === "completed" ? "complete" : "upcoming" },
+  ];
+
   return {
-    id: treatmentId,
-    animal_id: "MP-106",
-    species: "Goat",
-    status_badges: [
-      { text: "Active", variant: "active" },
-      { text: "Vet Signed", variant: "vet_signed" },
-    ],
-    medicine: "Amoxicillin",
-    route: "Injection",
-    dose: "7 mg/kg",
-    administered_at: "Yesterday, 14:00",
-    reason: "Preventative",
-    withdrawal: null,
-    timeline: [
-      { label: "Prescription", status: "complete" },
-      { label: "Dose Given", status: "complete" },
-      { label: "Withdrawal", status: "upcoming" },
-      { label: "Clear", status: "upcoming" }
-    ]
+    id: treatment.id,
+    animal_id: treatment.animalId,
+    species: speciesLabel(treatment.animalId),
+    status_badges: treatmentBadges(treatment),
+    medicine: treatment.drug,
+    route: treatment.route,
+    dose: treatment.dosage,
+    administered_at: treatment.administeredLabel.replace(/^Administered\s*/, ""),
+    reason: treatment.reason,
+    withdrawal: treatment.withdrawal ? withdrawalDto(treatment.withdrawal) : null,
+    timeline,
   };
 };

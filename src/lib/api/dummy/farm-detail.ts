@@ -1,3 +1,6 @@
+import { store } from "@/lib/seed/store";
+import { animalStatus, animalTypeLabel, farmCounts, speciesOverview } from "@/lib/seed/project";
+
 export interface FarmDetail {
   farm: {
     name: string;
@@ -31,35 +34,30 @@ export interface FarmDetail {
 export const getFarmDetail = async (): Promise<FarmDetail> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
+  const farm = store.getFarmerFarm();
+  const counts = farmCounts();
+
   return {
     farm: {
-      name: "Shree Krishna Dairy",
-      status: "GOOD",
-      total_animals: 48,
-      cows_count: 10,
-      buffaloes_count: 20,
-      goats_count: 18,
-      under_treatment_count: 3
+      name: farm.name,
+      status: counts.underTreatment > 3 ? "ATTENTION" : "GOOD",
+      total_animals: counts.total,
+      cows_count: counts.cows,
+      buffaloes_count: counts.buffaloes,
+      goats_count: counts.goats,
+      under_treatment_count: counts.underTreatment,
     },
-    species_overview: [
-      { species: "Cows", count: 10, healthy_count: 8, under_treatment_count: 1, waiting_count: 1 },
-      { species: "Buffaloes", count: 20, healthy_count: 18, under_treatment_count: 1, waiting_count: 1 },
-      { species: "Goats", count: 18, healthy_count: 17, under_treatment_count: 1, waiting_count: 0 }
-    ],
-    animals: [
-      { id: "MP-104", type: "Cow", status: "under_treatment" },
-      { id: "MP-105", type: "Cow", status: "healthy" },
-      { id: "MP-106", type: "Buffalo", status: "healthy" },
-      { id: "MP-107", type: "Buffalo", status: "healthy" },
-      { id: "MP-108", type: "Goat", status: "healthy" },
-      { id: "MP-109", type: "Buffalo", status: "waiting" },
-      { id: "MP-110", type: "Cow", status: "healthy" },
-      { id: "MP-111", type: "Goat", status: "healthy" }
-    ],
-    recent_activity: [
-      { icon: "clock", title: "Treatment recorded", subject: "MP-104", time_label: "Today" },
-      { icon: "clock", title: "Health check completed", subject: "MP-108", time_label: "Yesterday" },
-      { icon: "clock", title: "Animal registered", subject: "MP-109", time_label: "2 days ago" }
-    ]
+    species_overview: speciesOverview(),
+    animals: store.getFarmerRoster().map((animal) => ({
+      id: animal.id,
+      type: animalTypeLabel(animal),
+      status: animalStatus(animal.id),
+    })),
+    recent_activity: store.getState().farmActivity.map((row) => ({
+      icon: row.icon,
+      title: row.title,
+      subject: row.subject,
+      time_label: row.timeLabel,
+    })),
   };
 };

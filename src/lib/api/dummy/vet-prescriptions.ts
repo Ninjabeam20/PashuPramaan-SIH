@@ -1,3 +1,6 @@
+import { store } from "@/lib/seed/store";
+import { prescriptionAction, prescriptionAwareBadges, prescriptionStatusBadge } from "@/lib/seed/project";
+
 export interface PrescriptionsData {
   summary: {
     all_count: number;
@@ -22,103 +25,27 @@ export interface PrescriptionsData {
 export const getPrescriptionsList = async (): Promise<PrescriptionsData> => {
   await new Promise((resolve) => setTimeout(resolve, 800));
 
+  const prescriptions = store.getPrescriptions();
+
   return {
     summary: {
-      all_count: 8,
-      awaiting_signature_count: 2,
-      unsigned_emergency_count: 0,
-      signed_count: 4,
-      voided_count: 1,
+      all_count: prescriptions.length,
+      awaiting_signature_count: prescriptions.filter((p) => p.status === "sign_required").length,
+      // CONFLICT: this counter read 0 while Rx-207 was listed as COUNTERSIGNED. Rx-207 is
+      // an unsigned emergency (plan resolution 9), so the count now derives from status.
+      unsigned_emergency_count: prescriptions.filter((p) => p.status === "unsigned_emergency").length,
+      signed_count: prescriptions.filter((p) => p.status === "signed" || p.status === "countersigned").length,
+      voided_count: prescriptions.filter((p) => p.status === "voided").length,
     },
-    items: [
-      {
-        rx_id: "Rx-208",
-        farm: "Shanti Dairy",
-        animal_flock: "MP-104",
-        diagnosis: "Clinical mastitis",
-        status_badges: [{ text: "SIGN-REQ", variant: "sign" }],
-        aware_badges: [{ text: "ACCESS", variant: "access" }],
-        date_label: "10:42",
-        action_text: "Review",
-        action_target: "sign_flow"
-      },
-      {
-        rx_id: "Rx-207",
-        farm: "Meena Poultry",
-        animal_flock: "Flock P-01",
-        diagnosis: "Gumboro (IBD)",
-        status_badges: [{ text: "COUNTERSIGNED", variant: "countersigned", dot: true }],
-        aware_badges: [],
-        date_label: "09:18",
-        action_text: "Review",
-        action_target: "read_only" 
-      },
-      {
-        rx_id: "Rx-205",
-        farm: "Krishna Dairy",
-        animal_flock: "MP-118",
-        diagnosis: "Clinical mastitis",
-        status_badges: [{ text: "SIGN-REQ", variant: "sign" }],
-        aware_badges: [{ text: "WATCH", variant: "watch" }, { text: "CIA", variant: "cia" }],
-        date_label: "Yesterday",
-        action_text: "Review",
-        action_target: "sign_flow"
-      },
-      {
-        rx_id: "Rx-201",
-        farm: "Shanti Dairy",
-        animal_flock: "MP-101",
-        diagnosis: "Clinical mastitis",
-        status_badges: [{ text: "SIGNED", variant: "signed", dot: true }],
-        aware_badges: [{ text: "ACCESS", variant: "access" }],
-        date_label: "Yesterday",
-        action_text: "View",
-        action_target: "read_only"
-      },
-      {
-        rx_id: "Rx-198",
-        farm: "Krishna Dairy",
-        animal_flock: "MP-112",
-        diagnosis: "Mastitis",
-        status_badges: [{ text: "SIGNED", variant: "signed", dot: true }],
-        aware_badges: [{ text: "ACCESS", variant: "access" }],
-        date_label: "17 Aug",
-        action_text: "View",
-        action_target: "read_only"
-      },
-      {
-        rx_id: "Rx-194",
-        farm: "Meena Poultry",
-        animal_flock: "Flock P-02",
-        diagnosis: "Colibacillosis",
-        status_badges: [{ text: "SIGNED", variant: "signed", dot: true }],
-        aware_badges: [{ text: "WATCH", variant: "watch" }],
-        date_label: "15 Aug",
-        action_text: "View",
-        action_target: "read_only"
-      },
-      {
-        rx_id: "Rx-189",
-        farm: "Shanti Dairy",
-        animal_flock: "MP-097",
-        diagnosis: "Foot rot",
-        status_badges: [{ text: "SIGNED", variant: "signed", dot: true }],
-        aware_badges: [{ text: "ACCESS", variant: "access" }],
-        date_label: "12 Aug",
-        action_text: "View",
-        action_target: "read_only"
-      },
-      {
-        rx_id: "Rx-183",
-        farm: "Krishna Dairy",
-        animal_flock: "MP-088",
-        diagnosis: "Respiratory infection",
-        status_badges: [{ text: "VOIDED", variant: "voided" }],
-        aware_badges: [{ text: "RESERVE", variant: "reserve" }, { text: "CIA", variant: "cia" }],
-        date_label: "10 Aug",
-        action_text: "View",
-        action_target: "read_only"
-      }
-    ]
+    items: prescriptions.map((prescription) => ({
+      rx_id: prescription.id,
+      farm: store.farmName(prescription.farmId),
+      animal_flock: prescription.animalId,
+      diagnosis: prescription.diagnosis,
+      status_badges: [prescriptionStatusBadge(prescription)],
+      aware_badges: prescriptionAwareBadges(prescription),
+      date_label: prescription.dateLabel,
+      ...prescriptionAction(prescription),
+    })),
   };
 };

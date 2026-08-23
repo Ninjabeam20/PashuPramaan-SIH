@@ -179,6 +179,14 @@ PashuPramaan/
 │   │   │   ├── prescriptions/           # Prescriptions table & sign launcher
 │   │   │   ├── patients/                # Patient directory & case viewer
 │   │   │   └── layout.tsx               # Vet navigation shell
+│   │   ├── lab/                         # Laboratory technician portal
+│   │   │   ├── dashboard/               # Lab dashboard & attention queue
+│   │   │   ├── dispatches/              # Dispatch registry + per-dispatch assessment
+│   │   │   ├── testing-queue/           # Awaiting receipt & ready-for-testing lists
+│   │   │   ├── testing-workspace/       # Per-sample testing workspace
+│   │   │   ├── results/                 # Completed tests awaiting verification
+│   │   │   ├── reports/                 # Verified reports & MRL records
+│   │   │   └── layout.tsx               # Lab navigation shell
 │   │   ├── globals.css                  # Design tokens, fonts, and theme variables
 │   │   ├── layout.tsx                   # Root HTML & typography layout
 │   │   └── page.tsx                     # Landing / entry redirection
@@ -199,6 +207,7 @@ PashuPramaan/
 │   │   │   ├── CaseDetailModal.tsx
 │   │   │   ├── NewPrescriptionModal.tsx
 │   │   │   └── ...
+│   │   ├── lab/                         # Lab tables, testing queue & receipt flows
 │   │   └── ui/                          # Design system primitives (Badge, Button, Card, Select, Input, ProgressBar)
 │   ├── data/
 │   │   ├── india-states.json            # Simplified India states GeoJSON
@@ -208,21 +217,38 @@ PashuPramaan/
 │   │   │   ├── india-geo.ts             # State names, abbreviations, slugs
 │   │   │   ├── state-stats.ts           # Dummy livestock headcounts
 │   │   │   └── load-district-geo.ts     # Server loader for district GeoJSON
+│   │   ├── seed/                        # Canonical dummy dataset (single source of truth)
+│   │   │   ├── types.ts                 # Canonical entity types
+│   │   │   ├── ids.ts                   # Recurring id constants
+│   │   │   ├── canonical.ts             # Seed rows + `// CONFLICT:` resolutions
+│   │   │   ├── store.ts                 # Module-level store & getters
+│   │   │   ├── project.ts               # Shared badge / label / count projections
+│   │   │   ├── query-keys.ts            # TanStack Query keys for invalidation
+│   │   │   └── seed.test.ts             # Uniqueness, joins & adapter smoke tests
 │   │   └── api/
-│   │       └── dummy/                   # Mock API store for offline development
+│   │       └── dummy/                   # View adapters over the seed store
 │   │           ├── auth.ts
+│   │           ├── animal-detail.ts
 │   │           ├── dispatch.ts
 │   │           ├── farm-detail.ts
 │   │           ├── farm-insights.ts
 │   │           ├── farmer-dashboard.ts
+│   │           ├── lab-dashboard.ts
+│   │           ├── lab-dispatches.ts
+│   │           ├── lab-reports.ts
+│   │           ├── lab-results.ts
+│   │           ├── lab-testing.ts
 │   │           ├── treatments.ts
+│   │           ├── vet-case-detail.ts
 │   │           ├── vet-dashboard.ts
 │   │           ├── vet-patients.ts
 │   │           ├── vet-prescriptions.ts
-│   │           └── vet-sign-flow.ts
+│   │           ├── vet-sign-flow.ts
+│   │           └── vets.ts
 │   └── providers/                       # React Query & client context providers
 ├── package.json                         # Dependencies and build scripts
 ├── tsconfig.json                        # TypeScript configuration
+├── vitest.config.mts                    # Vitest config (`npm test`)
 └── README.md                            # Project documentation
 ```
 

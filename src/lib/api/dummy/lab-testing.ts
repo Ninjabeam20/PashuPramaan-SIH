@@ -1,3 +1,6 @@
+import { store } from "@/lib/seed/store";
+import { labAntimicrobial, labSourceSub, labTestingStarted, priorityColor } from "@/lib/seed/project";
+
 export type AwaitingSample = {
   id: string;
   product: string;
@@ -35,78 +38,37 @@ export type TestingQueueData = {
 export async function fetchTestingQueue(): Promise<TestingQueueData> {
   await new Promise((resolve) => setTimeout(resolve, 600));
 
-  return {
-    awaiting: [
-      {
-        id: "MLK-2026-00131",
-        product: "Milk",
-        productSub: "Raw Milk",
-        source: "Mahalaxmi Dairy",
-        sourceSub: "Animal: MP-087",
-        sample: "LAB-MLK-00992",
-        arrival: "Expected today · 10:45 AM",
-        priority: "HIGH PRIORITY",
-        priorityColor: "red",
-        reason: "Targeted residue test required",
-        action: "Receive Sample →",
-        highlighted: true,
-      },
-      {
-        id: "MEAT-2026-00091",
-        product: "Meat",
-        productSub: "Batch M-56",
-        source: "Green Valley Livestock",
-        sourceSub: "",
-        sample: "LAB-MT-00481",
-        arrival: "Received 15 min ago",
-        priority: "MODERATE",
-        priorityColor: "amber",
-        reason: "",
-        action: "Receive →",
-        highlighted: false,
-      },
-      {
-        id: "EGG-2026-00255",
-        product: "Eggs",
-        productSub: "Flock FLK-2026-051",
-        source: "Sunrise Poultry",
-        sourceSub: "",
-        sample: "LAB-EGG-01142",
-        arrival: "Expected today · 12:30 PM",
-        priority: "ROUTINE",
-        priorityColor: "neutral",
-        reason: "",
-        action: "Receive →",
-        highlighted: false,
-      },
-    ],
-    ready: [
-      {
-        id: "MLK-2026-00124",
-        product: "Milk",
-        source: "Shree Krishna Dairy",
-        sample: "LAB-MLK-00981",
-        tests: [
-          { name: "Product Quality", status: "done" },
-          { name: "Microbiological Safety", status: "active" },
-          { name: "Antimicrobial Residue", status: "pending" },
-        ],
-        action: "Continue Testing →",
-      },
-      {
-        id: "MEAT-2026-00091",
-        product: "Meat",
-        source: "Green Valley Livestock",
-        sample: "LAB-MT-00481",
-        tests: [
-          { name: "Quality Assessment", status: "pending" },
-          { name: "Microbiology", status: "pending" },
-          { name: "Antimicrobial Residue", status: "pending" },
-        ],
-        action: "Start Testing →",
-      },
-    ]
-  };
+  const awaiting: AwaitingSample[] = store.getAwaitingLabSamples().map((sample) => ({
+    id: sample.dispatchId,
+    product: sample.product,
+    productSub: sample.productSub,
+    source: sample.sourceName,
+    sourceSub: labSourceSub(sample),
+    sample: sample.sampleId,
+    arrival: sample.arrival,
+    priority: sample.priority,
+    priorityColor: priorityColor(sample.priority),
+    reason: sample.receiptReason,
+    action: sample.priority === "HIGH PRIORITY" ? "Receive Sample →" : "Receive →",
+    highlighted: sample.priority === "HIGH PRIORITY",
+  }));
+
+  // CONFLICT: MEAT-2026-00091 used to sit in both lists at once. A lot is either awaiting
+  // receipt or on the bench, never both (plan resolution 16) — the two lists are now
+  // disjoint slices of the same stage field.
+  const ready: ReadySample[] = store
+    .getLabSamples()
+    .filter((sample) => sample.stage === "received" || sample.stage === "testing")
+    .map((sample) => ({
+      id: sample.dispatchId,
+      product: sample.product,
+      source: sample.sourceName,
+      sample: sample.sampleId,
+      tests: sample.tests.map((test) => ({ name: test.name, status: test.state })),
+      action: labTestingStarted(sample) ? "Continue Testing →" : "Start Testing →",
+    }));
+
+  return { awaiting, ready };
 }
 
 export type WorkspaceData = {
@@ -127,22 +89,34 @@ export type WorkspaceData = {
 export async function fetchTestingWorkspace(sampleId: string): Promise<WorkspaceData> {
   await new Promise((resolve) => setTimeout(resolve, 600));
 
+  // Accepts either the lab dispatch id (what the dashboard links with) or the physical
+  // sample id, and falls back to the lot currently on the bench.
+  const sample =
+    store.getLabSample(sampleId) ??
+    store.getLabSamples().find((s) => s.stage === "testing") ??
+    store.getLabSamples()[0];
+
+  const antimicrobial = labAntimicrobial(sample);
+
   return {
-    dispatchId: "MLK-2026-00124",
-    sampleId: sampleId,
-    product: "Raw Milk",
-    productSub: "Milk",
-    source: "Shree Krishna Dairy",
-    sourceSub: "MP-104",
-    condition: "✓ Acceptable",
-    temperature: "4.2°C",
-    riskLevel: "MODERATE",
-    antimicrobialContext: "Amoxicillin · Last administered 15 Aug 2026",
-    antimicrobialStatus: "✓ Withdrawal completed before dispatch. Residue testing still required.",
-    assessments: [
-      { num: 1, label: "Product Quality", state: "done" },
-      { num: 2, label: "Microbiological Safety", state: "active" },
-      { num: 3, label: "Antimicrobial Residue", state: "pending" },
-    ],
+    dispatchId: sample.dispatchId,
+    sampleId: sample.sampleId,
+    product: sample.productLabel,
+    productSub: sample.product,
+    source: sample.sourceName,
+    sourceSub: sample.animalId ?? sample.batchLabel ?? "",
+    condition: `✓ ${sample.receipt.condition}`,
+    temperature: sample.receipt.temperature,
+    riskLevel: sample.risk,
+    // CONFLICT: the workspace claimed "Amoxicillin · withdrawal completed" for a lot whose
+    // farmer treatment (trt-1, Oxytetracycline) is still inside its withdrawal window.
+    // The context now derives from the linked farmer dispatch.
+    antimicrobialContext: antimicrobial.context,
+    antimicrobialStatus: antimicrobial.status,
+    assessments: sample.tests.map((test, index) => ({
+      num: index + 1,
+      label: test.name,
+      state: test.state,
+    })),
   };
 }

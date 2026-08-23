@@ -1,3 +1,6 @@
+import { store } from "@/lib/seed/store";
+import type { FarmerDispatch, Treatment } from "@/lib/seed/types";
+
 export interface DispatchStatSummary {
   active_dispatches: number;
   ready_to_dispatch: number;
@@ -32,84 +35,92 @@ export interface DispatchSafetyOutcome {
   };
 }
 
+/** Default assay figures used when a treatment is badged "Lab ≤ MRL" but no lab report is on file. */
+const DEFAULT_WITHIN_LIMIT = { lab_result_ppm: "0.04", permitted_ppm: "0.10" };
+
+const toItem = (dispatch: FarmerDispatch): DispatchItem => ({
+  id: dispatch.id,
+  product: dispatch.product,
+  animal_flock: dispatch.animalId,
+  date: dispatch.dateLabel,
+  status: dispatch.status,
+});
+
 export const getDispatches = async () => {
-  await new Promise(resolve => setTimeout(resolve, 400));
-  return {
-    summary: {
-      active_dispatches: 1,
-      ready_to_dispatch: 3,
-      under_withdrawal: 2,
-      blocked: 1
-    } as DispatchStatSummary,
-    items: [
-      {
-        id: "DSP-024",
-        product: "Milk",
-        animal_flock: "MP-104",
-        date: "Today",
-        status: "cleared"
-      },
-      {
-        id: "DSP-023",
-        product: "Milk",
-        animal_flock: "MP-108",
-        date: "Yesterday",
-        status: "withdrawal"
-      },
-      {
-        id: "DSP-022",
-        product: "Meat",
-        animal_flock: "Flock-07",
-        date: "20 Aug",
-        status: "blocked"
-      }
-    ] as DispatchItem[]
+  await new Promise((resolve) => setTimeout(resolve, 400));
+
+  const dispatches = store.getFarmerDispatches();
+
+  const summary: DispatchStatSummary = {
+    active_dispatches: dispatches.filter((d) => d.status !== "blocked").length,
+    ready_to_dispatch: dispatches.filter((d) => d.status === "cleared").length,
+    under_withdrawal: dispatches.filter((d) => d.status === "withdrawal").length,
+    blocked: dispatches.filter((d) => d.status === "blocked").length,
   };
+
+  return { summary, items: dispatches.map(toItem) };
 };
 
-export const checkDispatchSafety = async (product: string, animalIds: string[]): Promise<DispatchSafetyOutcome> => {
-  await new Promise(resolve => setTimeout(resolve, 600));
-  
-  // Hardcode a blocked scenario for MP-108 as a dummy rule, or if Meat + Flock-07
-  if (animalIds.includes("MP-108") || (product === "Meat" && animalIds.includes("Flock-07"))) {
+export const checkDispatchSafety = async (
+  product: string,
+  animalIds: string[],
+): Promise<DispatchSafetyOutcome> => {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+
+  // CONFLICT: this used to hardcode MP-108 / Flock-07 as the blocked scenario even though
+  // MP-108's course (trt-5) is completed. The outcome now derives from the animal's own
+  // treatments and from any blocked dispatch already recorded against it.
+  const treatments: Treatment[] = animalIds.flatMap((id) => store.getTreatmentsByAnimal(id));
+  const openWithdrawal = treatments.find((t) => t.phase === "withdrawal");
+  const blockedDispatch = animalIds
+    .flatMap((id) => store.getDispatchesForAnimal(id))
+    .find((d) => d.blocked !== null);
+
+  const latestTreatment = treatments.find((t) => t.phase !== "completed") ?? treatments[0];
+  const hasLabResult =
+    latestTreatment?.labAssay === "within_mrl" ||
+    animalIds.some((id) => store.getLabSamplesForAnimal(id).length > 0);
+
+  if (blockedDispatch?.blocked) {
+    return {
+      eligible: false,
+      withdrawal: openWithdrawal
+        ? { status: "active", detail: openWithdrawal.withdrawal?.clearsAt ?? "Active" }
+        : { status: "cleared", detail: "CLEARED" },
+      mrl: {
+        status: "exceeded",
+        lab_result_ppm: blockedDispatch.blocked.mrlMeasuredPpm,
+        permitted_ppm: blockedDispatch.blocked.mrlPermittedPpm,
+      },
+      prescription: { signed: blockedDispatch.blocked.prescriptionSigned },
+      lab_assay: { available: true },
+    };
+  }
+
+  if (openWithdrawal) {
     return {
       eligible: false,
       withdrawal: {
         status: "active",
-        detail: "Active (clears in 2 days)"
+        detail: openWithdrawal.withdrawal
+          ? `Active (${openWithdrawal.withdrawal.productMessage})`
+          : "Active",
       },
-      mrl: {
-        status: "exceeded",
-        lab_result_ppm: "0.15",
-        permitted_ppm: "0.10"
-      },
-      prescription: {
-        signed: true
-      },
-      lab_assay: {
-        available: true
-      }
+      mrl:
+        openWithdrawal.labAssay === "within_mrl"
+          ? { status: "within_limit", ...DEFAULT_WITHIN_LIMIT }
+          : null,
+      prescription: { signed: openWithdrawal.signed },
+      lab_assay: { available: openWithdrawal.labAssay === "within_mrl" },
     };
   }
 
-  // Default passing scenario
   return {
     eligible: true,
-    withdrawal: {
-      status: "cleared",
-      detail: "CLEARED"
-    },
-    mrl: {
-      status: "within_limit",
-      lab_result_ppm: "0.04",
-      permitted_ppm: "0.10"
-    },
-    prescription: {
-      signed: true
-    },
-    lab_assay: {
-      available: true
-    }
+    withdrawal: { status: "cleared", detail: "CLEARED" },
+    mrl: hasLabResult ? { status: "within_limit", ...DEFAULT_WITHIN_LIMIT } : null,
+    prescription: { signed: latestTreatment ? latestTreatment.signed : true },
+    lab_assay: { available: hasLabResult },
   };
 };
 
@@ -131,71 +142,75 @@ export interface DispatchDetail {
   };
 }
 
-export const getDispatchDetail = async (dispatchId: string): Promise<DispatchDetail> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-
-  if (dispatchId === "DSP-024") {
-    return {
-      id: "DSP-024",
-      product: "Milk",
-      animal_flock: "MP-104",
-      date: "Today",
-      status: "cleared",
-      timeline: [
-        { label: "Treatment", status: "complete" },
-        { label: "Withdrawal", status: "complete" },
-        { label: "Safety Check", status: "complete" },
-        { label: "Dispatch", status: "complete" }
-      ],
-      cleared_checklist: [
-        "Withdrawal Cleared",
-        "MRL Within Limit",
-        "Eligible",
-        "Passport Generated"
-      ]
-    };
-  }
-
-  if (dispatchId === "DSP-023") {
-    return {
-      id: "DSP-023",
-      product: "Milk",
-      animal_flock: "MP-108",
-      date: "Yesterday",
-      status: "withdrawal",
-      timeline: [
-        { label: "Treatment", status: "complete" },
-        { label: "Withdrawal", status: "current" },
-        { label: "Safety Check", status: "upcoming" },
-        { label: "Dispatch", status: "upcoming" }
-      ],
-      withdrawal_detail: {
-        clears_label: "Clears: 24 Aug, 10:30 AM",
-        treatment_id: "trt-2"
-      }
-    };
-  }
-
-  // DSP-022 Blocked fallback
-  return {
-    id: dispatchId,
-    product: "Meat",
-    animal_flock: "Flock-07",
-    date: "20 Aug",
-    status: "blocked",
-    timeline: [
+const timelineFor = (status: DispatchItem["status"]): DispatchDetail["timeline"] => {
+  if (status === "cleared") {
+    return [
       { label: "Treatment", status: "complete" },
       { label: "Withdrawal", status: "complete" },
-      { label: "Safety Check", status: "current" },
-      { label: "Dispatch", status: "upcoming" }
-    ],
-    blocked_detail: {
-      failed_gates: [
-        { gate: "MRL", message: "MRL Above Limit \u2014 Lab: 0.14 ppm / Permitted: 0.10 ppm" }
-      ],
-      warnings: [
-        { icon: "\u26A0", message: "Prescription Unsigned" }
-      ]
-    }
+      { label: "Safety Check", status: "complete" },
+      { label: "Dispatch", status: "complete" },
+    ];
+  }
+  if (status === "withdrawal") {
+    return [
+      { label: "Treatment", status: "complete" },
+      { label: "Withdrawal", status: "current" },
+      { label: "Safety Check", status: "upcoming" },
+      { label: "Dispatch", status: "upcoming" },
+    ];
+  }
+  return [
+    { label: "Treatment", status: "complete" },
+    { label: "Withdrawal", status: "complete" },
+    { label: "Safety Check", status: "current" },
+    { label: "Dispatch", status: "upcoming" },
+  ];
+};
+
+export const getDispatchDetail = async (dispatchId: string): Promise<DispatchDetail> => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  const dispatch = store.getFarmerDispatch(dispatchId) ?? store.getFarmerDispatches()[0];
+  const treatment = dispatch.treatmentId ? store.getTreatment(dispatch.treatmentId) : undefined;
+
+  const detail: DispatchDetail = {
+    id: dispatch.id,
+    product: dispatch.product,
+    animal_flock: dispatch.animalId,
+    date: dispatch.dateLabel,
+    status: dispatch.status,
+    timeline: timelineFor(dispatch.status),
   };
+
+  if (dispatch.status === "cleared") {
+    detail.cleared_checklist = [
+      "Withdrawal Cleared",
+      treatment?.labAssay === "within_mrl" ? "MRL Within Limit" : "No lab assay required",
+      "Eligible",
+      "Passport Generated",
+    ];
+  }
+
+  if (dispatch.status === "withdrawal") {
+    detail.withdrawal_detail = {
+      clears_label: treatment?.withdrawal?.clearsAt ?? "Clears when withdrawal completes",
+      treatment_id: dispatch.treatmentId ?? "",
+    };
+  }
+
+  if (dispatch.status === "blocked" && dispatch.blocked) {
+    detail.blocked_detail = {
+      failed_gates: [
+        {
+          gate: "MRL",
+          message: `MRL Above Limit — Lab: ${dispatch.blocked.mrlMeasuredPpm} ppm / Permitted: ${dispatch.blocked.mrlPermittedPpm} ppm`,
+        },
+      ],
+      warnings: dispatch.blocked.prescriptionSigned
+        ? []
+        : [{ icon: "⚠", message: "Prescription Unsigned" }],
+    };
+  }
+
+  return detail;
 };
