@@ -1,3 +1,5 @@
+import { store } from "@/lib/seed/store";
+
 export type LabSummaryCard = {
   value: string;
   label: string;
@@ -30,46 +32,34 @@ export type LabDashboardData = {
 
 export async function fetchLabDashboard(): Promise<LabDashboardData> {
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 600));
+  await new Promise((resolve) => setTimeout(resolve, 600));
+
+  const state = store.getState();
+  const counters = state.labCounters;
+  const highPriorityAwaiting = store.getAwaitingLabSamples().filter((s) => s.priority === "HIGH PRIORITY").length;
 
   return {
     summary: [
-      { value: "12", label: "Awaiting Receipt", sub: "3 high priority", color: "amber" },
-      { value: "18", label: "Tests in Progress", sub: "11 dispatches", color: "neutral" },
-      { value: "7", label: "Awaiting Verification", sub: "Ready for review", color: "amber" },
-      { value: "2", label: "On Hold", sub: "Action required", color: "red" },
+      { value: String(counters.awaitingReceipt), label: "Awaiting Receipt", sub: `${highPriorityAwaiting} high priority`, color: "amber" },
+      { value: String(counters.testsInProgress), label: "Tests in Progress", sub: `${counters.dispatchesInProgress} dispatches`, color: "neutral" },
+      { value: String(counters.awaitingVerification), label: "Awaiting Verification", sub: "Ready for review", color: "amber" },
+      { value: String(counters.onHold), label: "On Hold", sub: "Action required", color: "red" },
     ],
-    attention: [
-      {
-        id: "MLK-2026-00124", type: "MILK",
-        title: "Shree Krishna Dairy",
-        desc: "Beta-lactam residue testing required.",
-        status: "HIGH PRIORITY", statusColor: "amber",
-        action: "Start Testing →",
-        page: "/lab/testing-workspace/MLK-2026-00124",
-      },
-      {
-        id: "MEAT-2026-00087", type: "MEAT",
-        title: "Green Valley Livestock",
-        desc: "Withdrawal verification requires review.",
-        status: "REVIEW REQUIRED", statusColor: "red",
-        action: "View Dispatch →",
-        page: "/lab/dispatches/MEAT-2026-00087",
-      },
-      {
-        id: "EGG-2026-00241", type: "EGGS",
-        title: "Sunrise Poultry",
-        desc: "Assessment is awaiting verification.",
-        status: "ACTION REQUIRED", statusColor: "amber",
-        action: "Review Results →",
-        page: "/lab/results",
-      },
-    ],
-    activity: [
-      { text: "Result submitted for MLK-2026-00118", time: "10 min ago", icon: "check" },
-      { text: "Sample LAB-00921 received and registered", time: "1 hour ago", icon: "inbox" },
-      { text: "MEAT-2026-00072 placed on hold", time: "Yesterday", icon: "hold" },
-      { text: "EGG-2026-00217 cleared for dispatch", time: "Yesterday", icon: "dispatch" },
-    ],
+    // Attention rows follow the sample's own stage, so the dashboard can no longer offer
+    // "Start Testing" on a lot another page already reports as cleared.
+    attention: store
+      .getLabSamples()
+      .filter((sample) => sample.attention !== null)
+      .map((sample) => ({
+        id: sample.dispatchId,
+        type: sample.product === "Eggs" ? "EGGS" : sample.product.toUpperCase(),
+        title: sample.sourceName,
+        desc: sample.attention!.desc,
+        status: sample.attention!.status,
+        statusColor: sample.attention!.statusColor,
+        action: sample.attention!.action,
+        page: sample.attention!.page,
+      })),
+    activity: state.labActivity.map((row) => ({ text: row.text, time: row.time, icon: row.icon })),
   };
 }

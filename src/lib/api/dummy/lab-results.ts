@@ -1,3 +1,6 @@
+import { store } from "@/lib/seed/store";
+import { labTestingFinished } from "@/lib/seed/project";
+
 export type LabResultTest = {
   label: string;
   result: string;
@@ -18,59 +21,38 @@ export type LabResult = {
   outcome: "hold" | "released";
 };
 
-const MOCK_RESULTS: LabResult[] = [
-  {
-    id: "MLK-2026-00124",
-    product: "Raw Milk",
-    source: "Shree Krishna Dairy",
-    sample: "LAB-MLK-00981",
-    date: "23 Aug 2026",
-    tests: [
-      { label: "Product Quality",        result: "COMPLIANT",    ok: true  },
-      { label: "Microbiological Safety", result: "COMPLIANT",    ok: true  },
-      { label: "Antimicrobial Residue",  result: "WITHIN LIMIT", ok: true  },
-    ],
-    status: "AWAITING VERIFICATION",
-    statusColor: "amber",
-    action: "Review Assessment →",
-    outcome: "released",
-  },
-  {
-    id: "MEAT-2026-00087",
-    product: "Meat",
-    source: "Green Valley Livestock",
-    sample: "LAB-MT-00472",
-    date: "23 Aug 2026",
-    tests: [
-      { label: "Product Quality",        result: "COMPLIANT",       ok: true  },
-      { label: "Microbiological Safety", result: "COMPLIANT",       ok: true  },
-      { label: "Antimicrobial Residue",  result: "REVIEW REQUIRED", ok: false },
-    ],
-    status: "ACTION REQUIRED",
-    statusColor: "red",
-    action: "Review →",
-    outcome: "hold",
-  },
-  {
-    id: "EGG-2026-00241",
-    product: "Eggs",
-    source: "Sunrise Poultry",
-    sample: "LAB-EGG-01128",
-    date: "22 Aug 2026",
-    tests: [
-      { label: "Physical Quality",       result: "COMPLIANT",    ok: true },
-      { label: "Microbiological Safety", result: "COMPLIANT",    ok: true },
-      { label: "Antimicrobial Residue",  result: "WITHIN LIMIT", ok: true },
-    ],
-    status: "VERIFIED",
-    statusColor: "green",
-    // "View Report →" — this triggers onOpenReport → router.push("/lab/reports")
-    action: "View Report →",
-    outcome: "released",
-  },
-];
+const RESULT_VIEW = {
+  on_hold: { status: "ACTION REQUIRED", statusColor: "red" as const, action: "Review →", outcome: "hold" as const },
+  awaiting_verification: { status: "AWAITING VERIFICATION", statusColor: "amber" as const, action: "Review Assessment →", outcome: "released" as const },
+  verified: { status: "VERIFIED", statusColor: "green" as const, action: "View Report →", outcome: "released" as const },
+};
 
 export async function fetchLabResults(): Promise<LabResult[]> {
   await new Promise((r) => setTimeout(r, 500));
-  return MOCK_RESULTS;
+
+  // CONFLICT: results listed MLK-2026-00124 as awaiting verification while the testing
+  // queue still had it on the bench. A lot only reaches this table once every test is
+  // done (plan resolution 13), so it is the queue and this list that now agree.
+  return store
+    .getLabSamples()
+    .filter((sample) => labTestingFinished(sample) && sample.stage in RESULT_VIEW)
+    .map((sample) => {
+      const view = RESULT_VIEW[sample.stage as keyof typeof RESULT_VIEW];
+      return {
+        id: sample.dispatchId,
+        product: sample.productLabel,
+        source: sample.sourceName,
+        sample: sample.sampleId,
+        date: sample.resultDate ?? sample.date,
+        tests: sample.tests.map((test) => ({
+          label: test.name,
+          result: test.result ?? "PENDING",
+          ok: test.ok,
+        })),
+        status: view.status,
+        statusColor: view.statusColor,
+        action: view.action,
+        outcome: view.outcome,
+      };
+    });
 }

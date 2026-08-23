@@ -5,141 +5,35 @@ import { useRouter } from "next/navigation"
 import { IndiaChoroplethMap } from "@/components/admin/IndiaChoroplethMap"
 import { StateDistrictMap } from "@/components/admin/StateDistrictMap"
 import { geoNameToSlug, slugFromRegionId } from "@/lib/admin/india-geo"
+import { store } from "@/lib/seed/store"
+import type { AdminAnomalyRow, AdminDistrictRow, AdminHealthRow, AdminRegionRow } from "@/lib/seed/types"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type TabId = "overview" | "analytics" | "anomalies" | "health" | "forecast" | "workspace"
 
-// ─── Regional / AMU Data ──────────────────────────────────────────────────────
+// ─── Canonical data (see src/lib/seed) ───────────────────────────────────────
+//
+// Region / district / anomaly / health rows now live in `src/lib/seed/canonical.ts`
+// so the admin dashboard reads the same store as farmer, vet and lab. They are
+// re-exported here under their original names, so no admin component changed.
 
-export interface RegionRow {
-  id: string; state: string; zone: string;
-  amu: number; change: number; anomalies: number; unexplained: number;
-}
+export type RegionRow = AdminRegionRow
+export type DistrictRow = AdminDistrictRow
+export type AnomalyRow = AdminAnomalyRow
+export type HealthRow = AdminHealthRow
 
-export const REGION_DATA: RegionRow[] = [
-  { id:"UP",  state:"Uttar Pradesh",    zone:"North",  amu:94200, change:18, anomalies:22, unexplained:8 },
-  { id:"RJ",  state:"Rajasthan",        zone:"North",  amu:87670, change:31, anomalies:14, unexplained:7 },
-  { id:"MH",  state:"Maharashtra",      zone:"West",   amu:69420, change:23, anomalies:17, unexplained:5 },
-  { id:"KA",  state:"Karnataka",        zone:"South",  amu:73380, change:8,  anomalies:6,  unexplained:1 },
-  { id:"GJ",  state:"Gujarat",          zone:"West",   amu:65960, change:11, anomalies:9,  unexplained:2 },
-  { id:"MP",  state:"Madhya Pradesh",   zone:"Central",amu:71200, change:15, anomalies:11, unexplained:3 },
-  { id:"TN",  state:"Tamil Nadu",       zone:"South",  amu:61200, change:12, anomalies:8,  unexplained:2 },
-  { id:"WB",  state:"West Bengal",      zone:"East",   amu:58900, change:9,  anomalies:7,  unexplained:3 },
-  { id:"AP",  state:"Andhra Pradesh",   zone:"South",  amu:54300, change:6,  anomalies:5,  unexplained:1 },
-  { id:"BR",  state:"Bihar",            zone:"East",   amu:52100, change:21, anomalies:12, unexplained:4 },
-  { id:"HR",  state:"Haryana",          zone:"North",  amu:48700, change:14, anomalies:7,  unexplained:2 },
-  { id:"OD",  state:"Odisha",           zone:"East",   amu:39400, change:5,  anomalies:4,  unexplained:1 },
-  { id:"TG",  state:"Telangana",        zone:"South",  amu:43800, change:7,  anomalies:6,  unexplained:2 },
-  { id:"PB",  state:"Punjab",           zone:"North",  amu:51340, change:-3, anomalies:4,  unexplained:0 },
-  { id:"CG",  state:"Chhattisgarh",     zone:"Central",amu:36200, change:10, anomalies:4,  unexplained:1 },
-  { id:"JH",  state:"Jharkhand",        zone:"East",   amu:29800, change:8,  anomalies:3,  unexplained:1 },
-  { id:"HP",  state:"Himachal Pradesh", zone:"North",  amu:18200, change:4,  anomalies:2,  unexplained:0 },
-  { id:"UT",  state:"Uttarakhand",      zone:"North",  amu:21400, change:6,  anomalies:2,  unexplained:0 },
-  { id:"JK",  state:"J&K & Ladakh",     zone:"North",  amu:15600, change:3,  anomalies:2,  unexplained:0 },
-  { id:"NE",  state:"North-East States",zone:"East",   amu:24700, change:7,  anomalies:3,  unexplained:1 },
-  { id:"KL",  state:"Kerala",           zone:"South",  amu:34200, change:5,  anomalies:3,  unexplained:0 },
-  { id:"GA",  state:"Goa",             zone:"West",   amu:4800,  change:2,  anomalies:1,  unexplained:0 },
-]
+export const REGION_DATA = store.getState().adminRegions
+export const DISTRICT_DATA = store.getState().adminDistricts
+export const ANOMALY_DATA = store.getState().adminAnomalies
+export const HEALTH_DATA = store.getState().adminHealth
 
 export const amuById = Object.fromEntries(REGION_DATA.map(r => [r.id, r]))
 
-export interface DistrictRow {
-  district: string; amu: number; change: number; anomalies: number; unexplained: number;
-}
-
-export const DISTRICT_DATA: Record<string, DistrictRow[]> = {
-  GJ: [
-    { district:"Kachchh",   amu:12400, change:18, anomalies:3, unexplained:1 },
-    { district:"Ahmedabad", amu:8920,  change:11, anomalies:2, unexplained:0 },
-    { district:"Rajkot",    amu:9100,  change:15, anomalies:2, unexplained:1 },
-    { district:"Surat",     amu:7840,  change:8,  anomalies:1, unexplained:0 },
-    { district:"Vadodara",  amu:6800,  change:6,  anomalies:1, unexplained:0 },
-    { district:"Bhavnagar", amu:7200,  change:12, anomalies:2, unexplained:0 },
-    { district:"Jamnagar",  amu:5600,  change:9,  anomalies:1, unexplained:0 },
-    { district:"Junagadh",  amu:4900,  change:14, anomalies:1, unexplained:0 },
-  ],
-  MH: [
-    { district:"Pune",        amu:14200, change:22, anomalies:4, unexplained:2 },
-    { district:"Nashik",      amu:11800, change:19, anomalies:3, unexplained:1 },
-    { district:"Nagpur",      amu:10200, change:17, anomalies:2, unexplained:0 },
-    { district:"Aurangabad",  amu:9400,  change:24, anomalies:3, unexplained:1 },
-    { district:"Amravati",    amu:7800,  change:28, anomalies:3, unexplained:1 },
-    { district:"Solapur",     amu:8100,  change:21, anomalies:2, unexplained:0 },
-    { district:"Kolhapur",    amu:6700,  change:12, anomalies:1, unexplained:0 },
-  ],
-  UP: [
-    { district:"Lucknow",   amu:12400, change:16, anomalies:3, unexplained:1 },
-    { district:"Agra",      amu:10800, change:21, anomalies:4, unexplained:2 },
-    { district:"Kanpur",    amu:11200, change:18, anomalies:3, unexplained:1 },
-    { district:"Varanasi",  amu:9600,  change:14, anomalies:2, unexplained:1 },
-    { district:"Meerut",    amu:8900,  change:22, anomalies:3, unexplained:1 },
-    { district:"Bareilly",  amu:7400,  change:11, anomalies:2, unexplained:0 },
-    { district:"Allahabad", amu:8200,  change:19, anomalies:2, unexplained:1 },
-    { district:"Gorakhpur", amu:7100,  change:15, anomalies:2, unexplained:1 },
-  ],
-  RJ: [
-    { district:"Jaipur",  amu:14600, change:28, anomalies:3, unexplained:2 },
-    { district:"Jodhpur", amu:12800, change:33, anomalies:3, unexplained:2 },
-    { district:"Bikaner", amu:11200, change:31, anomalies:2, unexplained:1 },
-    { district:"Udaipur", amu:9800,  change:24, anomalies:2, unexplained:1 },
-    { district:"Kota",    amu:10200, change:29, anomalies:2, unexplained:1 },
-    { district:"Ajmer",   amu:8900,  change:26, anomalies:2, unexplained:0 },
-  ],
-}
-
-// ─── Anomaly Data ─────────────────────────────────────────────────────────────
-
-export interface AnomalyRow {
-  id: string; farm: string; region: string; medicine: string;
-  amuChange: number; baseline: number; healthEvent: string | null;
-  status: "UNEXPLAINED" | "EXPLAINED"; severity: "HIGH" | "MEDIUM" | "LOW";
-  species: string; date: string;
-  // 12-month historical AMU (normalised units for chart)
-  history: number[];
-}
-
-export const ANOMALY_DATA: AnomalyRow[] = [
-  { id:"A001", farm:"Farm 247",       region:"Maharashtra",  medicine:"Oxytetracycline", amuChange:68, baseline:100, healthEvent:null,                  status:"UNEXPLAINED", severity:"HIGH",   species:"Dairy",   date:"24 Aug 2026", history:[98,102,97,104,99,101,100,98,103,115,142,168] },
-  { id:"A002", farm:"Meena Poultry",  region:"Punjab",       medicine:"Oxytetracycline", amuChange:54, baseline:100, healthEvent:"Gumboro (IBD)",         status:"EXPLAINED",   severity:"MEDIUM", species:"Poultry", date:"22 Aug 2026", history:[96,100,98,102,97,99,101,98,100,108,154,148] },
-  { id:"A003", farm:"Farm 18",        region:"Gujarat",      medicine:"Amoxicillin",     amuChange:41, baseline:100, healthEvent:"Mastitis",              status:"EXPLAINED",   severity:"MEDIUM", species:"Dairy",   date:"21 Aug 2026", history:[101,99,102,97,100,98,102,99,101,110,141,138] },
-  { id:"A004", farm:"Farm 91",        region:"Rajasthan",    medicine:"Enrofloxacin",    amuChange:73, baseline:100, healthEvent:null,                    status:"UNEXPLAINED", severity:"HIGH",   species:"Dairy",   date:"20 Aug 2026", history:[100,103,98,101,99,102,98,101,100,118,148,173] },
-  { id:"A005", farm:"Krishna Dairy",  region:"Haryana",      medicine:"Amoxicillin",     amuChange:38, baseline:100, healthEvent:"Mastitis",              status:"EXPLAINED",   severity:"LOW",    species:"Dairy",   date:"19 Aug 2026", history:[99,101,100,98,102,100,99,101,98,105,138,132] },
-  { id:"A006", farm:"Farm 334",       region:"Uttar Pradesh",medicine:"Oxytetracycline", amuChange:82, baseline:100, healthEvent:null,                    status:"UNEXPLAINED", severity:"HIGH",   species:"Poultry", date:"18 Aug 2026", history:[102,98,101,99,103,100,98,102,104,122,158,182] },
-  { id:"A007", farm:"Shanti Farms",   region:"Karnataka",    medicine:"Enrofloxacin",    amuChange:29, baseline:100, healthEvent:"Respiratory infection",  status:"EXPLAINED",   severity:"LOW",    species:"Poultry", date:"17 Aug 2026", history:[98,100,99,101,100,98,102,99,100,104,129,125] },
-  { id:"A008", farm:"Farm 512",       region:"Rajasthan",    medicine:"Oxytetracycline", amuChange:61, baseline:100, healthEvent:null,                    status:"UNEXPLAINED", severity:"MEDIUM", species:"Dairy",   date:"16 Aug 2026", history:[101,99,102,98,100,103,99,101,100,114,145,161] },
-  { id:"A009", farm:"Greenview Dairy",region:"Maharashtra",  medicine:"Penicillin",      amuChange:44, baseline:100, healthEvent:"Foot rot",              status:"EXPLAINED",   severity:"MEDIUM", species:"Dairy",   date:"15 Aug 2026", history:[100,102,98,101,99,100,103,99,101,108,144,139] },
-  { id:"A010", farm:"Farm 88",        region:"Gujarat",      medicine:"Enrofloxacin",    amuChange:57, baseline:100, healthEvent:null,                    status:"UNEXPLAINED", severity:"HIGH",   species:"Poultry", date:"14 Aug 2026", history:[99,101,100,102,98,101,99,103,101,116,148,157] },
-  { id:"A011", farm:"Farm 203",       region:"Bihar",        medicine:"Amoxicillin",     amuChange:35, baseline:100, healthEvent:"Colibacillosis",        status:"EXPLAINED",   severity:"LOW",    species:"Poultry", date:"13 Aug 2026", history:[100,98,101,99,102,100,98,101,99,104,135,130] },
-  { id:"A012", farm:"Sunrise Poultry",region:"West Bengal",  medicine:"Oxytetracycline", amuChange:47, baseline:100, healthEvent:"Newcastle disease",     status:"EXPLAINED",   severity:"MEDIUM", species:"Poultry", date:"12 Aug 2026", history:[102,99,101,98,100,102,99,101,100,109,147,142] },
-]
-
-// ─── Health × AMU Data ────────────────────────────────────────────────────────
-
-export interface HealthRow {
-  event: string; species: string; amuChange: number;
-  farmsAffected: number; classification: "Explained" | "Unexplained" | "Mixed";
-}
-
-export const HEALTH_DATA: HealthRow[] = [
-  { event:"Gumboro (IBD)",         species:"Poultry", amuChange:54, farmsAffected:21, classification:"Explained"   },
-  { event:"Mastitis",              species:"Dairy",   amuChange:31, farmsAffected:14, classification:"Explained"   },
-  { event:"None recorded",         species:"Poultry", amuChange:47, farmsAffected:9,  classification:"Unexplained" },
-  { event:"Foot Rot",              species:"Dairy",   amuChange:28, farmsAffected:11, classification:"Explained"   },
-  { event:"Respiratory infection", species:"Poultry", amuChange:36, farmsAffected:7,  classification:"Explained"   },
-  { event:"Newcastle disease",     species:"Poultry", amuChange:41, farmsAffected:8,  classification:"Explained"   },
-  { event:"None recorded",         species:"Dairy",   amuChange:62, farmsAffected:5,  classification:"Unexplained" },
-  { event:"Colibacillosis",        species:"Poultry", amuChange:29, farmsAffected:12, classification:"Explained"   },
-  { event:"Mastitis + other",      species:"Dairy",   amuChange:38, farmsAffected:6,  classification:"Mixed"       },
-]
-
 // Monthly AMU index for the national timeline chart (Jan–Aug 2026)
-export const MONTHLY_AMU     = [112, 108, 115, 110, 114, 118, 156, 182]
-export const MONTHLY_LABELS  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug"]
-export const HEALTH_EVENTS   = [
-  { month: 5, label: "Gumboro outbreak · Punjab", color: "#F97316" },
-  { month: 6, label: "Mastitis cluster · MH",     color: "#EF4444" },
-]
+export const MONTHLY_AMU     = store.getState().adminMonthlyAmu
+export const MONTHLY_LABELS  = store.getState().adminMonthlyLabels
+export const HEALTH_EVENTS   = store.getState().adminHealthEventMarkers
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -1,3 +1,13 @@
+import { store } from "@/lib/seed/store";
+import {
+  awareBadge,
+  CIA_BADGE,
+  prescriptionAwareBadges,
+  prescriptionStatusBadge,
+  requiresStewardshipNotice,
+  speciesTypeLabel,
+} from "@/lib/seed/project";
+
 export interface CaseDetail {
   id: string;
   label: string;
@@ -35,71 +45,52 @@ export const getCaseDetail = async (caseId: string): Promise<CaseDetail> => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  // Determine mock data based on caseId or return a default
-  if (caseId.includes("P-01") || caseId === "attn-2") {
-    // Unsigned emergency case mock
-    return {
-      id: "Flock P-01",
-      label: "Flock P-01",
-      title: "Gumboro (IBD)",
-      animal: {
-        id: "Flock P-01",
-        species_type: "Poultry \u00b7 Broiler"
-      },
-      farm_name: "Meena Poultry",
-      status_badges: [
-        { text: "UNSIGNED EMERGENCY", variant: "unsigned_emergency", dot: true }
-      ],
-      health_event: {
-        name: "Gumboro (IBD)",
-        onset: "Today"
-      },
-      prescription: {
-        drug: "Oxytetracycline",
-        route: "Drinking water",
-        dose: "20 mg/kg",
-        frequency: "Once daily",
-        duration: "3 days",
-        reason: "Outbreak control"
-      }
+  // CONFLICT: this used to branch on the string "P-01" and otherwise return a fixed
+  // Rx-205 body (with MP-118 typed as a Buffalo). It now resolves whatever id the caller
+  // holds — an Rx id, an animal id from the alerts widget, or an id with a UI suffix.
+  const prescription = store.resolvePrescription(caseId);
+  const animal = store.getAnimal(prescription.animalId);
+  const healthEvent = store.getHealthEventForAnimal(prescription.animalId);
+
+  const detail: CaseDetail = {
+    id: prescription.id,
+    label: prescription.id,
+    title: prescription.diagnosis,
+    animal: {
+      id: prescription.animalId,
+      species_type: animal ? speciesTypeLabel(animal) : "",
+    },
+    farm_name: store.farmName(prescription.farmId),
+    status_badges: [prescriptionStatusBadge(prescription), ...prescriptionAwareBadges(prescription)],
+    prescription: {
+      drug: prescription.drug,
+      route: prescription.route,
+      dose: prescription.dose,
+      frequency: prescription.frequency,
+      duration: prescription.duration,
+      reason: prescription.reason,
+    },
+  };
+
+  if (healthEvent) {
+    detail.health_event = { name: healthEvent.name, onset: healthEvent.onset };
+  }
+
+  // Only Watch / Reserve / CIA drugs get the stewardship block.
+  if (requiresStewardshipNotice(prescription)) {
+    detail.stewardship = {
+      ...(prescription.aware ? { aware_badge: awareBadge(prescription.aware) } : {}),
+      ...(prescription.cia ? { cia_badge: { ...CIA_BADGE } } : {}),
     };
   }
 
-  // Default / RX-205 mock
-  return {
-    id: caseId,
-    label: "RX-205",
-    title: "Clinical mastitis",
-    animal: {
-      id: "MP-118",
-      species_type: "Buffalo \u00b7 Dairy"
-    },
-    farm_name: "Krishna Dairy",
-    status_badges: [
-      { text: "SIGN-REQ", variant: "sign" },
-      { text: "WATCH", variant: "watch" },
-      { text: "CIA", variant: "cia" }
-    ],
-    health_event: {
-      name: "Clinical mastitis",
-      onset: "18 Aug"
-    },
-    prescription: {
-      drug: "Enrofloxacin",
-      route: "Intramammary",
-      dose: "10 mL",
-      frequency: "Twice daily",
-      duration: "3 days",
-      reason: "Acute mastitis"
-    },
-    stewardship: {
-      aware_badge: { text: "WATCH", variant: "watch" },
-      cia_badge: { text: "CIA", variant: "cia" }
-    },
-    treatment_history: {
-      previous_episode: "Clinical mastitis",
-      outcome_badge: { text: "RECOVERED", variant: "recovered" },
-      completed_date: "12 Aug"
-    }
-  };
+  if (prescription.treatmentHistory) {
+    detail.treatment_history = {
+      previous_episode: prescription.treatmentHistory.episode,
+      outcome_badge: { text: prescription.treatmentHistory.outcome, variant: prescription.treatmentHistory.outcome.toLowerCase() },
+      completed_date: prescription.treatmentHistory.completedDate,
+    };
+  }
+
+  return detail;
 };

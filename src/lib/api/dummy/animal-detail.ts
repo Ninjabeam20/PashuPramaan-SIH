@@ -1,3 +1,5 @@
+import { store } from "@/lib/seed/store";
+import { animalStatus, signatureBadge, withdrawalDto } from "@/lib/seed/project";
 import { WithdrawalData, BadgeData } from "./treatments";
 
 export interface AnimalDetail {
@@ -20,44 +22,46 @@ export interface AnimalDetail {
 }
 
 export const getAnimalDetail = async (animalId: string): Promise<AnimalDetail> => {
-  await new Promise(resolve => setTimeout(resolve, 400));
-  
-  if (animalId === "MP-104") {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+
+  const animal = store.getAnimal(animalId);
+
+  // Animals added during this session that are not seeded yet fall back to a
+  // healthy placeholder, exactly as before the store existed.
+  if (!animal) {
     return {
-      id: "MP-104",
-      type: "Buffalo",
-      status: "under_treatment",
-      breed: "Gir",
+      id: animalId,
+      type: "Cow",
+      status: "healthy",
+      breed: "Unknown",
       sex: "Female",
-      date_of_birth: "12 Mar 2021",
+      date_of_birth: "01 Jan 2020",
       production_type: "Dairy",
-      registered_on: "01 Jan 2022",
-      current_treatment: {
-        drug: "Oxytetracycline",
-        route: "Injection",
-        dosage: "10 mg/kg",
-        administered_at: "Administered Today, 08:15 AM",
-        signed_badge: { text: "Vet Signed", variant: "vet_signed" },
-        withdrawal: {
-          dose_time: "Dose",
-          now_pct: 30,
-          clear_label: "Clear",
-          product_message: "Milk clears tomorrow, 10:30 AM"
-        }
-      }
+      registered_on: "15 Jun 2021",
+      current_treatment: null,
     };
   }
 
-  // Default healthy fallback
+  const treatment = store.getOpenTreatment(animal.id);
+
   return {
-    id: animalId,
-    type: "Cow",
-    status: "healthy",
-    breed: "Unknown",
-    sex: "Female",
-    date_of_birth: "01 Jan 2020",
-    production_type: "Dairy",
-    registered_on: "15 Jun 2021",
-    current_treatment: null
+    id: animal.id,
+    type: animal.species,
+    status: animalStatus(animal.id),
+    breed: animal.breed,
+    sex: animal.sex,
+    date_of_birth: animal.dateOfBirth,
+    production_type: animal.productionType,
+    registered_on: animal.registeredOn,
+    current_treatment: treatment
+      ? {
+          drug: treatment.drug,
+          route: treatment.route,
+          dosage: treatment.dosage,
+          administered_at: treatment.administeredLabel,
+          signed_badge: signatureBadge(treatment),
+          withdrawal: treatment.withdrawal ? withdrawalDto(treatment.withdrawal) : null,
+        }
+      : null,
   };
 };
