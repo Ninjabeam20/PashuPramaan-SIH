@@ -383,6 +383,9 @@ class LabSample(Base):
     priority = Column(String, default="Standard")
     stage = Column(Enum(LabStage, name="lab_stage_enum"), default=LabStage.AWAITING_RECEIPT)
     receivedOn = Column(DateTime, nullable=True)
+    condition = Column(String, nullable=True)
+    temperature = Column(String, nullable=True)
+    container = Column(String, nullable=True)
     
     createdAt = Column(DateTime, default=datetime.utcnow)
     updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

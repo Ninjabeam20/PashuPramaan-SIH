@@ -1,10 +1,11 @@
 import * as React from "react";
-import { AwaitingSample } from "@/lib/api/dummy/lab-testing";
-import { ArrowLeft, Check } from "lucide-react";
+import { AwaitingSample, receiveSample } from "@/lib/api/dummy/lab-testing";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface SampleReceiptFlowProps {
   dispatch: AwaitingSample;
@@ -17,17 +18,31 @@ const STEPS = ["Identify", "Inspect", "Confirm"];
 
 export function SampleReceiptFlow({ dispatch, onBack, onComplete }: SampleReceiptFlowProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = React.useState<ReceiptStep>("step1");
   
+  const receiveMutation = useMutation({
+    mutationFn: () => receiveSample(dispatch.id, {
+      condition,
+      temperature,
+      container,
+      notes: issueNote,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
+      setStep("success");
+    }
+  });
+
   // Step 1
   const [manualId, setManualId] = React.useState(dispatch.sample);
   
   // Step 2
-  const [condition, setCondition] = React.useState("Acceptable");
-  const [temperature, setTemperature] = React.useState("4.2");
-  const [container, setContainer] = React.useState("Intact");
-  const [quantity, setQuantity] = React.useState("50");
-  const [packaging, setPackaging] = React.useState("Acceptable");
+  const [condition, setCondition] = React.useState("");
+  const [temperature, setTemperature] = React.useState("");
+  const [container, setContainer] = React.useState("");
+  const [quantity, setQuantity] = React.useState("");
+  const [packaging, setPackaging] = React.useState("");
   const [issueNote, setIssueNote] = React.useState("");
 
   const needsNote = condition !== "Acceptable" || container !== "Intact" || packaging !== "Acceptable";
@@ -161,7 +176,7 @@ export function SampleReceiptFlow({ dispatch, onBack, onComplete }: SampleReceip
                 <p className="text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase mb-4">Sample Condition</p>
                 <div className="space-y-3">
                   {["Acceptable", "Requires Attention", "Rejected"].map((opt) => (
-                    <label key={opt} className="flex items-center gap-3 cursor-pointer">
+                    <label key={opt} className="flex items-center gap-3 cursor-pointer" onClick={() => setCondition(opt)}>
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${condition === opt ? "border-[var(--color-primary)]" : "border-[var(--color-border)]"}`}>
                         {condition === opt && <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
                       </div>
@@ -290,23 +305,30 @@ export function SampleReceiptFlow({ dispatch, onBack, onComplete }: SampleReceip
 
       {/* Sticky Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 md:relative md:bottom-auto bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4 flex gap-3 z-30 pb-safe shadow-[0_-4px_10px_rgb(0,0,0,0.05)] md:shadow-none">
-        {step !== "step1" && (
+        {step !== "step1" ? (
           <Button 
             variant="outline" 
             onClick={() => setStep(step === "step2" ? "step1" : "step2")}
+            disabled={receiveMutation.isPending}
           >
             Back
           </Button>
+        ) : (
+          <Button variant="outline" className="px-6" onClick={onBack} disabled={receiveMutation.isPending}>Cancel</Button>
         )}
         <Button 
-          className="flex-1"
+          className="flex-1" 
+          disabled={
+            receiveMutation.isPending || 
+            (step === "step2" && (!condition || !temperature || !container))
+          }
           onClick={() => {
             if (step === "step1") setStep("step2");
             else if (step === "step2") setStep("step3");
-            else if (step === "step3") setStep("success");
+            else if (step === "step3") receiveMutation.mutate();
           }}
         >
-          {step === "step3" ? "Confirm Receipt" : "Continue"} &rarr;
+          {receiveMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : (step === "step3" ? "Confirm Receipt" : "Continue")} &rarr;
         </Button>
       </div>
     </div>

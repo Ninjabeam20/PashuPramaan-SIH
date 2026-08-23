@@ -111,15 +111,36 @@ export function DispatchDetailModal({ dispatchId, onClose }: DispatchDetailModal
 
               {/* Conditional Section */}
               <div className="mt-2">
-                {detail.status === "cleared" && detail.cleared_checklist && (
-                  <div className="flex flex-col gap-3">
-                    {detail.cleared_checklist.map((item, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[#358a6f] font-medium text-sm">
-                        <Check size={16} strokeWidth={2.5} />
-                        {item}
+                {detail.status === "cleared" && (
+                  <>
+                    <div className="flex flex-col gap-3">
+                      {(detail.cleared_checklist || []).map((item: string, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-[#358a6f] font-medium text-sm">
+                          <Check size={16} strokeWidth={2.5} />
+                          {item}
+                        </div>
+                      ))}
+                      {detail.mrlMeasuredPpm != null && (
+                        <div className="flex items-center gap-2 text-[#358a6f] font-medium text-sm">
+                          <Check size={16} strokeWidth={2.5} />
+                          Residue Check Passed ({detail.mrlMeasuredPpm} / {detail.mrlPermittedPpm} ppm)
+                        </div>
+                      )}
+                    </div>
+                    <div className="bg-[var(--color-bg)] rounded-xl p-6 flex flex-col items-center gap-3 mt-4 text-center">
+                      <div className="w-24 h-24 bg-[#e2ead8] rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 border-4 border-[#a6bca2] rounded grid grid-cols-2 gap-1 p-1">
+                          <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
+                          <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="text-sm text-[var(--color-text-muted)]">Scan to Verify Passport</div>
+                      <div className="font-bold text-sm text-[var(--color-text)]">ID: {detail.passport_id}</div>
+                      <div className="text-[10px] text-[var(--color-text-muted)] truncate max-w-full">
+                        {detail.qr_data}
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 {detail.status === "withdrawal" && detail.withdrawal_detail && (

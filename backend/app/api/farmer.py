@@ -190,7 +190,9 @@ def get_dispatches(db: Session = Depends(get_db), current_user: User = Depends(g
             "product": d.product.name.capitalize(),
             "animal_flock": d.animalId,
             "date": d.dateLabel,
-            "status": status_lower
+            "status": status_lower,
+            "mrlMeasuredPpm": d.mrlMeasuredPpm,
+            "mrlPermittedPpm": d.mrlPermittedPpm,
         })
         
     return {
@@ -421,7 +423,7 @@ def get_dispatch_detail(dispatchId: str, db: Session = Depends(get_db)):
     else:
         status_color = "red"
         
-    return {
+    res = {
         "id": d.id,
         "product": d.product.name.capitalize(),
         "animal_flock": d.animalId,
@@ -432,8 +434,25 @@ def get_dispatch_detail(dispatchId: str, db: Session = Depends(get_db)):
         "statusColor": status_color,
         "qr_data": f"https://pashupramaan.gov.in/verify/{d.id}",
         "passport_id": f"PP-{d.id}",
-        "timeline": [] # Frontend handles timeline if not provided
+        "mrlMeasuredPpm": d.mrlMeasuredPpm,
+        "mrlPermittedPpm": d.mrlPermittedPpm,
+        "timeline": []
     }
+    
+    if status_lower == "cleared":
+        res["cleared_checklist"] = [
+            "Withdrawal Cleared",
+            "Vet Signed",
+            f"Lab Tested: Within MRL ({d.mrlMeasuredPpm} ppm / {d.mrlPermittedPpm} ppm)" if d.mrlMeasuredPpm else "No lab assay required"
+        ]
+    elif status_lower == "blocked":
+        res["blocked_detail"] = {
+            "failed_gates": [
+                { "message": f"Lab Test Failed: MRL Exceeded ({d.mrlMeasuredPpm} ppm / {d.mrlPermittedPpm} ppm)" if d.mrlMeasuredPpm else "Safety check failed" }
+            ],
+            "warnings": []
+        }
+    return res
 
 @router.get("/treatments")
 def get_treatments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

@@ -57,12 +57,12 @@ export const REPORTS_SUMMARY: ReportsSummary[] = [
   { v: "116", l: "Passed", color: "green" },
 ];
 
-export async function fetchLabReports(): Promise<LabReport[]> {
+export async function fetchLabReports(): Promise<{ summary: ReportsSummary[], items: LabReport[] }> {
   const token = getToken();
   const res = await fetch("http://localhost:8000/api/lab/reports", {
     headers: { "Authorization": `Bearer ${token}` }
   });
+  if (!res.ok) throw new Error("Failed to fetch reports");
   const data = await res.json();
-  // Backend returns { summary: [...], items: [...] }
-  return (data?.items || data || []) as any;
+  return data;
 }

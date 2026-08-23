@@ -86,21 +86,23 @@ export default function LabResultsPage() {
         )}
         {view === "verification" && (
           <VerificationScreen
+            item={selected}
             onViewAssessment={() => setView("assessment")}
             onBack={() => setView("list")}
             onReleased={() => setView("released")}
+            onHold={() => setView("hold")}
           />
         )}
         {view === "released" && (
           <ReleasedScreen
-            // onReport → /lab/reports (the onOpenReport callback from source App.tsx)
+            item={selected}
             onReport={() => router.push("/lab/reports")}
             onDispatch={() => router.push(`/lab/dispatches/${selected.id}`)}
             onBack={() => setView("list")}
           />
         )}
         {view === "hold" && (
-          <HoldScreen onBack={() => setView("list")} />
+          <HoldScreen item={selected} onBack={() => setView("list")} />
         )}
       </div>
     );

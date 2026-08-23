@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { fetchTestingWorkspace, submitTestResult } from "@/lib/api/dummy/lab-testing";
@@ -19,6 +19,30 @@ export default function TestingWorkspacePage() {
     queryFn: () => fetchTestingWorkspace(sampleId),
   });
 
+  const queryClient = useQueryClient();
+  
+  const submitMutation = useMutation({
+    mutationFn: (testPayload: any) => submitTestResult(sampleId, testPayload),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["lab-workspace", sampleId] });
+      queryClient.invalidateQueries({ queryKey: ["lab-queue"] });
+      // Clear payload and go back to form to evaluate next test
+      setPayload(null);
+      setView("form");
+    }
+  });
+
+  const router = require("next/navigation").useRouter();
+  const { submitAssessment } = require("@/lib/api/dummy/lab-testing");
+  const finalizeMutation = useMutation({
+    mutationFn: () => submitAssessment(sampleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lab-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-results"] });
+      router.push("/lab/results");
+    }
+  });
+
   if (isLoading || !data) {
     return (
       <div className="p-4 md:p-8 space-y-6 animate-pulse max-w-3xl mx-auto h-[100dvh]">
@@ -33,7 +57,10 @@ export default function TestingWorkspacePage() {
     return <div className="p-4 text-red-500">Failed to load testing workspace.</div>;
   }
 
-  if (view === "form") {
+  const allDone = data.assessments.length > 0 && data.assessments.every((a: any) => a.state === "done");
+  const currentView = allDone ? "next" : view;
+
+  if (currentView === "form") {
     return (
       <WorkspaceFormView 
         data={data} 
@@ -48,37 +75,27 @@ export default function TestingWorkspacePage() {
     );
   }
 
-  const queryClient = useQueryClient();
-  
-  const submitMutation = useMutation({
-    mutationFn: (testPayload: any) => submitTestResult(sampleId, testPayload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lab-workspace", sampleId] });
-      queryClient.invalidateQueries({ queryKey: ["lab-queue"] });
-      setView("next");
-    }
-  });
-
-  if (view === "review") {
+  if (currentView === "review") {
     return (
       <WorkspaceReviewView 
         payload={payload}
+        activeTest={data.assessments.find((a: any) => a.state === "active")}
         onBack={() => setView("form")}
         onConfirm={() => {
           submitMutation.mutate({
-            test_id: "mrl-assay",
+            test_id: payload.test_id,
             result_value: Number(payload.mrlValue),
-            unit: "ppm",
+            unit: payload.unit,
             operator: "LAB-TECH-01",
-            verdict: payload.mrlOk ? "WITHIN_LIMIT" : "EXCEEDED"
+            verdict: "Within Limits"
           });
         }}
       />
     );
   }
 
-  if (view === "next") {
-    return <WorkspaceNextView data={data} />;
+  if (currentView === "next") {
+    return <WorkspaceNextView data={data} onFinalize={() => finalizeMutation.mutate()} />;
   }
 
   return null;

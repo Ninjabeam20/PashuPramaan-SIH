@@ -45,6 +45,22 @@ export async function fetchTestingQueue(): Promise<TestingQueueData> {
   return data as any;
 }
 
+export async function receiveSample(dispatchId: string, payload: { condition: string; temperature: string; container: string; notes?: string }) {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/lab/dispatches/${dispatchId}/receive`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error("Failed to receive sample");
+  }
+  return await res.json();
+}
+
 export type WorkspaceData = {
   dispatchId: string;
   sampleId: string;
@@ -79,5 +95,18 @@ export async function submitTestResult(sampleId: string, payload: { test_id: str
   if (!res.ok) {
     throw new Error("Failed to submit test result");
   }
+  return await res.json();
+}
+
+export async function submitAssessment(sampleId: string) {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}/submit_assessment`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  });
+  if (!res.ok) throw new Error("Failed to submit assessment");
   return await res.json();
 }

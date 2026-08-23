@@ -18,22 +18,29 @@ interface FormViewProps {
 
 export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
   const [showContext, setShowContext] = React.useState(false);
-  const [draftSaved, setDraftSaved] = React.useState(false);
+  const activeTest = data.assessments.find(a => a.state === "active");
 
   // Form State
   const [mrlValue, setMrlValue] = React.useState("");
-  const [testMethod, setTestMethod] = React.useState("LC-MS/MS");
+  const [unit, setUnit] = React.useState("ppm");
   const [notes, setNotes] = React.useState("");
+  const [draftSaved, setDraftSaved] = React.useState(false);
+  const [testMethod, setTestMethod] = React.useState("HPLC");
 
-  const mrlOk = mrlValue !== "" && Number(mrlValue) <= 0.10;
+  const handleComplete = () => {
+    if (!activeTest) return;
+    onNext({ 
+      test_id: activeTest.id, 
+      test_name: activeTest.label, 
+      mrlValue, 
+      unit, 
+      notes 
+    });
+  };
 
   const handleSaveDraft = () => {
     setDraftSaved(true);
     setTimeout(() => setDraftSaved(false), 3000);
-  };
-
-  const handleComplete = () => {
-    onNext({ mrlValue, testMethod, notes, mrlOk });
   };
 
   const timelineSteps = data.assessments.map(a => ({
@@ -135,26 +142,27 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
             
             {/* Antimicrobial MRL */}
             <div>
-              <div className="flex items-baseline justify-between mb-2">
-                <label className="text-sm font-bold text-[var(--color-text)]">Antimicrobial Residue (ppm)</label>
-                {mrlValue !== "" && (
-                  <ResultBadge ok={mrlOk} />
-                )}
-              </div>
-              <div className="flex items-center gap-3">
+              <label className="block text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase mb-3">Measured Result / Value</label>
+              <div className="flex max-w-sm gap-2">
                 <Input 
-                  type="number"
-                  value={mrlValue}
+                  type="number" 
                   step="0.01"
+                  value={mrlValue} 
                   onChange={(e) => setMrlValue(e.target.value)}
-                  placeholder="Enter MRL ppm"
-                  className="flex-1 bg-[var(--color-surface)]"
+                  placeholder="0.00" 
+                  className="text-lg font-mono bg-white flex-1" 
                 />
-                <span className="text-sm font-semibold text-[var(--color-text-muted)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-2.5">
-                  ppm
-                </span>
+                <select 
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="px-3 border border-[var(--color-border)] rounded-md bg-[var(--color-surface)] text-sm font-semibold text-[var(--color-text-muted)] focus:outline-none"
+                >
+                  <option value="ppm">ppm</option>
+                  <option value="%">%</option>
+                  <option value="cfu/ml">cfu/ml</option>
+                  <option value="unit">unit</option>
+                </select>
               </div>
-              <p className="text-xs text-[var(--color-text-muted)] mt-2">Reference: ≤ 0.10 ppm permitted</p>
             </div>
 
             <div className="h-px bg-[var(--color-border)]" />
@@ -236,9 +244,9 @@ function ResultBadge({ ok }: { ok: boolean }) {
 // REVIEW VIEW
 // ----------------------------------------------------------------------
 
-export function WorkspaceReviewView({ payload, onBack, onConfirm }: { payload: any, onBack: () => void, onConfirm: () => void }) {
-  const { mrlValue, testMethod, notes, mrlOk } = payload;
-  const isCompliant = mrlOk;
+export function WorkspaceReviewView({ payload, activeTest, onBack, onConfirm }: { payload: any, activeTest: any, onBack: () => void, onConfirm: () => void }) {
+  const { mrlValue, unit, notes, test_name } = payload;
+  const isCompliant = Number(mrlValue) <= 0.1; // generic mock limit check since we don't have per-test limits in this schema yet
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg)]">
@@ -252,24 +260,17 @@ export function WorkspaceReviewView({ payload, onBack, onConfirm }: { payload: a
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-32 max-w-2xl mx-auto w-full space-y-6">
         <div>
           <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">Review</p>
-          <h2 className="font-display text-3xl font-semibold text-[var(--color-text)] mb-2">Antimicrobial Residue Results</h2>
+          <h2 className="font-display text-3xl font-semibold text-[var(--color-text)] mb-2">{test_name} Results</h2>
           <p className="text-sm text-[var(--color-text-muted)]">Confirm findings before marking this test complete.</p>
         </div>
 
         <Card className="divide-y divide-[var(--color-border)] p-0 overflow-hidden">
           <div className="p-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">MRL Residue (ppm)</p>
-              <p className="text-sm font-bold text-[var(--color-text)]">{mrlValue ? `${Number(mrlValue).toLocaleString()} ppm` : "—"}</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">Recorded Value</p>
+              <p className="text-sm font-bold text-[var(--color-text)]">{mrlValue ? `${mrlValue} ${unit}` : "—"}</p>
             </div>
-            <ResultBadge ok={mrlOk} />
-          </div>
-          <div className="p-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1">Testing Method</p>
-              <p className="text-sm font-bold text-[var(--color-text)]">{testMethod}</p>
-            </div>
-            <ResultBadge ok={true} />
+            <ResultBadge ok={isCompliant} />
           </div>
           {notes && (
             <div className="p-4">
@@ -297,14 +298,15 @@ export function WorkspaceReviewView({ payload, onBack, onConfirm }: { payload: a
 // NEXT VIEW
 // ----------------------------------------------------------------------
 
-export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
+export function WorkspaceNextView({ data, onFinalize }: { data: WorkspaceData, onFinalize?: () => void }) {
   const router = useRouter();
   
-  const timelineSteps = [
-    { label: "Product Quality", status: "complete" as const },
-    { label: "Microbiological Safety", status: "complete" as const },
-    { label: "Antimicrobial Residue", status: "current" as const },
-  ];
+  const timelineSteps = data.assessments.map(a => ({
+    label: a.label,
+    status: (a.state === "done" ? "complete" : a.state === "active" ? "current" : "upcoming") as "complete" | "current" | "upcoming"
+  }));
+  const completedCount = data.assessments.filter(a => a.state === "done").length;
+  const allComplete = data.assessments.length > 0 && completedCount === data.assessments.length;
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg)]">
@@ -320,7 +322,7 @@ export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-[var(--color-text)]">Required Assessments</h2>
-            <p className="text-xs font-bold text-[var(--color-primary)]">2 of 3 Complete</p>
+            <p className="text-xs font-bold text-[var(--color-primary)]">{completedCount} of {data.assessments.length} Complete</p>
           </div>
           <div className="overflow-x-auto hide-scrollbar pb-2">
             <div className="min-w-[400px]">
@@ -329,40 +331,52 @@ export function WorkspaceNextView({ data }: { data: WorkspaceData }) {
           </div>
         </Card>
 
+        {allComplete ? (
           <div className="bg-[var(--status-good-bg)] border border-[var(--status-good-border)] rounded-xl px-5 py-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-[var(--status-good-text)] flex items-center justify-center shrink-0 mt-0.5">
-            <Check size={16} strokeWidth={3} className="text-white" />
+            <div className="w-8 h-8 rounded-full bg-[var(--status-good-text)] flex items-center justify-center shrink-0 mt-0.5">
+              <Check size={16} strokeWidth={3} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[var(--status-good-text)] mb-1">Testing Complete</h3>
+              <p className="text-xs font-medium text-[var(--status-good-text)] opacity-90">All findings recorded and marked compliant.</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[var(--status-good-text)] mb-1">Testing Complete</h3>
-            <p className="text-xs font-medium text-[var(--status-good-text)] opacity-90">All findings recorded and marked compliant.</p>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-white text-sm font-bold">{completedCount + 1}</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-800 mb-1">Testing In Progress</h3>
+              <p className="text-xs font-medium text-amber-800 opacity-90">Proceed to the next required test.</p>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div>
-          <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-3 px-1">Next Step</p>
-          <Card className="p-5 border-2 border-[var(--color-primary)] shadow-md">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="font-display text-2xl font-semibold text-[var(--color-text)]">Issue Report</h3>
-              </div>
-              <Badge variant="normal">READY</Badge>
+        {allComplete && (
+          <div>
+            <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-3 px-1">Recorded Results</p>
+            <div className="space-y-3">
+              {data.assessments.map(a => (
+                <Card key={a.id} className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-[var(--color-text)]">{a.label}</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-1">Result: {a.result || "N/A"}</p>
+                  </div>
+                  <Badge variant={a.ok ? "good" : "amber"}>{a.ok ? "COMPLIANT" : "FAILED"}</Badge>
+                </Card>
+              ))}
             </div>
-            
-            <p className="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">
-              Targeted residue testing is required based on the linked antimicrobial treatment history.
-            </p>
-            
-            <Badge variant="amber" className="mb-5 inline-flex">Triggered by treatment history</Badge>
-            
-            <div className="space-y-2 text-sm text-[var(--color-text-muted)] font-medium">
-              <div className="flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)]" />
-                This sample is ready to have its report issued.
-              </div>
-            </div>
-          </Card>
-        </div>
+          </div>
+        )}
+
+        {allComplete && (
+          <div className="mt-8">
+            <Button className="w-full" onClick={() => onFinalize && onFinalize()}>
+              Review Final Assessment &rarr;
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="fixed bottom-16 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4 flex gap-3 z-30 pb-safe md:relative md:bottom-auto shadow-[0_-4px_10px_rgb(0,0,0,0.05)] md:shadow-none">

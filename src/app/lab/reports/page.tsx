@@ -38,7 +38,7 @@ export default function LabReportsPage() {
   }
 
   // Filter logic matching source exactly
-  const filtered = (data || []).filter((r) => {
+  const filtered = (data?.items || []).filter((r) => {
     const matchProduct =
       productFilter === "All Products" || r.product === productFilter;
     const matchStatus =
@@ -79,7 +79,7 @@ export default function LabReportsPage() {
 
       <ReportsList
         reports={filtered}
-        summary={REPORTS_SUMMARY}
+        summary={data?.summary || []}
         dateFilter={dateFilter}
         onDateFilterChange={setDateFilter}
         productFilter={productFilter}
