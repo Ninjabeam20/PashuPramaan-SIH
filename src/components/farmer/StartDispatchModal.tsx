@@ -134,9 +134,6 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
             </div>
 
             <div className="flex gap-3 mt-2">
-              <Button className="flex-1 bg-[#1e6147] hover:bg-[#164a35] text-white min-h-[44px]" onClick={() => { console.log("View Passport"); handleCloseFinal(); }}>
-                View Passport
-              </Button>
               <Button variant="outline" className="flex-1 bg-[var(--color-bg)] min-h-[44px]" onClick={handleCloseFinal}>
                 Close
               </Button>

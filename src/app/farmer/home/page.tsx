@@ -11,6 +11,9 @@ import Link from "next/link";
 import { RecordHealthEventModal } from "@/components/farmer/RecordHealthEventModal";
 import { getFarmerDashboard } from "@/lib/api/dummy/farmer-dashboard";
 import { MedicineStockAlertsCard } from "@/components/farmer/MedicineStockAlertsCard";
+import { BookVetModal } from "@/components/farmer/BookVetModal";
+import { getFarmDetail } from "@/lib/api/dummy/farm-detail";
+import { getAvailableVets } from "@/lib/api/dummy/vets";
 
 interface DashboardData {
   farm: { name: string; status: string; animal_count: number; clear_count: number; under_treatment_count: number; waiting_count: number };
@@ -21,10 +24,23 @@ interface DashboardData {
 export default function FarmerHome() {
   const router = useRouter();
   const [isHealthEventOpen, setIsHealthEventOpen] = React.useState(false);
+  const [isBookVetOpen, setIsBookVetOpen] = React.useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["farmer-dashboard"],
     queryFn: getFarmerDashboard,
+  });
+
+  const { data: farmDetail } = useQuery({
+    queryKey: ["farm-detail"],
+    queryFn: getFarmDetail,
+    enabled: isBookVetOpen, // Only fetch when modal opens
+  });
+
+  const { data: vets } = useQuery({
+    queryKey: ["available-vets"],
+    queryFn: getAvailableVets,
+    enabled: isBookVetOpen, // Only fetch when modal opens
   });
 
   if (isLoading) {
@@ -40,16 +56,30 @@ export default function FarmerHome() {
   return (
     <div className="flex flex-col gap-8 pb-8">
       {/* 1. Header Section */}
-      <section>
-        <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-2">
-          YOUR FARM
+      <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+        <div className="flex-1">
+          <div className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-2">
+            YOUR FARM
+          </div>
+          <div className="flex flex-row items-center justify-between mb-2 w-full gap-4">
+            <h1 className="text-4xl font-display text-[var(--color-primary-dark)] flex items-center gap-2">
+              Namaste, Ankita <span className="text-3xl">🙏</span>
+            </h1>
+            <div className="shrink-0 flex items-center justify-end">
+              <Button 
+                variant="primary" 
+                className="gap-2 justify-center font-semibold text-sm h-10 px-4"
+                style={{ width: 'auto' }}
+                onClick={() => setIsBookVetOpen(true)}
+              >
+                <Plus size={18} /> Book a Vet
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Here&apos;s your farm at a glance.
+          </p>
         </div>
-        <h1 className="text-4xl font-display text-[var(--color-primary-dark)] mb-2 flex items-center gap-2">
-          Namaste, Ankita <span className="text-3xl">🙏</span>
-        </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Here&apos;s your farm at a glance.
-        </p>
       </section>
 
       {/* 2. Farm Summary Card */}
@@ -146,6 +176,14 @@ export default function FarmerHome() {
 
       {isHealthEventOpen && (
         <RecordHealthEventModal onClose={() => setIsHealthEventOpen(false)} />
+      )}
+
+      {isBookVetOpen && farmDetail && vets && (
+        <BookVetModal
+          animals={farmDetail.animals}
+          vets={vets}
+          onClose={() => setIsBookVetOpen(false)}
+        />
       )}
     </div>
   );
