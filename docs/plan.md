@@ -8,7 +8,7 @@ Do **one stage per agent session**. Do not skip ahead. After each stage, run the
 
 | Order | Stage | What to implement | Stop when |
 |-------|--------|-------------------|-----------|
-| **FIRST** | Stage 1 | `src/lib/seed/` + dummy GETs read the store. **No mutations.** | Read-only click-through across farmer, vet, lab, admin passes |
+| ~~FIRST~~ **DONE** | Stage 1 | `src/lib/seed/` + dummy GETs read the store. **No mutations.** | ✅ Done on branch `feat/stage1-canonical-seed` — 27/27 click-through checks + `npm test` pass |
 | **NEXT** | Stage 2 | Farmer writes (add animal, treatment, stock, health event, dispatch) | Farmer cross-page updates work |
 | Then | Stage 3 | Vet writes (new Rx, sign, countersign) | Vet home + prescriptions stay in sync |
 | Then | Stage 4 | Lab writes (receive, complete, verify) | Lab queues/results/reports stay in sync |
@@ -270,11 +270,11 @@ Stop after each stage. User click-through is the gate.
 
 **Tests:** every entity id unique per collection; `getFarmDetail().animals.find(MP-104).type === 'Buffalo'`; `getPrescriptionsList()` Rx-207 not COUNTERSIGNED.
 
-- [ ] **Step 1:** Add `src/lib/seed/types.ts` with canonical interfaces (fields richer than DTOs; adapters slice/rename).
-- [ ] **Step 2:** Add `canonical.ts` with farms, animals, prescriptions, treatments, dispatches, stock, vets, lab samples, admin anomalies copied from current literals then patched per resolutions + `// CONFLICT:` comments.
-- [ ] **Step 3:** Add `store.ts` with `let state = structuredClone(initial)` and getters.
-- [ ] **Step 4:** Point `getFarmDetail`, `getAnimalDetail`, `getTreatments`, `getFarmerDashboard`, `getDispatches`, `getFarmInsights`, vet GETs, lab GETs at the store. **Admin:** extract `REGION_DATA` / `ANOMALY_DATA` into seed and re-export from `AdminShared.tsx` so the file still exports the same names (UI import path can stay `AdminShared` to avoid JSX churn — re-export is allowed).
-- [ ] **Step 5:** Run app, **read-only** click-through (below). Do not implement writes yet.
+- [x] **Step 1:** Add `src/lib/seed/types.ts` with canonical interfaces (fields richer than DTOs; adapters slice/rename).
+- [x] **Step 2:** Add `canonical.ts` with farms, animals, prescriptions, treatments, dispatches, stock, vets, lab samples, admin anomalies copied from current literals then patched per resolutions + `// CONFLICT:` comments.
+- [x] **Step 3:** Add `store.ts` with `let state = structuredClone(initial)` and getters.
+- [x] **Step 4:** Point `getFarmDetail`, `getAnimalDetail`, `getTreatments`, `getFarmerDashboard`, `getDispatches`, `getFarmInsights`, vet GETs, lab GETs at the store. **Admin:** extract `REGION_DATA` / `ANOMALY_DATA` into seed and re-export from `AdminShared.tsx` so the file still exports the same names (UI import path can stay `AdminShared` to avoid JSX churn — re-export is allowed).
+- [x] **Step 5:** Run app, **read-only** click-through (below). Do not implement writes yet.
 
 **Verify Stage 1**
 
@@ -288,6 +288,49 @@ Stop after each stage. User click-through is the gate.
 8. Login admin → Anomalies: Meena Poultry / Gumboro still visible.
 
 If Stage 1 looks wrong, fix seed — do not start Stage 2.
+
+#### Stage 1 outcome (2026-08-23, branch `feat/stage1-canonical-seed`)
+
+All eight verify steps pass in a headless click-through (27/27 assertions) with no console
+errors, plus `npm test` (`src/lib/seed/seed.test.ts`, 15 tests: id uniqueness, referential
+integrity, adapter smoke tests). Decisions taken while seeding, beyond the literal wording of
+the resolutions above:
+
+- **Farmer operates two farms.** `Shree Krishna Dairy` (My Farm) and `Meena Poultry` stay
+  separate `farm_id`s per resolution 2, but both are flagged `operatedByFarmer`, because the
+  farmer's treatments (`trt-2`, Flock P-01) and dispatches (`DSP-022`, Flock-07) already
+  covered poultry. Vet/admin joins to Meena Poultry are unaffected.
+- **Roster vs herd.** The dairy carries 48 head; only the eight `onFarmerRoster` animals are
+  listed individually. `MP-112` / `MP-118` / `MP-088` sit on the same dairy (the vet called it
+  "Krishna Dairy") but stay off that listed sample, so My Farm still shows eight rows.
+  Under-treatment / waiting counts are recomputed from the roster: **48 = 45 clear + 2 under
+  treatment + 1 waiting**, and species overview matches.
+- **`DSP-023` is cleared, not under withdrawal.** Resolution 5 repoints it at `trt-5`, which is
+  completed with lab ≤ MRL — so status follows the treatment. `DSP-024` is the withdrawal row
+  (resolution 4). The cleared-dispatch screen is preserved, just on the other row.
+- **`trt-1` stays unlinked from `Rx-208`.** Both are Oxytetracycline on MP-104, but the farmer's
+  screens badge `trt-1` "Vet Signed" while `Rx-208` awaits signature. Keeping them separate is
+  what lets MP-104 read *under treatment* (verify step 2) and stops stage 3's signature from
+  rewriting a signed row.
+- **`Rx-195` seeded.** The farmer's prescription options already offered "Vet Rx #195" for
+  Ivermectin; it is now a real signed row backing `trt-5`. The registry lists 9 prescriptions.
+- **Vet alerts derive from unsigned emergencies.** The alerts widget hardcodes
+  "Emergency administration needs countersignature", but two of the three seeded alerts were
+  ordinary sign-requests — one for MP-105, a healthy animal with no prescription. Alerts now
+  show only Rx-207, matching the workload counter.
+- **Attention item ids are prescription ids** (`Rx-208`, `Rx-205-stewardship`) instead of
+  `attn-N`, so "Review & Sign" from vet home routes to the right prescription. Case detail and
+  the sign flow resolve an Rx id, an animal id or a suffixed id.
+- **Lab pipeline is monotonic.** `MLK-2026-00124` is in testing (resolution 13), so it has no
+  results or report row; the CLEARED milk report moved to `MLK-2026-00118`, the milk dispatch
+  that really is finished and already offered "View Report →". `EGG-2026-00241` stays awaiting
+  verification (its report appears when stage 4 verifies it). `MEAT-2026-00087` is ON HOLD,
+  which makes the dashboard's "2 On Hold" counter match the rows.
+
+**Known leftovers for stage 4 / 6** (page literals, not adapter data, so out of stage 1 scope):
+`src/app/lab/dispatches/[dispatchId]/page.tsx` hardcodes "· Holstein Cow", "Clinical Mastitis"
+and a "Continue Testing →" button for every lot; `src/components/lab/LabDispatchesTable.tsx`
+hardcodes "of 48 dispatches"; the lab dispatches page header stats are literals.
 
 ---
 

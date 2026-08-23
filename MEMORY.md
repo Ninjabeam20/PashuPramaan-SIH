@@ -3,9 +3,9 @@
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
 **Last updated:** 2026-08-23  
-**Branch:** `main`  
-**HEAD:** `b509fed` — docs: add four-role canonical dummy-data plan  
-**Note:** Uncommitted README backend-direction wording; navbar height/type work from earlier sessions may still be uncommitted or already in prior commits — check `git status`.
+**Branch:** `feat/stage1-canonical-seed` (branched off `main` @ `43f8e4e`; **do not merge until asked**)  
+**HEAD (main):** `43f8e4e` — docs: record plan commit in MEMORY  
+**Note:** `main` was clean at the start of this session — the "unstaged" navbar/README items listed in earlier revisions of this file had already landed in `400b4f6` / `439b276` / `51fef83`.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -13,13 +13,40 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ---
 
-## Current tree (unstaged on `main`)
+## Branch `feat/stage1-canonical-seed` — Stage 1 of `docs/plan.md`
 
-- `README.md` — backend-direction sentence (FastAPI vs Express); **not** part of the plan commit.
-- Admin sticky nav height `52` → `64` in `src/app/admin/layout.tsx` and unused `NavBar` in `src/components/admin/AdminShared.tsx` so it matches farmer/vet `h-16`.
-- Vet header now uses `h-16` / `h-full` like farmer (`src/app/vet/layout.tsx`).
-- Navbar type unified to farmer: links `14px` / weight `500`, logo `40px`, EN `12px` / `600`, avatar `32px` / `14px` (vet + admin layouts; AdminShared `NavBar`).
-- Also modified: `package-lock.json` (unrelated to this change).
+Canonical dummy data + read adapters. **No mutations** (stages 2–6 still open). Not merged.
+
+**New — `src/lib/seed/`:** the only place entity rows live.
+- `types.ts` canonical entity types · `ids.ts` recurring id constants · `canonical.ts` seed rows with
+  `// CONFLICT:` notes for every resolution · `store.ts` module-level state + getters (`resetStore()`)
+  · `project.ts` shared badge/label/count projections · `query-keys.ts` the keys pages actually use
+  · `seed.test.ts` 15 vitest tests (id uniqueness, referential integrity, adapter smoke tests).
+
+**Rewritten as view adapters (interfaces and return shapes unchanged):** all 17 read modules under
+`src/lib/api/dummy/` (`auth.ts` untouched). `AdminShared.tsx` now re-exports `REGION_DATA`,
+`DISTRICT_DATA`, `ANOMALY_DATA`, `HEALTH_DATA`, `MONTHLY_*`, `HEALTH_EVENTS` and the `RegionRow` /
+`DistrictRow` / `AnomalyRow` / `HealthRow` types from seed — no admin JSX changed.
+
+**Story fixes now visible:** MP-104 is a Buffalo under treatment at Shree Krishna Dairy; home reads
+48 = 45 clear + 2 under treatment + 1 waiting and species overview matches; attention names
+Oxytetracycline (not "Medicine A"); every treatment detail opens its own animal; `DSP-024` is under
+withdrawal and `DSP-023` cleared; `Rx-207` is an unsigned emergency everywhere; the sign flow branches
+on `rxId`; vet alerts equal the unsigned-emergency count (1); the lab pipeline is monotonic —
+`MLK-2026-00124` is in testing with no results/report row, the CLEARED milk report belongs to
+`MLK-2026-00118`, `MEAT-2026-00091` is awaiting receipt only; admin anomaly A002 still joins Meena
+Poultry (and A005 now joins Shree Krishna Dairy).
+
+**Tooling:** `npm test` → `vitest run` (`vitest.config.mts`, `@` alias). README tree updated with
+`src/lib/seed/`, the lab routes/components and the full dummy module list.
+
+**Verified:** headless-chromium click-through of the Stage 1 verify list — 27/27 checks, no console
+errors — plus `npx tsc --noEmit` and `eslint` clean on changed files (AdminShared's 18 pre-existing
+lint errors unchanged).
+
+**Known leftovers (page literals, stage 4/6):** `src/app/lab/dispatches/[dispatchId]/page.tsx`
+hardcodes "· Holstein Cow", "Clinical Mastitis" and a "Continue Testing →" button for every lot;
+`LabDispatchesTable.tsx` hardcodes "of 48 dispatches"; the lab dispatches header stats are literals.
 
 ---
 
