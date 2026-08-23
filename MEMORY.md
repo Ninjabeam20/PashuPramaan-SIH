@@ -2,7 +2,7 @@
 
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
-**Last updated:** 2026-08-23  
+**Last updated:** 2026-08-23 (plan: 4-role canonical dummy data)  
 **Branch:** `main`  
 **HEAD:** `3f8f95e` — Fea: Added proper logo  
 **Note:** Uncommitted navbar height and type alignment across farmer, vet, and admin shells.
@@ -15,6 +15,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 ## Current tree (unstaged on `main`)
 
+- Added `docs/plan.md` — 4-role dummy-data audit (farmer, vet, lab, admin), conflict resolutions, and staged execution (Stage 1 first, then 2–6). Pointer: `docs/superpowers/plans/2026-08-23-canonical-dummy-data.md`. Implementation not started.
 - Admin sticky nav height `52` → `64` in `src/app/admin/layout.tsx` and unused `NavBar` in `src/components/admin/AdminShared.tsx` so it matches farmer/vet `h-16`.
 - Vet header now uses `h-16` / `h-full` like farmer (`src/app/vet/layout.tsx`).
 - Navbar type unified to farmer: links `14px` / weight `500`, logo `40px`, EN `12px` / `600`, avatar `32px` / `14px` (vet + admin layouts; AdminShared `NavBar`).
@@ -27,7 +28,7 @@ Living record of repo state and what each commit changed. **Update this file in 
 | Route | Role | Status |
 |---|---|---|
 | `/` | — | Redirects to `/login` |
-| `/login` | All | Farmer → `/farmer/home`, Vet → `/vet/home`, Admin → `/admin` |
+| `/login` | All | Farmer → `/farmer/home`, Vet → `/vet/home`, Admin → `/admin/overview`, Lab → `/lab/dashboard` |
 | `/farmer/home` | Farmer | Live |
 | `/farmer/my-farm` | Farmer | Live |
 | `/farmer/treatments` | Farmer | Live |
@@ -39,7 +40,20 @@ Living record of repo state and what each commit changed. **Update this file in 
 | `/vet/prescriptions/[rxId]/sign` | Vet | Live |
 | `/vet/prescriptions/[rxId]/countersign` | Vet | Live |
 | `/vet/patients` | Vet | Live |
-| `/admin` | Admin / Researcher | Live (D3 choropleth; all state abbreviations; click → district page) |
+| `/lab/dashboard` | Lab | Live |
+| `/lab/dispatches` | Lab | Live |
+| `/lab/dispatches/[dispatchId]` | Lab | Live |
+| `/lab/testing-queue` | Lab | Live |
+| `/lab/testing-workspace/[sampleId]` | Lab | Live |
+| `/lab/results` | Lab | Live |
+| `/lab/reports` | Lab | Live |
+| `/admin` | Admin / Researcher | Live (D3 choropleth; click → district page) |
+| `/admin/overview` | Admin | Live |
+| `/admin/analytics` | Admin | Live |
+| `/admin/anomalies` | Admin | Live |
+| `/admin/health` | Admin | Live |
+| `/admin/forecast` | Admin | Live |
+| `/admin/workspace` | Admin | Live |
 | `/admin/states/[slug]` | Admin / Researcher | Live (34 state/UT district maps, dummy headcount) |
 
 ---
