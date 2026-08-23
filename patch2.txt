@@ -1,0 +1,18 @@
+### GET /api/auth/me
+
+Status: `NEEDED` — Fetch the current authenticated session profile based on the JWT token.
+
+**Response 200**
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "Ankita",
+    "role": "farmer",
+    "farm_id": "uuid | null",
+    "locale": "en | hi"
+  }
+}
+```
+

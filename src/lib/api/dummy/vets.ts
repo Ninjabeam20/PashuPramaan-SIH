@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 
 export interface VetOption {
@@ -7,11 +8,13 @@ export interface VetOption {
 }
 
 export const getAvailableVets = async (): Promise<VetOption[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  return store.getVets().map((vet) => ({
-    id: vet.id,
-    name: vet.name,
-    designation: vet.designation,
-  }));
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/farmer/vets`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
+  }
+  return (await res.json()).items as any;
 };

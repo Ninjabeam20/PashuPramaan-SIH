@@ -41,9 +41,11 @@ export function RecentOutcomes({ outcomes }: { outcomes: OutcomeItem[] }) {
             )}
           </div>
           <div className="shrink-0">
-            <Badge variant={item.outcome_badge.variant as BadgeVariant}>
-              {item.outcome_badge.text}
-            </Badge>
+            {item.outcome_badge && (
+              <Badge variant={item.outcome_badge.variant as BadgeVariant}>
+                {item.outcome_badge.text}
+              </Badge>
+            )}
           </div>
         </div>
       )}

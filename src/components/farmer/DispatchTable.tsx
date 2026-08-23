@@ -51,7 +51,7 @@ export function DispatchTable({ items, onViewAction }: { items: DispatchItem[], 
 
       {/* Rows */}
       <div className="flex flex-col divide-y divide-[var(--color-border)]">
-        {items.map((item, idx) => (
+        {(items || []).map((item, idx) => (
           <div 
             key={item.id} 
             className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 p-4 sm:px-5 sm:py-4 hover:bg-[var(--color-bg)] transition-colors items-start sm:items-center"

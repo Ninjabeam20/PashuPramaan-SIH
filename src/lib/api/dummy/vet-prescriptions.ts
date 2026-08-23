@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { prescriptionAction, prescriptionAwareBadges, prescriptionStatusBadge } from "@/lib/seed/project";
 
@@ -23,29 +24,13 @@ export interface PrescriptionsData {
 }
 
 export const getPrescriptionsList = async (): Promise<PrescriptionsData> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const prescriptions = store.getPrescriptions();
-
-  return {
-    summary: {
-      all_count: prescriptions.length,
-      awaiting_signature_count: prescriptions.filter((p) => p.status === "sign_required").length,
-      // CONFLICT: this counter read 0 while Rx-207 was listed as COUNTERSIGNED. Rx-207 is
-      // an unsigned emergency (plan resolution 9), so the count now derives from status.
-      unsigned_emergency_count: prescriptions.filter((p) => p.status === "unsigned_emergency").length,
-      signed_count: prescriptions.filter((p) => p.status === "signed" || p.status === "countersigned").length,
-      voided_count: prescriptions.filter((p) => p.status === "voided").length,
-    },
-    items: prescriptions.map((prescription) => ({
-      rx_id: prescription.id,
-      farm: store.farmName(prescription.farmId),
-      animal_flock: prescription.animalId,
-      diagnosis: prescription.diagnosis,
-      status_badges: [prescriptionStatusBadge(prescription)],
-      aware_badges: prescriptionAwareBadges(prescription),
-      date_label: prescription.dateLabel,
-      ...prescriptionAction(prescription),
-    })),
-  };
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/prescriptions`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    // some fallback just in case or throw
+  }
+  return await res.json() as any;
 };

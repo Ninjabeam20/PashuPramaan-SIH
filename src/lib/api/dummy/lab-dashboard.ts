@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 
 export type LabSummaryCard = {
@@ -31,35 +32,10 @@ export type LabDashboardData = {
 };
 
 export async function fetchLabDashboard(): Promise<LabDashboardData> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  const state = store.getState();
-  const counters = state.labCounters;
-  const highPriorityAwaiting = store.getAwaitingLabSamples().filter((s) => s.priority === "HIGH PRIORITY").length;
-
-  return {
-    summary: [
-      { value: String(counters.awaitingReceipt), label: "Awaiting Receipt", sub: `${highPriorityAwaiting} high priority`, color: "amber" },
-      { value: String(counters.testsInProgress), label: "Tests in Progress", sub: `${counters.dispatchesInProgress} dispatches`, color: "neutral" },
-      { value: String(counters.awaitingVerification), label: "Awaiting Verification", sub: "Ready for review", color: "amber" },
-      { value: String(counters.onHold), label: "On Hold", sub: "Action required", color: "red" },
-    ],
-    // Attention rows follow the sample's own stage, so the dashboard can no longer offer
-    // "Start Testing" on a lot another page already reports as cleared.
-    attention: store
-      .getLabSamples()
-      .filter((sample) => sample.attention !== null)
-      .map((sample) => ({
-        id: sample.dispatchId,
-        type: sample.product === "Eggs" ? "EGGS" : sample.product.toUpperCase(),
-        title: sample.sourceName,
-        desc: sample.attention!.desc,
-        status: sample.attention!.status,
-        statusColor: sample.attention!.statusColor,
-        action: sample.attention!.action,
-        page: sample.attention!.page,
-      })),
-    activity: state.labActivity.map((row) => ({ text: row.text, time: row.time, icon: row.icon })),
-  };
+  const token = getToken();
+  const res = await fetch("http://localhost:8000/api/lab/dashboard", {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  const data = await res.json();
+  return data as any;
 }

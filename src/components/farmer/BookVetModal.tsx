@@ -56,7 +56,7 @@ export function BookVetModal({ animals, vets, onClose }: BookVetModalProps) {
 
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const vetOptions = vets.map(vet => ({
+  const vetOptions = (vets || []).map(vet => ({
     label: `${vet.name} — ${vet.designation}`,
     value: vet.id
   }));
@@ -107,7 +107,7 @@ export function BookVetModal({ animals, vets, onClose }: BookVetModalProps) {
                   ANIMAL(S) / FLOCK
                 </label>
                 <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
-                  {animals.map(animal => {
+                  {(animals || []).map(animal => {
                     const isChecked = selectedAnimalIds.includes(animal.id);
                     return (
                       <div 

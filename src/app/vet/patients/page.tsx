@@ -28,7 +28,7 @@ export default function PatientsPage() {
   const inactivePillClass = "bg-white text-[var(--color-text)] border-[var(--color-border)] hover:bg-[var(--color-bg)] font-medium";
 
   // Dummy filtering logic
-  const filteredPatients = data.items.filter(item => {
+  const filteredPatients = (data.items || []).filter(item => {
     if (filter === "all") return true;
     if (filter === "under_treatment") return item.status.text === "Under Treatment";
     if (filter === "follow_up_due") return item.status.text === "Follow-up Due" || item.status.text === "Improved"; // Just logic for dummy

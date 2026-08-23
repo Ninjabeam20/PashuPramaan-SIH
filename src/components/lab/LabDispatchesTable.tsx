@@ -51,7 +51,7 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {dispatches.map((item) => (
+              {(dispatches || []).map((item) => (
                 <tr 
                   key={item.id} 
                   onClick={() => item.clickable && onActionClick?.(item.id, item.action)}
@@ -119,7 +119,7 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
 
       {/* Mobile Stacked Cards View */}
       <div className="sm:hidden flex flex-col gap-4 mb-8">
-        {dispatches.map((item) => (
+        {(dispatches || []).map((item) => (
           <div 
             key={item.id}
             onClick={() => item.clickable && onActionClick?.(item.id, item.action)}

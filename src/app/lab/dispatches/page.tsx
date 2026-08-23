@@ -36,7 +36,7 @@ export default function LabDispatchesPage() {
   }
 
   // Filter Data
-  const filteredData = data.filter((item) => {
+  const filteredData = (data || []).filter((item) => {
     // 1. Search Query
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery || 

@@ -9,9 +9,11 @@ Stack assumption: FastAPI + PostgreSQL backend, JWT auth, JSON over REST. All ti
 ## 1. Auth
 
 ### POST /api/auth/login
+
 Status: `DUMMY`
 
 **Request**
+
 ```json
 {
   "role": "farmer | vet | admin",
@@ -21,6 +23,7 @@ Status: `DUMMY`
 ```
 
 **Response 200**
+
 ```json
 {
   "token": "jwt-string",
@@ -38,18 +41,39 @@ Status: `DUMMY`
 **Response 403** — role/user_id mismatch
 
 Open questions for backend:
+
 - Is `role` used server-side to validate against the account, or purely a UI hint before the real role comes back in the JWT claims?
 - Password reset flow (`Forgot Password?` link on login) — endpoint TBD.
 - Signup (`Sign Up` link) — endpoint TBD, likely admin-approved for vets, self-serve for farmers.
 
 ---
 
+### GET /api/auth/me
+
+Status: `NEEDED` — Fetch the current authenticated session profile based on the JWT token.
+
+**Response 200**
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "Ankita",
+    "role": "farmer",
+    "farm_id": "uuid | null",
+    "locale": "en | hi"
+  }
+}
+```
+
 ## 2. Farmer Dashboard (Home page)
 
 ### GET /api/farmer/dashboard
+
 Status: `DUMMY` — mocked in `lib/api/dummy/farmer-dashboard.ts`
 
 **Response 200**
+
 ```json
 {
   "farm": {
@@ -87,6 +111,7 @@ Status: `DUMMY` — mocked in `lib/api/dummy/farmer-dashboard.ts`
 ```
 
 Open questions for backend:
+
 - `attention_items` — is priority/ordering computed server-side (per the "attention centre" spec) or does frontend sort by a priority field?
 - Is `insight.medicines` the same payload as Prophet's farm-level forecast (Layer 1), or a separate summarized endpoint?
 - Real-time refresh: polling interval vs push (websocket/SSE) for dashboard counts once withdrawal clocks tick over.
@@ -96,9 +121,11 @@ Open questions for backend:
 ## 3. My Farm
 
 ### GET /api/farmer/farm
+
 Status: `DUMMY` — mocked in `lib/api/dummy/farm-detail.ts`
 
 **Response 200**
+
 ```json
 {
   "farm": {
@@ -157,10 +184,12 @@ backend should expose pagination + filter query params (`?type=cow&status=under_
 search=MP-1`) so this doesn't stay a full-list client-side filter forever.
 
 ### POST /api/farmer/animals
+
 Status: `DUMMY` — client-side only for now (`AddAnimalModal` appends to local state feeding
 `my-farm/page.tsx`, no network call yet). Real endpoint shape below, matches the built form.
 
 **Request**
+
 ```json
 {
   "type": "cow | buffalo | goat | sheep | pig | poultry_flock | other",
@@ -173,6 +202,7 @@ Status: `DUMMY` — client-side only for now (`AddAnimalModal` appends to local 
 ```
 
 **Response 201**
+
 ```json
 {
   "id": "MP-110",
@@ -190,10 +220,8 @@ Status: `DUMMY` — client-side only for now (`AddAnimalModal` appends to local 
 against the in-memory list; backend should enforce this as the source of truth once wired up).
 
 Notes for backend:
-- `type: poultry_flock` represents a flock, not a single animal — frontend swaps the tag-id
-  field's label to "FLOCK ID" and placeholder to "e.g. P-01" when this type is selected, but
-  sends the same `tag_id` field either way. Confirm whether flocks need a different id schema
-  or count differently toward `total_animals` (one flock = one unit, or a flock size field is
+
+- `type: poultry_flock` represents a flock. The `tag_id` field is treated identically in the database as any other animal ID (e.g. `Flock P-01`). For herd count purposes, a flock counts as 1 unit.
   needed?) — currently sent as 1 unit, same as any other animal.
 - `species_overview` (Section 3, GET /api/farmer/farm) only has cards for cow/buffalo/goat.
   Adding a sheep/pig/poultry_flock/other animal currently only updates `total_animals` and the
@@ -204,10 +232,12 @@ Notes for backend:
   instead of a birthdate in some future revision; current form only captures a date).
 
 ### GET /api/farmer/animals/{animal_id}
+
 Status: `DUMMY` — mocked in `lib/api/dummy/farm-detail.ts` (`getAnimalDetail`). Powers the
 "View →" AnimalDetailModal on My Farm.
 
 **Response 200**
+
 ```json
 {
   "id": "MP-104",
@@ -233,10 +263,12 @@ Status: `DUMMY` — mocked in `lib/api/dummy/farm-detail.ts` (`getAnimalDetail`)
   }
 }
 ```
+
 `current_treatment: null` when the animal has no active/recent treatment — frontend omits the
 whole "CURRENT TREATMENT" section and withdrawal ribbon in that case (e.g. a "Healthy" animal).
 
 Open questions for backend:
+
 - `species_overview` counts (`healthy_count` + `under_treatment_count` + `waiting_count`) should
   sum to `count` per species — should the backend guarantee this invariant, or does frontend
   need to defensively handle a mismatch (e.g. an animal in more than one bucket)?
@@ -251,9 +283,11 @@ Open questions for backend:
 ## 4. Treatments
 
 ### GET /api/farmer/treatments
+
 Status: `DUMMY` — mocked in `lib/api/dummy/treatments.ts` (`getTreatments`)
 
 **Response 200**
+
 ```json
 {
   "summary": {
@@ -308,16 +342,19 @@ Status: `DUMMY` — mocked in `lib/api/dummy/treatments.ts` (`getTreatments`)
   ]
 }
 ```
+
 `withdrawal: null` for treatments with status Active-no-withdrawal or Completed — frontend
 omits the WithdrawalRibbon in that case. Search/filter (by animal/medicine, status pills,
 species select) are client-side against this full list for now — same pagination caveat as
 Section 3.
 
 ### GET /api/farmer/treatments/{treatment_id}
+
 Status: `DUMMY` — mocked in `lib/api/dummy/treatments.ts` (`getTreatmentDetail`). Powers the
 "View details →" side panel (TreatmentDetailPanel).
 
 **Response 200**
+
 ```json
 {
   "id": "uuid",
@@ -349,10 +386,12 @@ Status: `DUMMY` — mocked in `lib/api/dummy/treatments.ts` (`getTreatmentDetail
 ```
 
 ### GET /api/farmer/prescription-options
+
 Status: `DUMMY` — mocked in `lib/api/dummy/treatments.ts` (`getPrescriptionOptions`). Powers
 Step 2 ("What") of the Record Treatment wizard.
 
 **Response 200**
+
 ```json
 {
   "items": [
@@ -386,6 +425,7 @@ Step 2 ("What") of the Record Treatment wizard.
 ```
 
 ### POST /api/farmer/treatments
+
 Status: `NEEDED` — powers the final "Start Withdrawal Clock" submit. Frontend currently appends
 a client-side approximated treatment (with a placeholder withdrawal ribbon) to local state
 rather than calling a real endpoint — flagged in code as temporary, since real withdrawal-window
@@ -393,6 +433,7 @@ math (formulary hours per drug × species × product, per the withdrawal-vs-MRL 
 logic, not something the frontend should compute.
 
 **Request**
+
 ```json
 {
   "animal_ids": ["MP-104", "Flock P-01"],
@@ -406,6 +447,7 @@ logic, not something the frontend should compute.
 computed server-side from the formulary.
 
 Open questions for backend:
+
 - Multi-animal submission (Step 1 allows selecting several animals/flocks at once) — does this
   create one treatment record per animal, or one record covering all selected animals? Frontend
   currently treats it as producing one list entry per submission regardless of animal count —
@@ -421,9 +463,11 @@ Open questions for backend:
 ## 5. Dispatch
 
 ### GET /api/farmer/dispatches
+
 Status: `DUMMY` — mocked in `lib/api/dummy/dispatch.ts` (`getDispatches`)
 
 **Response 200**
+
 ```json
 {
   "summary": {
@@ -446,10 +490,12 @@ Status: `DUMMY` — mocked in `lib/api/dummy/dispatch.ts` (`getDispatches`)
 ```
 
 ### GET /api/farmer/dispatches/{dispatch_id}
+
 Status: `DUMMY` — mocked in `lib/api/dummy/dispatch.ts` (`getDispatchDetail`). Powers the
 per-row "View →" DispatchDetailModal, with three conditional bodies driven by `status`.
 
 **Response 200 (status: cleared)**
+
 ```json
 {
   "id": "DSP-024",
@@ -473,6 +519,7 @@ per-row "View →" DispatchDetailModal, with three conditional bodies driven by 
 ```
 
 **Response 200 (status: withdrawal)**
+
 ```json
 {
   "id": "DSP-023",
@@ -491,6 +538,7 @@ per-row "View →" DispatchDetailModal, with three conditional bodies driven by 
 ```
 
 **Response 200 (status: blocked)**
+
 ```json
 {
   "id": "DSP-022",
@@ -506,64 +554,71 @@ per-row "View →" DispatchDetailModal, with three conditional bodies driven by 
   ],
   "blocked_detail": {
     "failed_gates": [
-      { "gate": "mrl", "message": "MRL Above Limit — Lab: 0.14 ppm / Permitted: 0.10 ppm" }
+      {
+        "gate": "mrl",
+        "message": "MRL Above Limit — Lab: 0.14 ppm / Permitted: 0.10 ppm"
+      }
     ],
-    "warnings": [
-      { "icon": "warning", "message": "Prescription Unsigned" }
-    ]
+    "warnings": [{ "icon": "warning", "message": "Prescription Unsigned" }]
   }
 }
 ```
 
 ### POST /api/farmer/dispatch/safety-check
+
 Status: `NEEDED` — **this is the actual farm-gate lock.** Powers Step 3 of the Start Dispatch
 wizard. Frontend currently computes pass/block from dummy per-animal `withdrawal_status` /
 `mrl_status` fields via `checkDispatchSafety(product, animalIds)` in `lib/api/dummy/dispatch.ts`
 — this must be replaced by a real backend check, not left client-computed, once real data exists.
 
 **Request**
+
 ```json
 { "product": "milk | meat | eggs", "animal_ids": ["MP-104"] }
 ```
 
 **Response 200 (eligible)**
+
 ```json
 {
   "eligible": true,
   "withdrawal": { "status": "cleared", "detail": null },
-  "mrl": { "status": "within_limit", "lab_result_ppm": 0.04, "permitted_ppm": 0.10 },
+  "mrl": {
+    "status": "within_limit",
+    "lab_result_ppm": 0.04,
+    "permitted_ppm": 0.1
+  },
   "prescription": { "signed": true },
   "lab_assay": { "available": true }
 }
 ```
 
-**Response 200 (blocked)** — per the product spec, dispatch blocking must be a **hard gate, not
-a soft warning**. Whether this should be `200` with `eligible: false` (so the frontend can
-render the detailed blocked-gate breakdown) or a `409` per the general fails-closed convention
-(see Conventions section below) needs to be settled — frontend currently expects a `200` with
-`eligible: false` so it can show which specific gate failed and why, rather than a bare error.
-Flag this mismatch to backend before wiring up.
+**Response 200 (blocked)** — per the product spec, dispatch blocking must be a **hard gate, not a soft warning**. This endpoint returns `200` with `eligible: false` so the frontend can properly render the detailed blocked-gate breakdown. Backend must securely reject the actual `POST .../passport` generation if attempted.
+
 ```json
 {
   "eligible": false,
   "withdrawal": { "status": "active", "detail": "Clears in 2 days" },
-  "mrl": { "status": "exceeded", "lab_result_ppm": 0.14, "permitted_ppm": 0.10 },
+  "mrl": { "status": "exceeded", "lab_result_ppm": 0.14, "permitted_ppm": 0.1 },
   "prescription": { "signed": false },
   "lab_assay": { "available": true }
 }
 ```
 
 ### POST /api/farmer/dispatch/passport
+
 Status: `NEEDED` — powers "Generate PashuPramaan Passport", only callable when the safety check
 above returned `eligible: true`. Frontend currently appends a client-side generated dispatch
 entry to local state on this action — flagged as temporary.
 
 **Request**
+
 ```json
 { "product": "meat", "animal_ids": ["MP-108"], "safety_check_id": "uuid" }
 ```
 
 **Response 201**
+
 ```json
 {
   "passport_id": "PP-2026-024",
@@ -579,28 +634,26 @@ entry to local state on this action — flagged as temporary.
   "qr_verify_url": "https://.../verify/PP-2026-024"
 }
 ```
+
 Per the product spec, the passport must be honest about lab status — `"No assay on file"` is a
 valid, non-blocking value when no lab sample exists (time-cleared but not lab-certified), not
 an error state.
 
 Open questions for backend:
-- Confirmed with product spec: this endpoint **must fail closed** — see the Conventions section.
-  Need to resolve the 200-with-eligible-false vs 409 question above before frontend integration.
-- `safety_check_id` — does the passport endpoint need to reference a specific prior safety-check
-  call (to prevent a stale/replayed pass), or does it re-run the check itself server-side before
-  issuing? Given the "no fake lab certificate" principle in the spec, re-checking at generation
-  time seems safer than trusting a client-supplied prior result.
-- QR code generation — is `qr_verify_url` enough for frontend to render the QR client-side, or
-  does backend return a pre-rendered QR image?
+
+- `safety_check_id` — This endpoint should ignore client-provided `safety_check_id` and re-run the safety check server-side to prevent a stale/replayed pass. It must fail closed (return `409 Conflict`) if the check fails during passport generation.
+- QR code generation — The backend should return the verification URL (`qr_verify_url`) and the frontend will generate the QR code client-side to minimize payload size.
 
 ---
 
 ## 6. Insights
 
 ### GET /api/farmer/insights?range=30d|60d|90d
+
 Status: `DUMMY` — mocked in `lib/api/dummy/farm-insights.ts` (`getFarmInsights`)
 
 **Response 200**
+
 ```json
 {
   "range": "30d",
@@ -625,33 +678,45 @@ Status: `DUMMY` — mocked in `lib/api/dummy/farm-insights.ts` (`getFarmInsights
     "status": { "text": "Restock Recommended", "variant": "red" }
   },
   "most_used_medicines": [
-    { "rank": 1, "name": "Oxytetracycline", "usage": "25 used", "usage_value": 100 }
+    {
+      "rank": 1,
+      "name": "Oxytetracycline",
+      "usage": "25 used",
+      "usage_value": 100
+    }
   ],
   "farm_health_map": [
-    { "species": "Cattle", "level": "Moderate", "detail": "10 animals · 1 under treatment" },
-    { "species": "Poultry", "level": "High", "detail": "Flock P-01 · emergency tx" }
+    {
+      "species": "Cattle",
+      "level": "Moderate",
+      "detail": "10 animals · 1 under treatment"
+    },
+    {
+      "species": "Poultry",
+      "level": "High",
+      "detail": "Flock P-01 · emergency tx"
+    }
   ],
   "farm_performance": {
-    "chart_data": [
-      { "month": "Mar", "milk_output": 100, "medicine_cost": 110 }
-    ]
+    "chart_data": [{ "month": "Mar", "milk_output": 100, "medicine_cost": 110 }]
   },
   "health_treatment_trends": {
-    "chart_data": [
-      { "month": "Mar", "health_events": 5, "treatments": 8 }
-    ]
+    "chart_data": [{ "month": "Mar", "health_events": 5, "treatments": 8 }]
   }
 }
 ```
 
 Open questions for backend:
+
 - Is `demand_forecast.chart_data` still mapped directly to Prophet's output? Does the backend handle the 60d increment, or is that computed differently?
 - `farm_health_map` details — strings like `"10 animals · 1 under treatment"` or `"Flock P-01 · emergency tx"` are sent fully constructed by the backend because rules differ per species (e.g., poultry uses flock ID rather than animal count). Confirm the backend will handle this formatting.
 
 ### POST /api/farmer/medicine-stock
+
 Status: `NEEDED` — powers the "+ Add Stock" modal on the Insights page (and potentially Home page). Frontend currently handles this entirely in local state.
 
 **Request**
+
 ```json
 {
   "medicine": "Oxytetracycline",
@@ -662,6 +727,7 @@ Status: `NEEDED` — powers the "+ Add Stock" modal on the Insights page (and po
 ```
 
 **Response 201**
+
 ```json
 {
   "success": true,
@@ -671,14 +737,38 @@ Status: `NEEDED` — powers the "+ Add Stock" modal on the Insights page (and po
 ```
 
 Open questions for backend:
-- Does the backend expect normalized units (e.g. converting `mL` to `doses` based on formulary), or does it just blindly append string units if they differ from the current stock?
+
+Open questions for backend:
+
+- The backend should accept the quantity and string unit as-is (e.g. "50 vials"). Normalization or unit conversion is not required unless specific aggregate mathematical rules require it later on.
+
+### GET /api/farmer/vets
+
+Status: `NEEDED` — Fetch list of available veterinarians for consultation.
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": "vet-1",
+      "name": "Dr. Bankey",
+      "designation": "Veterinary Officer",
+      "vci_reg_no": "VCI-12345"
+    }
+  ]
+}
+```
 
 ## 7. Vet role
 
 ### GET /api/vet/dashboard
+
 Status: `DUMMY` — mocked in `lib/api/dummy/vet-dashboard.ts`. Covers vet Home (page 1 of 2).
 
 **Response 200**
+
 ```json
 {
   "vet": { "name": "Dr. Bankey" },
@@ -769,12 +859,14 @@ return full history for both; capping is a frontend display concern, not somethi
 endpoint needs to paginate.
 
 ### GET /api/vet/cases/{case_id}
+
 Status: `DUMMY` — mocked in `lib/api/dummy/vet-dashboard.ts` (`getCaseDetail`). Powers
 CaseDetailModal, opened from every "Review →" / "Review & Sign →" / "Review & Countersign →"
 link on vet home (attention cards, prescriptions table, alerts panel) and on the Prescriptions
 list page — one modal, conditional content, reused everywhere a case needs a quick-look view.
 
 **Response 200**
+
 ```json
 {
   "case_id": "RX-205",
@@ -786,7 +878,10 @@ list page — one modal, conditional content, reused everywhere a case needs a q
     { "text": "WATCH", "variant": "amber" },
     { "text": "CIA", "variant": "purple" }
   ],
-  "linked_health_event": { "title": "Clinical mastitis", "onset": "2026-08-18" },
+  "linked_health_event": {
+    "title": "Clinical mastitis",
+    "onset": "2026-08-18"
+  },
   "prescription": {
     "drug": "Enrofloxacin",
     "route": "Intramammary",
@@ -809,6 +904,7 @@ list page — one modal, conditional content, reused everywhere a case needs a q
   "action_label": "Review & Sign | Review & Countersign | Review | Close"
 }
 ```
+
 `linked_health_event`, `stewardship`, and `treatment_history` are each independently nullable —
 frontend omits that section entirely when absent (confirmed via the unsigned-emergency variant,
 where `stewardship` is empty). `action_label` is sent by the backend rather than inferred
@@ -820,11 +916,13 @@ the countersign flow (below), `"Review"` → navigates to the read-only prescrip
 ---
 
 ### GET /api/vet/prescriptions/{rx_id}/for-signing
+
 Status: `DUMMY` — mocked in `lib/api/dummy/vet-sign-flow.ts` (`getPrescriptionForSigning`).
 Powers the 3-step Review & Sign flow. Extends the `GET /api/vet/cases/{case_id}` shape above
 with fields specific to the sign ceremony.
 
 **Response 200**
+
 ```json
 {
   "case_id": "RX-205",
@@ -836,7 +934,10 @@ with fields specific to the sign ceremony.
     { "text": "WATCH", "variant": "amber" },
     { "text": "CIA", "variant": "purple" }
   ],
-  "linked_health_event": { "title": "Clinical mastitis", "onset": "2026-08-18" },
+  "linked_health_event": {
+    "title": "Clinical mastitis",
+    "onset": "2026-08-18"
+  },
   "prescription": {
     "drug": "Enrofloxacin",
     "route": "Intramammary",
@@ -866,6 +967,7 @@ with fields specific to the sign ceremony.
   ]
 }
 ```
+
 `requires_stewardship_notice` drives whether the flow's Notice step is shown at all — when
 `false`, frontend skips straight from Review to Sign and the step-indicator only shows two
 chips instead of three. `stewardship_notice.highlights` is an array of exact substrings of
@@ -873,12 +975,14 @@ chips instead of three. `stewardship_notice.highlights` is an array of exact sub
 as the Insights page's `why_this_matters.highlight`.
 
 ### POST /api/vet/prescriptions/{rx_id}/sign
+
 Status: `NEEDED` — the real sign ceremony (B7: ECDSA P-256 + wet-ink/typed name + vet PIN).
 Frontend currently uses `submitSignature()` in `lib/api/dummy/vet-sign-flow.ts`, which validates
 a hardcoded demo PIN (`"1234"`) client-side and fabricates a plausible-looking reference string
 — explicitly **not** representing real cryptographic signing, flagged with a code comment.
 
 **Request**
+
 ```json
 {
   "typed_name": "Sofia Abidi",
@@ -889,6 +993,7 @@ a hardcoded demo PIN (`"1234"`) client-side and fabricates a plausible-looking r
 ```
 
 **Response 200**
+
 ```json
 {
   "signed_by": "Dr. Bankey",
@@ -902,6 +1007,7 @@ a hardcoded demo PIN (`"1234"`) client-side and fabricates a plausible-looking r
 advance to the Signed step).
 
 Open questions for backend:
+
 - Real signature ceremony — what does "ECDSA P-256 + wet-ink + vet PIN" actually mean as a
   request payload? Is the drawn canvas image what gets hashed/signed, or is there a separate
   cryptographic keypair per vet that the PIN unlocks? The prototype explicitly does not
@@ -916,15 +1022,21 @@ Open questions for backend:
 ---
 
 ### GET /api/vet/emergencies/{event_id}/for-countersigning
+
 Status: `DUMMY` — mocked in `lib/api/dummy/vet-sign-flow.ts` (`getEmergencyForCountersigning`).
 Powers the 2-step Review & Countersign flow (no Notice step — always exactly Review → Sign).
 
 **Response 200**
+
 ```json
 {
   "case_id": "RX-207",
   "diagnosis": "Gumboro (IBD)",
-  "animal_flock": { "id": "Flock P-01", "species": "Poultry", "type": "Broiler" },
+  "animal_flock": {
+    "id": "Flock P-01",
+    "species": "Poultry",
+    "type": "Broiler"
+  },
   "farm": "Meena Poultry",
   "status_badges": [{ "text": "UNSIGNED EMERGENCY", "variant": "red" }],
   "administration": {
@@ -940,11 +1052,13 @@ Powers the 2-step Review & Countersign flow (no Notice step — always exactly R
 ```
 
 ### POST /api/vet/emergencies/{event_id}/countersign
+
 Status: `NEEDED` — countersigning an unsigned emergency administration (B5). Frontend uses
 `submitCountersignature()` in `lib/api/dummy/vet-sign-flow.ts`, same dummy-PIN validation
 pattern as the sign endpoint above, explicitly not representing a real signing ceremony.
 
 **Request**
+
 ```json
 {
   "typed_name": "Dr. Bankey",
@@ -955,6 +1069,7 @@ pattern as the sign endpoint above, explicitly not representing a real signing c
 ```
 
 **Response 200**
+
 ```json
 {
   "countersigned_by": "Dr. Bankey",
@@ -976,10 +1091,12 @@ backend modeling).
 ---
 
 ### GET /api/vet/prescriptions
+
 Status: `DUMMY` — mocked in `lib/api/dummy/vet-prescriptions.ts` (`getPrescriptionsList`).
 Powers the Prescriptions list page (vet page 2).
 
 **Response 200**
+
 ```json
 {
   "summary": {
@@ -1023,20 +1140,20 @@ Powers the Prescriptions list page (vet page 2).
   ]
 }
 ```
+
 Search + filter pills (All/Awaiting signature/Unsigned emergency/Signed/Voided) are client-side
 against this full list for now — same pagination caveat noted in Section 3. New badge variants
 introduced here: `blue` (COUNTERSIGNED, reused from the countersign flow's result badge),
-`voided` (muted gray + strikethrough text), `reserve` (distinct from `purple`/CIA — confirm
-with product whether RESERVE and CIA should visually differ or if this is the same AWaRe/CIA
-vocabulary rendered differently; the mockup shows both badges on the same VOIDED row, implying
-they're independent classifications, not alternatives).
+`voided` (muted gray + strikethrough text), `reserve` (distinct from `purple`/CIA). `RESERVE` (from the WHO AWaRe classification) and `CIA` (Critically Important Antimicrobials) are independent classifications. A drug can be both, so both badges may appear on the same row.
 
 ### POST /api/vet/prescriptions
+
 Status: `NEEDED` — powers "Save Prescription" in the New Prescription modal. Frontend currently
 appends a client-side-generated prescription (status always `"SIGN"`, per the modal's own
 copy: "signature required in a separate step") to local state — flagged as temporary.
 
 **Request**
+
 ```json
 {
   "farm": "Krishna Dairy",
@@ -1059,22 +1176,24 @@ always `{ "text": "SIGN", "variant": "orange" }` on creation (a new prescription
 created pre-signed).
 
 Open questions for backend:
+
 - `rx_id` generation — sequential per farm, per vet, or globally? Frontend currently guesses
   the next id client-side for display in the modal header before submission; backend should be
   the source of truth once wired.
 - Does creating a prescription here immediately make it eligible for `POST
-  /api/vet/prescriptions/{rx_id}/sign`, or is there an intermediate review/queue step not yet
+/api/vet/prescriptions/{rx_id}/sign`, or is there an intermediate review/queue step not yet
   captured?
 
 ---
 
 Open questions for backend (dashboard-level, from earlier draft — still open):
+
 - Is `workload.status` ("action_needed") computed from a threshold on the four counts, or is
   it an independent field the backend sets based on other rules (e.g. any unsigned_emergency > 0
   forces action_needed regardless of counts)?
 - `attention_items` ordering/priority — same question as the farmer dashboard: server-sorted or
   client-sorted?
-- Insight cards of `type: "treatment_evidence"` — is this always tied to the *most recent*
+- Insight cards of `type: "treatment_evidence"` — is this always tied to the _most recent_
   prescription being reviewed, or a static "most relevant case this vet is looking at" computed
   some other way? Now that `insights` is a list, could the backend return multiple evidence
   cards for different cases simultaneously, or is treatment evidence always exactly one item?
@@ -1086,9 +1205,11 @@ Open questions for backend (dashboard-level, from earlier draft — still open):
 ## 8. Vet Patients
 
 ### GET /api/vet/patients
+
 Status: `DUMMY` — mocked in `lib/api/dummy/vet-patients.ts`
 
 **Response 200**
+
 ```json
 {
   "summary": {
@@ -1103,7 +1224,11 @@ Status: `DUMMY` — mocked in `lib/api/dummy/vet-patients.ts`
       "id": "MP-104",
       "type": "Cow",
       "farm": "Shanti Dairy",
-      "status": { "text": "Under Treatment", "variant": "patient_under_treatment", "dot": true },
+      "status": {
+        "text": "Under Treatment",
+        "variant": "patient_under_treatment",
+        "dot": true
+      },
       "last_follow_up": "22 Aug"
     }
   ]
@@ -1111,16 +1236,22 @@ Status: `DUMMY` — mocked in `lib/api/dummy/vet-patients.ts`
 ```
 
 ### GET /api/vet/patients/{patient_id}
+
 Status: `NEEDED` — frontend currently uses hardcoded mock data in `PatientDetailModal.tsx`.
 
 **Response 200**
+
 ```json
 {
   "id": "MP-104",
   "type": "Cow",
   "farm": "Shanti Dairy",
   "condition": "Clinical mastitis",
-  "status": { "text": "Under Treatment", "variant": "patient_under_treatment", "dot": true },
+  "status": {
+    "text": "Under Treatment",
+    "variant": "patient_under_treatment",
+    "dot": true
+  },
   "current_treatment": "Amoxicillin · Intramammary · Twice daily",
   "last_follow_up": "22 Aug",
   "health_history": [
@@ -1128,8 +1259,16 @@ Status: `NEEDED` — frontend currently uses hardcoded mock data in `PatientDeta
       "date": "2026-08-22",
       "logs": [
         { "type": "health_event", "title": "Clinical mastitis onset" },
-        { "type": "prescription", "title": "Amoxicillin prescribed (Rx-208)", "subtitle": "Vet: Dr. Bankey" },
-        { "type": "follow_up", "title": "Follow-up recorded", "subtitle": "Vet: Dr. Bankey · Outcome: Improved" }
+        {
+          "type": "prescription",
+          "title": "Amoxicillin prescribed (Rx-208)",
+          "subtitle": "Vet: Dr. Bankey"
+        },
+        {
+          "type": "follow_up",
+          "title": "Follow-up recorded",
+          "subtitle": "Vet: Dr. Bankey · Outcome: Improved"
+        }
       ]
     }
   ]
@@ -1137,9 +1276,11 @@ Status: `NEEDED` — frontend currently uses hardcoded mock data in `PatientDeta
 ```
 
 ### POST /api/vet/patients/{patient_id}/follow-up
+
 Status: `NEEDED` — frontend uses local state in `RecordFollowUpModal.tsx`.
 
 **Request**
+
 ```json
 {
   "outcome": "Recovered | Improved | No Change | Worsened | Relapse",
@@ -1148,6 +1289,7 @@ Status: `NEEDED` — frontend uses local state in `RecordFollowUpModal.tsx`.
 ```
 
 **Response 201**
+
 ```json
 {
   "success": true,
@@ -1160,9 +1302,11 @@ Status: `NEEDED` — frontend uses local state in `RecordFollowUpModal.tsx`.
 With the frontend refactored into a hierarchical structure under `/admin/*`, the backend must now support dedicated endpoints for each tab.
 
 ### GET /api/admin/overview
+
 Status: `DUMMY` — derived from static constants in `components/admin/AdminShared.tsx`
 
 **Response 200**
+
 ```json
 {
   "summary_metrics": {
@@ -1197,9 +1341,11 @@ Status: `DUMMY` — derived from static constants in `components/admin/AdminShar
 ```
 
 ### GET /api/admin/analytics
+
 Status: `DUMMY` — derived from `REGION_DATA` and `DISTRICT_DATA`
 
 **Response 200**
+
 ```json
 {
   "states": [
@@ -1226,12 +1372,15 @@ Status: `DUMMY` — derived from `REGION_DATA` and `DISTRICT_DATA`
   }
 }
 ```
+
 Open question for backend: Do we want to load all district data nationally upfront, or fetch districts on-demand `GET /api/admin/analytics/districts?state=MH` when a state is selected? Currently, the frontend holds all mock data in memory.
 
 ### GET /api/admin/anomalies
+
 Status: `DUMMY` — derived from `ANOMALY_DATA`
 
 **Response 200**
+
 ```json
 {
   "items": [
@@ -1254,9 +1403,11 @@ Status: `DUMMY` — derived from `ANOMALY_DATA`
 ```
 
 ### GET /api/admin/health-amu
+
 Status: `DUMMY` — derived from `HEALTH_DATA`
 
 **Response 200**
+
 ```json
 {
   "items": [
@@ -1275,16 +1426,16 @@ Status: `DUMMY` — derived from `HEALTH_DATA`
       "classification": "Unexplained"
     }
   ],
-  "monthly_trend": [
-    { "month": "Mar", "health_events": 412, "amu_index": 115 }
-  ]
+  "monthly_trend": [{ "month": "Mar", "health_events": 412, "amu_index": 115 }]
 }
 ```
 
 ### GET /api/admin/forecast
+
 Status: `DUMMY`
 
 **Response 200**
+
 ```json
 {
   "series": [
@@ -1310,9 +1461,11 @@ Status: `DUMMY`
 ```
 
 ### GET /api/admin/workspace/insights
+
 Status: `DUMMY` — powers the workspace
 
 **Response 200**
+
 ```json
 {
   "saved_insights": [
@@ -1342,9 +1495,11 @@ Status: `DUMMY` — powers the workspace
 ```
 
 ### POST /api/admin/workspace/insights
+
 Status: `NEEDED` — Currently, saving insights from anomalies is handled in local React state (`AdminContext`). Backend must persist this to DB.
 
 **Request**
+
 ```json
 {
   "title": "string",
@@ -1353,7 +1508,9 @@ Status: `NEEDED` — Currently, saving insights from anomalies is handled in loc
   "linked_anomaly_id": "string"
 }
 ```
+
 **Response 201**
+
 ```json
 {
   "id": "I002",
@@ -1363,15 +1520,384 @@ Status: `NEEDED` — Currently, saving insights from anomalies is handled in loc
 
 ---
 
+## 10. Lab Technician Role
+
+### GET /api/lab/dashboard
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-dashboard.ts`
+
+**Response 200**
+
+```json
+{
+  "summary": [
+    {
+      "value": "12",
+      "label": "Awaiting Receipt",
+      "sub": "3 high priority",
+      "color": "amber"
+    }
+  ],
+  "attention": [
+    {
+      "id": "MLK-2026-00124",
+      "type": "MILK",
+      "title": "Shree Krishna Dairy",
+      "desc": "Beta-lactam residue testing required.",
+      "status": "HIGH PRIORITY",
+      "statusColor": "amber",
+      "action": "Start Testing →",
+      "page": "/lab/testing-workspace/MLK-2026-00124"
+    }
+  ],
+  "activity": [
+    {
+      "text": "Result submitted for MLK-2026-00118",
+      "time": "10 min ago",
+      "icon": "check"
+    }
+  ]
+}
+```
+
+### GET /api/lab/dispatches
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-dispatches.ts`
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": "MLK-2026-00124",
+      "date": "22 Aug · 10:30 AM",
+      "product": "Milk",
+      "productSub": "Raw milk",
+      "source": "Shree Krishna Dairy",
+      "sourceSub": "Animal: MP-104",
+      "sample": "LAB-MLK-00981",
+      "sampleStatus": "Received",
+      "sampleColor": "green",
+      "risk": "MODERATE",
+      "riskColor": "amber",
+      "status": "READY FOR TESTING",
+      "statusColor": "amber",
+      "action": "View →",
+      "clickable": true
+    }
+  ]
+}
+```
+
+### GET /api/lab/dispatches/{dispatchId}
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-dispatches.ts` (`fetchLabDispatchDetail`)
+
+**Response 200**
+
+```json
+{
+  "id": "MLK-2026-00124",
+  "product": "Raw Milk",
+  "source": "Shree Krishna Dairy",
+  "date": "22 Aug 2026",
+  "time": "10:30 AM",
+  "quantity": "850 L",
+  "linkedAnimal": "MP-104",
+  "currentSample": "LAB-MLK-00981",
+  "risk": "MODERATE",
+  "riskReason": "Recent antimicrobial exposure",
+  "overallStatus": "TESTING IN PROGRESS",
+  "stages": [{ "label": "Testing", "state": "active" }],
+  "tests": [
+    {
+      "num": "02",
+      "title": "Microbiological Safety",
+      "checks": [
+        "Standard plate count",
+        "Coliform screening",
+        "Pathogen screen"
+      ],
+      "status": "IN PROGRESS",
+      "statusColor": "amber",
+      "action": "Continue Testing →",
+      "active": true,
+      "badge": null
+    }
+  ],
+  "assessment": [
+    { "label": "Traceability", "status": "Complete", "color": "green" }
+  ],
+  "notes": {
+    "condition": "Acceptable",
+    "temperature": "4.2°C",
+    "container": "Intact",
+    "receivedBy": "Dr. Priya Sharma",
+    "receivedAt": "22 Aug · 11:05 AM"
+  },
+  "activity": [
+    {
+      "time": "12:10 PM",
+      "title": "Microbiological testing started",
+      "desc": "Status updated to In Progress.",
+      "icon": "active"
+    }
+  ]
+}
+```
+
+### POST /api/lab/dispatches/{dispatchId}/receive
+
+Status: `NEEDED` — Marks a dispatched sample as received by the laboratory and moves it into the testing queue.
+
+**Request**
+
+```json
+{
+  "condition": "Acceptable | Compromised | Rejected",
+  "temperature": "string",
+  "container": "Intact | Damaged",
+  "notes": "string, optional"
+}
+```
+
+**Response 200**
+
+```json
+{
+  "success": true,
+  "dispatchId": "MLK-2026-00124",
+  "new_status": "READY FOR TESTING"
+}
+```
+
+### GET /api/lab/queue
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-testing.ts` (`fetchTestingQueue`)
+
+**Response 200**
+
+```json
+{
+  "awaiting": [
+    {
+      "id": "MLK-2026-00131",
+      "product": "Milk",
+      "productSub": "Raw Milk",
+      "source": "Mahalaxmi Dairy",
+      "sourceSub": "Animal: MP-087",
+      "sample": "LAB-MLK-00992",
+      "arrival": "Expected today · 10:45 AM",
+      "priority": "HIGH PRIORITY",
+      "priorityColor": "red",
+      "reason": "Targeted residue test required",
+      "action": "Receive Sample →",
+      "highlighted": true
+    }
+  ],
+  "ready": [
+    {
+      "id": "MLK-2026-00124",
+      "product": "Milk",
+      "source": "Shree Krishna Dairy",
+      "sample": "LAB-MLK-00981",
+      "tests": [
+        { "name": "Product Quality", "status": "done" },
+        { "name": "Microbiological Safety", "status": "active" },
+        { "name": "Antimicrobial Residue", "status": "pending" }
+      ],
+      "action": "Continue Testing →"
+    }
+  ]
+}
+```
+
+### GET /api/lab/workspace/{sampleId}
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-testing.ts` (`fetchTestingWorkspace`)
+
+**Response 200**
+
+```json
+{
+  "dispatchId": "MLK-2026-00124",
+  "sampleId": "LAB-MLK-00981",
+  "product": "Raw Milk",
+  "productSub": "Milk",
+  "source": "Shree Krishna Dairy",
+  "sourceSub": "MP-104",
+  "condition": "✓ Acceptable",
+  "temperature": "4.2°C",
+  "riskLevel": "MODERATE",
+  "antimicrobialContext": "Amoxicillin · Last administered 15 Aug 2026",
+  "antimicrobialStatus": "✓ Withdrawal completed before dispatch. Residue testing still required.",
+  "assessments": [
+    { "num": 1, "label": "Product Quality", "state": "done" },
+    { "num": 2, "label": "Microbiological Safety", "state": "active" },
+    { "num": 3, "label": "Antimicrobial Residue", "state": "pending" }
+  ]
+}
+```
+
+### POST /api/lab/workspace/{sampleId}/tests
+
+Status: `NEEDED` — Single atomic submission per assay category.
+
+**Request**
+
+```json
+{
+  "test_category": "Microbiological Safety",
+  "plateCount": 4200,
+  "coliform": "Not Detected",
+  "pathogen": "Not Detected",
+  "organism": null,
+  "notes": "Sample looks consistent.",
+  "is_compliant": true
+}
+```
+
+**Response 200**
+
+```json
+{
+  "success": true,
+  "message": "Test results submitted."
+}
+```
+
+Open questions for backend:
+
+- Do these microbiological safety fields (plateCount, coliform, pathogen) map directly to the `lab_assay` / `mrl.lab_result_ppm` fields mentioned in Section 5? The API contract focuses heavily on antimicrobial MRLs for dispatch safety logic. If these pathogen results need to be tracked on the dispatch passport or queried centrally, the backend `lab_assay` schema may need to explicitly include non-MRL tests (pathogen flags, CFU limits).
+
+### GET /api/lab/results
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-results.ts`
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": "MLK-2026-00124",
+      "product": "Raw Milk",
+      "source": "Shree Krishna Dairy",
+      "sample": "LAB-MLK-00981",
+      "date": "23 Aug 2026",
+      "tests": [
+        { "label": "Product Quality", "result": "COMPLIANT", "ok": true },
+        {
+          "label": "Microbiological Safety",
+          "result": "COMPLIANT",
+          "ok": true
+        },
+        {
+          "label": "Antimicrobial Residue",
+          "result": "WITHIN LIMIT",
+          "ok": true
+        }
+      ],
+      "status": "AWAITING VERIFICATION",
+      "statusColor": "amber",
+      "action": "Review Assessment →",
+      "outcome": "released"
+    }
+  ]
+}
+```
+
+### POST /api/lab/results/{resultId}/verify
+
+Status: `NEEDED` — Final assessment submission to clear or hold the dispatch.
+
+**Request**
+
+```json
+{
+  "outcome": "released | hold",
+  "remarks": "All checks passed successfully."
+}
+```
+
+**Response 200**
+
+```json
+{
+  "success": true,
+  "new_status": "CLEARED FOR DISPATCH"
+}
+```
+
+### GET /api/lab/reports
+
+Status: `DUMMY` — mocked in `lib/api/dummy/lab-reports.ts`
+
+**Response 200**
+
+```json
+{
+  "summary": [{ "v": "128", "l": "Completed", "color": "neutral" }],
+  "items": [
+    {
+      "id": "MLK-2026-00124",
+      "product": "Milk",
+      "productSub": "Raw Milk",
+      "source": "Shree Krishna Dairy",
+      "sample": "LAB-MLK-00981",
+      "animal": "MP-104",
+      "date": "23 Aug 2026",
+      "status": "CLEARED",
+      "statusColor": "green",
+      "refNo": "LAB-REF-2026-00124",
+      "verifiedBy": "Laboratory Authority",
+      "verifiedOn": "23 Aug 2026 · 4:20 PM",
+      "assessments": [
+        {
+          "label": "Microbiological Safety",
+          "result": "Compliant",
+          "ok": true,
+          "detail": "SPC 4,200 CFU/mL · Coliform ND · Pathogen ND"
+        }
+      ],
+      "mrl": {
+        "drug": "Amoxicillin (Beta-lactam)",
+        "measured": 3.2,
+        "limit": 4.0,
+        "unit": "μg/kg",
+        "ratio": 0.8,
+        "verdict": "WITHIN MRL",
+        "verdictOk": true
+      },
+      "withdrawal": {
+        "drug": "Amoxicillin",
+        "administered": "15 Aug 2026",
+        "completed": "20 Aug 2026",
+        "status": "Completed before dispatch"
+      },
+      "outcome": "CLEARED FOR DISPATCH",
+      "outcomeOk": true
+    }
+  ]
+}
+```
+
+Open questions for backend:
+
+- **MRL Consistency:** The `ReportMrl` struct contains `ratio` and `verdictOk` fields. Ensure the backend returns these pre-computed for consistency with the frontend.
+- **Dispatch Safety Check Consistency:** The Farmer `POST /api/farmer/dispatch/safety-check` API returns an `mrl` object (e.g. `{"status": "within_limit", "lab_result_ppm": 0.04, "permitted_ppm": 0.10}`). The backend needs to ensure that when a Lab `CLEARED FOR DISPATCH` status is generated here, it maps accurately to `lab_assay: {available: true}` and sets the corresponding `mrl` status in the farmer's safety check API.
 
 ## Conventions for all future endpoints
+
 - Auth: `Authorization: Bearer <jwt>` on every call except `/api/auth/login`.
 - Pagination: `?page=1&page_size=20`, response wraps list in `{ "items": [...], "total": n }`.
 - Errors: `{ "error": { "code": "string", "message": "string" } }`.
-- Dispatch/sale-gate specifically returns `409` on block (never a soft 200 with a warning flag) per the "fails closed" design rule — **note this conflicts with the current dummy frontend behavior for `POST /api/farmer/dispatch/safety-check`, which expects a 200 with `eligible: false`; see Section 5, still unresolved.**
+- Dispatch/sale-gate: `POST /api/farmer/dispatch/safety-check` returns a **`200 OK` with `eligible: false`** instead of a `409` when blocked. While the system "fails closed" logically, returning `200` ensures the frontend can parse the rich JSON payload detailing exactly which gates failed (MRL, withdrawal, etc.) without falling into generic HTTP error handling blocks.
 
 ---
-*Last updated: both Farmer and Vet roles are now functionally complete on dummy data —
+
+\*Last updated: both Farmer and Vet roles are now functionally complete on dummy data —
 all 5 farmer pages (Home, My Farm, Treatments, Dispatch, Insights) and all 3 vet pages (Home,
 Prescriptions, Patients), including every modal/panel/flow built so far: farmer side — Add Animal,
 Record Treatment wizard, Start Dispatch wizard + passport, Animal Detail, Treatment Detail
@@ -1381,9 +1907,7 @@ Countersigned), New Prescription modal, PatientDetailModal, and RecordFollowUpMo
 on vet home now use a shared capped-list-with-View-More pattern.
 
 Remaining gaps: the real cryptographic sign/countersign ceremony (both endpoints are `NEEDED`,
-current frontend uses dummy PIN "1234" validation only — flagged throughout as non-production),
-the dispatch safety-check 200-vs-409 conflict (Section 5, unresolved), the RESERVE-vs-CIA badge
-distinction (Section 7, unresolved). The Admin/Regulator dashboard is now designed with full hierarchical endpoints.
+current frontend uses dummy PIN "1234" validation only — flagged throughout as non-production). The Admin/Regulator dashboard is now designed with full hierarchical endpoints.
 
 Update this file every time a new page's data shape is decided — don't let it drift from the
-frontend dummy data.*
+frontend dummy data.\*

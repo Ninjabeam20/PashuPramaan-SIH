@@ -1,3 +1,4 @@
+import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { labTestingFinished } from "@/lib/seed/project";
 
@@ -28,31 +29,10 @@ const RESULT_VIEW = {
 };
 
 export async function fetchLabResults(): Promise<LabResult[]> {
-  await new Promise((r) => setTimeout(r, 500));
-
-  // CONFLICT: results listed MLK-2026-00124 as awaiting verification while the testing
-  // queue still had it on the bench. A lot only reaches this table once every test is
-  // done (plan resolution 13), so it is the queue and this list that now agree.
-  return store
-    .getLabSamples()
-    .filter((sample) => labTestingFinished(sample) && sample.stage in RESULT_VIEW)
-    .map((sample) => {
-      const view = RESULT_VIEW[sample.stage as keyof typeof RESULT_VIEW];
-      return {
-        id: sample.dispatchId,
-        product: sample.productLabel,
-        source: sample.sourceName,
-        sample: sample.sampleId,
-        date: sample.resultDate ?? sample.date,
-        tests: sample.tests.map((test) => ({
-          label: test.name,
-          result: test.result ?? "PENDING",
-          ok: test.ok,
-        })),
-        status: view.status,
-        statusColor: view.statusColor,
-        action: view.action,
-        outcome: view.outcome,
-      };
-    });
+  const token = getToken();
+  const res = await fetch("http://localhost:8000/api/lab/results", {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  const data = await res.json();
+  return data.items as any;
 }

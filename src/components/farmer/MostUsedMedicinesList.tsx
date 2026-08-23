@@ -31,7 +31,7 @@ export function MostUsedMedicinesList({ data }: { data: MostUsedMedicine[] }) {
       </div>
 
       <div className="flex flex-col gap-6 mt-2">
-        {data.map((item) => (
+        {(data || []).map((item) => (
           <div key={item.name} className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

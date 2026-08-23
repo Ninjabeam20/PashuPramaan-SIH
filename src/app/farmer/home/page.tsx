@@ -129,7 +129,7 @@ export default function FarmerHome() {
         <section className="flex-1 flex flex-col gap-4">
           <h3 className="font-bold text-[var(--color-text)]">Needs your attention</h3>
           <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-4">
-            {attention_items.map((item) => (
+            {(attention_items || []).map((item) => (
               <div key={item.id} className={`flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 shadow-sm relative overflow-hidden`}>
                 {/* Left accent bar */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${item.priority === "HIGH" ? "bg-[var(--status-high-text)]" : "bg-[var(--status-medium-text)]"}`} />

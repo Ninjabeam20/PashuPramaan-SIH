@@ -103,7 +103,7 @@ export function RecordTreatmentModal({ animals, prescriptions, onClose, onSubmit
                 Select the animal(s) or flock for this treatment.
               </p>
               <div className="flex flex-col gap-2">
-                {animals.map(animal => {
+                {(animals || []).map(animal => {
                   const isChecked = selectedAnimalIds.includes(animal.id);
                   return (
                     <div 

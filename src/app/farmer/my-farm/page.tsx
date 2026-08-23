@@ -71,7 +71,7 @@ export default function MyFarmPage() {
       // Note: Sheep, Pig, Poultry, Other don't have overview cards yet, so we skip their specific counts
 
       // Update overview cards
-      next.species_overview = next.species_overview.map(overview => {
+      next.species_overview = (next.species_overview || []).map(overview => {
         if (
           (formData.type === "Cow" && overview.species === "Cows") ||
           (formData.type === "Buffalo" && overview.species === "Buffaloes") ||
@@ -93,7 +93,7 @@ export default function MyFarmPage() {
   };
 
   // Client-side filtering
-  const filteredAnimals = localData.animals.filter(animal => {
+  const filteredAnimals = (localData.animals || []).filter(animal => {
     // Search match
     const matchesSearch = animal.id.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -143,7 +143,7 @@ export default function MyFarmPage() {
       {/* Animal Overview */}
       <section className="flex flex-col gap-4 mt-2">
         <h2 className="text-xl font-bold text-[var(--color-text)]">Animal Overview</h2>
-        <AnimalOverviewCards data={localData.species_overview} />
+        <AnimalOverviewCards data={localData.species_overview || []} />
       </section>
 
       {/* Your Animals section (Search + Table) */}
@@ -163,13 +163,13 @@ export default function MyFarmPage() {
 
       {/* Recent Activity */}
       <section className="mt-6">
-        <RecentActivityList activities={localData.recent_activity} />
+        <RecentActivityList activities={localData.recent_activity || []} />
       </section>
 
       {/* Add Animal Modal */}
       {isAddModalOpen && (
         <AddAnimalModal
-          existingIds={localData.animals.map(a => a.id)}
+          existingIds={(localData.animals || []).map(a => a.id)}
           onClose={() => setIsAddModalOpen(false)}
           onSubmit={handleAddAnimal}
         />

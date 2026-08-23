@@ -41,7 +41,7 @@ export function ReportsList({
     <div className="space-y-0">
       {/* Summary strip — sits flush under the header filter bar on desktop */}
       <div className="flex border-b border-[var(--color-border)] bg-[var(--color-surface)] rounded-2xl md:rounded-b-none mb-4 md:mb-0 shadow-sm overflow-hidden">
-        {summary.map(({ v, l, color }) => (
+        {(summary || []).map(({ v, l, color }) => (
           <div key={l} className="flex-1 py-3.5 text-center border-r border-[var(--color-border)] last:border-0">
             <p className="font-display text-xl font-bold text-[var(--color-text)] leading-none">{v}</p>
             <div className="flex items-center justify-center gap-1.5 mt-1.5">
@@ -109,7 +109,7 @@ export function ReportsList({
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reports.map((r) => (
+          {(reports || []).map((r) => (
             <Card key={r.id} className="p-5 hover:shadow-md transition-shadow">
               {/* Card header */}
               <div className="flex items-start justify-between mb-4 border-b border-[var(--color-border)] pb-3">

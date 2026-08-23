@@ -63,7 +63,7 @@ export function ResultsList({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {results.map((item) => (
+          {(results || []).map((item) => (
             <Card key={item.id} className="p-5 hover:shadow-md transition-shadow">
               {/* Header */}
               <div className="flex items-start justify-between mb-4 border-b border-[var(--color-border)] pb-3">
@@ -81,7 +81,7 @@ export function ResultsList({
 
               {/* Test results inline */}
               <div className="space-y-2 mb-4">
-                {item.tests.map((t) => (
+                {(item.tests || []).map((t) => (
                   <div key={t.label} className="flex items-center justify-between">
                     <p className="text-xs text-[var(--color-text-muted)]">{t.label}</p>
                     <span className={`text-xs font-bold ${t.ok ? "text-[var(--status-good-text)]" : "text-[var(--status-high-text)]"}`}>

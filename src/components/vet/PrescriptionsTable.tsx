@@ -50,7 +50,7 @@ export function PrescriptionsTable({ prescriptions, onReviewClick }: Prescriptio
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex flex-wrap justify-end gap-1.5">
-                    {item.status_badges.map((b, i) => (
+                    {(item.status_badges || []).map((b, i) => (
                       <Badge key={i} variant={b.variant as BadgeVariant} dot={b.dot}>
                         {b.text}
                       </Badge>

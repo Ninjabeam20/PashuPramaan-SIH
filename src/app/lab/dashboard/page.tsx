@@ -47,7 +47,7 @@ export default function LabDashboardPage() {
       {/* Summary cards */}
       <div className="mb-8">
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide snap-x snap-mandatory">
-          {data.summary.map((card, i) => (
+          {(data.summary || []).map((card, i) => (
             <Card key={i} className="snap-start shrink-0 w-44 p-4 md:p-5">
               <div className="flex items-start justify-between mb-3">
                 <span className="font-display text-3xl font-bold text-[var(--color-text)] leading-none">
@@ -71,7 +71,7 @@ export default function LabDashboardPage() {
             </h2>
           </div>
           <div className="space-y-4">
-            {data.attention.map((item) => (
+            {(data.attention || []).map((item) => (
               <Card key={item.id} className="p-4 md:p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold text-[var(--color-text-muted)]">{item.id}</span>
@@ -101,7 +101,7 @@ export default function LabDashboardPage() {
           </h2>
           <Card className="p-0 overflow-hidden">
             <div className="divide-y divide-[var(--color-border)]">
-              {data.activity.map((item, i) => (
+              {(data.activity || []).map((item, i) => (
                 <div key={i} className="flex items-start gap-3 p-4">
                   <ActivityIcon type={item.icon} />
                   <div className="flex-1 min-w-0 pt-0.5">

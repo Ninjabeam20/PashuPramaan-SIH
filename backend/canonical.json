@@ -1,0 +1,2071 @@
+{
+  "FARMS": [
+    {
+      "id": "farm-shree-krishna-dairy",
+      "name": "Shree Krishna Dairy",
+      "kind": "dairy",
+      "region": "Haryana",
+      "aliases": [
+        "Krishna Dairy"
+      ],
+      "operatedByFarmer": true,
+      "herd": {
+        "cows": 10,
+        "buffaloes": 20,
+        "goats": 18
+      }
+    },
+    {
+      "id": "farm-shanti-dairy",
+      "name": "Shanti Dairy",
+      "kind": "dairy",
+      "region": "Haryana",
+      "aliases": [],
+      "operatedByFarmer": false,
+      "herd": {
+        "cows": 0,
+        "buffaloes": 0,
+        "goats": 0
+      }
+    },
+    {
+      "id": "farm-meena-poultry",
+      "name": "Meena Poultry",
+      "kind": "poultry",
+      "region": "Punjab",
+      "aliases": [],
+      "operatedByFarmer": true,
+      "herd": {
+        "cows": 0,
+        "buffaloes": 0,
+        "goats": 0
+      }
+    },
+    {
+      "id": "farm-green-valley-livestock",
+      "name": "Green Valley Livestock",
+      "kind": "livestock",
+      "region": "Maharashtra",
+      "aliases": [],
+      "operatedByFarmer": false,
+      "herd": {
+        "cows": 0,
+        "buffaloes": 0,
+        "goats": 0
+      }
+    },
+    {
+      "id": "farm-sunrise-poultry",
+      "name": "Sunrise Poultry",
+      "kind": "poultry",
+      "region": "West Bengal",
+      "aliases": [],
+      "operatedByFarmer": false,
+      "herd": {
+        "cows": 0,
+        "buffaloes": 0,
+        "goats": 0
+      }
+    },
+    {
+      "id": "farm-mahalaxmi-dairy",
+      "name": "Mahalaxmi Dairy",
+      "kind": "dairy",
+      "region": "Gujarat",
+      "aliases": [],
+      "operatedByFarmer": false,
+      "herd": {
+        "cows": 0,
+        "buffaloes": 0,
+        "goats": 0
+      }
+    },
+    {
+      "id": "farm-raj-farms",
+      "name": "Raj Farms",
+      "kind": "livestock",
+      "region": "Rajasthan",
+      "aliases": [],
+      "operatedByFarmer": false,
+      "herd": {
+        "cows": 0,
+        "buffaloes": 0,
+        "goats": 0
+      }
+    }
+  ],
+  "ANIMALS": [
+    {
+      "id": "MP-104",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Buffalo",
+      "isFlock": false,
+      "breed": "Gir",
+      "sex": "Female",
+      "dateOfBirth": "12 Mar 2021",
+      "productionType": "Dairy",
+      "registeredOn": "01 Jan 2022",
+      "onFarmerRoster": true,
+      "careStatus": "under_treatment",
+      "lastFollowUp": "22 Aug",
+      "followUpDue": false
+    },
+    {
+      "id": "MP-105",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Cow",
+      "isFlock": false,
+      "breed": "Sahiwal",
+      "sex": "Female",
+      "dateOfBirth": "04 Feb 2020",
+      "productionType": "Dairy",
+      "registeredOn": "12 Mar 2021",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-106",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Buffalo",
+      "isFlock": false,
+      "breed": "Murrah",
+      "sex": "Female",
+      "dateOfBirth": "22 Jul 2019",
+      "productionType": "Dairy",
+      "registeredOn": "10 Aug 2020",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-107",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Buffalo",
+      "isFlock": false,
+      "breed": "Murrah",
+      "sex": "Female",
+      "dateOfBirth": "18 Nov 2020",
+      "productionType": "Dairy",
+      "registeredOn": "02 Jan 2021",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-108",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Goat",
+      "isFlock": false,
+      "breed": "Jamunapari",
+      "sex": "Female",
+      "dateOfBirth": "09 Jan 2022",
+      "productionType": "Dairy",
+      "registeredOn": "20 Feb 2022",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-109",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Buffalo",
+      "isFlock": false,
+      "breed": "Murrah",
+      "sex": "Female",
+      "dateOfBirth": "30 May 2021",
+      "productionType": "Dairy",
+      "registeredOn": "21 Aug 2026",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-110",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Cow",
+      "isFlock": false,
+      "breed": "Gir",
+      "sex": "Female",
+      "dateOfBirth": "15 Sep 2019",
+      "productionType": "Dairy",
+      "registeredOn": "01 Nov 2020",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-111",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Goat",
+      "isFlock": false,
+      "breed": "Beetal",
+      "sex": "Female",
+      "dateOfBirth": "27 Apr 2022",
+      "productionType": "Dairy",
+      "registeredOn": "05 Jun 2022",
+      "onFarmerRoster": true,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-112",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Buffalo",
+      "isFlock": false,
+      "breed": "Murrah",
+      "sex": "Female",
+      "dateOfBirth": "11 Jun 2019",
+      "productionType": "Dairy",
+      "registeredOn": "19 Jul 2020",
+      "onFarmerRoster": false,
+      "careStatus": "improved",
+      "lastFollowUp": "17 Aug",
+      "followUpDue": false
+    },
+    {
+      "id": "MP-118",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Cow",
+      "isFlock": false,
+      "breed": "Gir",
+      "sex": "Female",
+      "dateOfBirth": "03 Mar 2020",
+      "productionType": "Dairy",
+      "registeredOn": "14 Apr 2021",
+      "onFarmerRoster": false,
+      "careStatus": "improved",
+      "lastFollowUp": "20 Aug",
+      "followUpDue": false
+    },
+    {
+      "id": "MP-088",
+      "farmId": "farm-shree-krishna-dairy",
+      "species": "Buffalo",
+      "isFlock": false,
+      "breed": "Murrah",
+      "sex": "Female",
+      "dateOfBirth": "08 Dec 2018",
+      "productionType": "Dairy",
+      "registeredOn": "02 Feb 2020",
+      "onFarmerRoster": false,
+      "careStatus": "no_change",
+      "lastFollowUp": "14 Aug",
+      "followUpDue": false
+    },
+    {
+      "id": "MP-101",
+      "farmId": "farm-shanti-dairy",
+      "species": "Cow",
+      "isFlock": false,
+      "breed": "Sahiwal",
+      "sex": "Female",
+      "dateOfBirth": "17 Oct 2019",
+      "productionType": "Dairy",
+      "registeredOn": "23 Nov 2020",
+      "onFarmerRoster": false,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-097",
+      "farmId": "farm-shanti-dairy",
+      "species": "Cow",
+      "isFlock": false,
+      "breed": "Sahiwal",
+      "sex": "Female",
+      "dateOfBirth": "25 Jan 2019",
+      "productionType": "Dairy",
+      "registeredOn": "30 Mar 2020",
+      "onFarmerRoster": false,
+      "careStatus": "recovered",
+      "lastFollowUp": "16 Aug",
+      "followUpDue": false
+    },
+    {
+      "id": "Flock P-01",
+      "farmId": "farm-meena-poultry",
+      "species": "Poultry",
+      "isFlock": true,
+      "breed": "Broiler",
+      "sex": "Mixed",
+      "dateOfBirth": "02 Jul 2026",
+      "productionType": "Broiler",
+      "registeredOn": "02 Jul 2026",
+      "onFarmerRoster": false,
+      "careStatus": "under_treatment",
+      "lastFollowUp": "21 Aug",
+      "followUpDue": true
+    },
+    {
+      "id": "Flock P-02",
+      "farmId": "farm-meena-poultry",
+      "species": "Poultry",
+      "isFlock": true,
+      "breed": "Broiler",
+      "sex": "Mixed",
+      "dateOfBirth": "18 Jun 2026",
+      "productionType": "Broiler",
+      "registeredOn": "18 Jun 2026",
+      "onFarmerRoster": false,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "Flock-07",
+      "farmId": "farm-meena-poultry",
+      "species": "Poultry",
+      "isFlock": true,
+      "breed": "Broiler",
+      "sex": "Mixed",
+      "dateOfBirth": "12 May 2026",
+      "productionType": "Broiler",
+      "registeredOn": "12 May 2026",
+      "onFarmerRoster": false,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "MP-087",
+      "farmId": "farm-mahalaxmi-dairy",
+      "species": "Cow",
+      "isFlock": false,
+      "breed": "Gir",
+      "sex": "Female",
+      "dateOfBirth": "06 Aug 2019",
+      "productionType": "Dairy",
+      "registeredOn": "16 Sep 2020",
+      "onFarmerRoster": false,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "FLK-2026-042",
+      "farmId": "farm-sunrise-poultry",
+      "species": "Poultry",
+      "isFlock": true,
+      "breed": "Layer",
+      "sex": "Female",
+      "dateOfBirth": "20 Mar 2026",
+      "productionType": "Layer",
+      "registeredOn": "20 Mar 2026",
+      "onFarmerRoster": false,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    },
+    {
+      "id": "FLK-2026-051",
+      "farmId": "farm-sunrise-poultry",
+      "species": "Poultry",
+      "isFlock": true,
+      "breed": "Layer",
+      "sex": "Female",
+      "dateOfBirth": "11 Apr 2026",
+      "productionType": "Layer",
+      "registeredOn": "11 Apr 2026",
+      "onFarmerRoster": false,
+      "careStatus": null,
+      "lastFollowUp": null,
+      "followUpDue": false
+    }
+  ],
+  "HEALTH_EVENTS": [
+    {
+      "id": "he-1",
+      "animalId": "MP-104",
+      "name": "Clinical mastitis",
+      "onset": "Today"
+    },
+    {
+      "id": "he-2",
+      "animalId": "Flock P-01",
+      "name": "Gumboro (IBD)",
+      "onset": "Today"
+    },
+    {
+      "id": "he-3",
+      "animalId": "MP-118",
+      "name": "Clinical mastitis",
+      "onset": "18 Aug"
+    }
+  ],
+  "PRESCRIPTIONS": [
+    {
+      "id": "Rx-208",
+      "farmId": "farm-shree-krishna-dairy",
+      "animalId": "MP-104",
+      "diagnosis": "Clinical mastitis",
+      "status": "sign_required",
+      "aware": "ACCESS",
+      "cia": false,
+      "drug": "Oxytetracycline",
+      "route": "Injection",
+      "dose": "10 mg/kg",
+      "frequency": "Once daily",
+      "duration": "5 days",
+      "reason": "Clinical mastitis — first-line therapy",
+      "dateLabel": "10:42",
+      "stewardshipGuidance": [],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": null
+    },
+    {
+      "id": "Rx-207",
+      "farmId": "farm-meena-poultry",
+      "animalId": "Flock P-01",
+      "diagnosis": "Gumboro (IBD)",
+      "status": "unsigned_emergency",
+      "aware": null,
+      "cia": false,
+      "drug": "Oxytetracycline",
+      "route": "Drinking water",
+      "dose": "20 mg/kg",
+      "frequency": "Once daily",
+      "duration": "5 days",
+      "reason": "Gumboro-associated secondary infection",
+      "dateLabel": "09:18",
+      "stewardshipGuidance": [],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": null
+    },
+    {
+      "id": "Rx-205",
+      "farmId": "farm-shree-krishna-dairy",
+      "animalId": "MP-118",
+      "diagnosis": "Clinical mastitis",
+      "status": "sign_required",
+      "aware": "WATCH",
+      "cia": true,
+      "drug": "Enrofloxacin",
+      "route": "Intramuscular",
+      "dose": "5 mg/kg",
+      "frequency": "Once daily",
+      "duration": "5 days",
+      "reason": "Non-responsive to first-line treatment",
+      "dateLabel": "Yesterday",
+      "stewardshipGuidance": [
+        "CIA drugs require clinical justification for use.",
+        "AWaRe Watch drugs should be reserved for specific cases where first-line options are insufficient.",
+        "Your signature confirms this prescription is clinically justified."
+      ],
+      "previousTreatment": {
+        "drug": "Amoxicillin",
+        "duration": "3 days",
+        "outcome": "RECOVERED"
+      },
+      "treatmentHistory": {
+        "episode": "Clinical mastitis",
+        "outcome": "RECOVERED",
+        "completedDate": "12 Aug"
+      },
+      "signature": null
+    },
+    {
+      "id": "Rx-201",
+      "farmId": "farm-shanti-dairy",
+      "animalId": "MP-101",
+      "diagnosis": "Clinical mastitis",
+      "status": "signed",
+      "aware": "ACCESS",
+      "cia": false,
+      "drug": "Amoxicillin",
+      "route": "Injection",
+      "dose": "7 mg/kg",
+      "frequency": "Twice daily",
+      "duration": "3 days",
+      "reason": "Clinical mastitis",
+      "dateLabel": "Yesterday",
+      "stewardshipGuidance": [],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": {
+        "signedBy": "Dr. Bankey",
+        "dateTime": "22 Aug · 09:10 am",
+        "reference": "Signed · 4F2A91C7"
+      }
+    },
+    {
+      "id": "Rx-198",
+      "farmId": "farm-shree-krishna-dairy",
+      "animalId": "MP-112",
+      "diagnosis": "Mastitis",
+      "status": "signed",
+      "aware": "ACCESS",
+      "cia": false,
+      "drug": "Amoxicillin",
+      "route": "Injection",
+      "dose": "7 mg/kg",
+      "frequency": "Twice daily",
+      "duration": "3 days",
+      "reason": "Mastitis",
+      "dateLabel": "17 Aug",
+      "stewardshipGuidance": [],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": {
+        "signedBy": "Dr. Bankey",
+        "dateTime": "17 Aug · 11:20 am",
+        "reference": "Signed · 7C41B0DE"
+      }
+    },
+    {
+      "id": "Rx-195",
+      "farmId": "farm-shree-krishna-dairy",
+      "animalId": "MP-108",
+      "diagnosis": "Parasite control",
+      "status": "signed",
+      "aware": "ACCESS",
+      "cia": false,
+      "drug": "Ivermectin",
+      "route": "Pour-on",
+      "dose": "500 mcg/kg",
+      "frequency": "Single dose",
+      "duration": "1 day",
+      "reason": "Ectoparasite control",
+      "dateLabel": "18 Aug",
+      "stewardshipGuidance": [],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": {
+        "signedBy": "Dr. Bankey",
+        "dateTime": "18 Aug · 08:05 am",
+        "reference": "Signed · 22B9F5A1"
+      }
+    },
+    {
+      "id": "Rx-194",
+      "farmId": "farm-meena-poultry",
+      "animalId": "Flock P-02",
+      "diagnosis": "Colibacillosis",
+      "status": "signed",
+      "aware": "WATCH",
+      "cia": false,
+      "drug": "Enrofloxacin",
+      "route": "Drinking water",
+      "dose": "10 mg/kg",
+      "frequency": "Once daily",
+      "duration": "3 days",
+      "reason": "Colibacillosis outbreak",
+      "dateLabel": "15 Aug",
+      "stewardshipGuidance": [
+        "CIA drugs require clinical justification for use.",
+        "AWaRe Watch drugs should be reserved for specific cases where first-line options are insufficient.",
+        "Your signature confirms this prescription is clinically justified."
+      ],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": {
+        "signedBy": "Dr. Bankey",
+        "dateTime": "15 Aug · 04:40 pm",
+        "reference": "Signed · 91D7E230"
+      }
+    },
+    {
+      "id": "Rx-189",
+      "farmId": "farm-shanti-dairy",
+      "animalId": "MP-097",
+      "diagnosis": "Foot rot",
+      "status": "signed",
+      "aware": "ACCESS",
+      "cia": false,
+      "drug": "Oxytetracycline",
+      "route": "Injection",
+      "dose": "10 mg/kg",
+      "frequency": "Once daily",
+      "duration": "4 days",
+      "reason": "Foot rot",
+      "dateLabel": "12 Aug",
+      "stewardshipGuidance": [],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": {
+        "signedBy": "Dr. Bankey",
+        "dateTime": "12 Aug · 10:15 am",
+        "reference": "Signed · 5A0C77EB"
+      }
+    },
+    {
+      "id": "Rx-183",
+      "farmId": "farm-shree-krishna-dairy",
+      "animalId": "MP-088",
+      "diagnosis": "Respiratory infection",
+      "status": "voided",
+      "aware": "RESERVE",
+      "cia": true,
+      "drug": "Colistin",
+      "route": "Injection",
+      "dose": "50,000 IU/kg",
+      "frequency": "Twice daily",
+      "duration": "3 days",
+      "reason": "Non-responsive respiratory infection",
+      "dateLabel": "10 Aug",
+      "stewardshipGuidance": [
+        "CIA drugs require clinical justification for use.",
+        "AWaRe Watch drugs should be reserved for specific cases where first-line options are insufficient.",
+        "Your signature confirms this prescription is clinically justified."
+      ],
+      "previousTreatment": null,
+      "treatmentHistory": null,
+      "signature": null
+    }
+  ],
+  "PRESCRIPTION_OPTIONS": [
+    {
+      "id": "opt-1",
+      "drugName": "Oxytetracycline",
+      "dosage": "10 mg/kg",
+      "route": "Injection",
+      "prescriptionId": "Rx-208",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-2",
+      "drugName": "Amoxicillin",
+      "dosage": "7 mg/kg",
+      "route": "Injection",
+      "prescriptionId": "Rx-198",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-3",
+      "drugName": "Ivermectin",
+      "dosage": "500 mcg/kg",
+      "route": "Pour-on",
+      "prescriptionId": "Rx-195",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-4",
+      "drugName": "Vitamin B12",
+      "dosage": "5 mL",
+      "route": "Injection",
+      "prescriptionId": null,
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-5",
+      "drugName": "Oxytetracycline",
+      "dosage": "Medicated Feed",
+      "route": "",
+      "prescriptionId": "Rx-207",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-6",
+      "drugName": "No signed Rx — Emergency Log",
+      "dosage": "",
+      "route": "",
+      "prescriptionId": null,
+      "isEmergencyException": true
+    }
+  ],
+  "TREATMENTS": [
+    {
+      "id": "trt-1",
+      "animalId": "MP-104",
+      "farmId": "farm-shree-krishna-dairy",
+      "prescriptionId": null,
+      "drug": "Oxytetracycline",
+      "route": "Injection",
+      "dosage": "10 mg/kg",
+      "administeredLabel": "Administered Today, 08:15 AM",
+      "administeredOn": "23 Aug 2026",
+      "phase": "withdrawal",
+      "signed": true,
+      "emergency": false,
+      "labAssay": "within_mrl",
+      "feedBatch": null,
+      "reason": "Respiratory infection",
+      "withdrawal": {
+        "doseTime": "Dose",
+        "nowPct": 30,
+        "clearLabel": "Clear",
+        "productMessage": "Milk clears tomorrow, 10:30 AM",
+        "clearsAt": "Clears: 24 Aug, 10:30 AM"
+      }
+    },
+    {
+      "id": "trt-2",
+      "animalId": "Flock P-01",
+      "farmId": "farm-meena-poultry",
+      "prescriptionId": "Rx-207",
+      "drug": "Oxytetracycline",
+      "route": "Drinking water",
+      "dosage": "200 mg/L",
+      "administeredLabel": "Administered 2 days ago",
+      "administeredOn": "21 Aug 2026",
+      "phase": "withdrawal",
+      "signed": false,
+      "emergency": true,
+      "labAssay": "unavailable",
+      "feedBatch": "Feed Batch FB-012",
+      "reason": "Gumboro-associated secondary infection",
+      "withdrawal": {
+        "doseTime": "Dose",
+        "nowPct": 55,
+        "clearLabel": "Clear",
+        "productMessage": "Eggs clear in 4 days",
+        "clearsAt": "Clears: 27 Aug"
+      }
+    },
+    {
+      "id": "trt-3",
+      "animalId": "MP-106",
+      "farmId": "farm-shree-krishna-dairy",
+      "prescriptionId": null,
+      "drug": "Amoxicillin",
+      "route": "Injection",
+      "dosage": "7 mg/kg",
+      "administeredLabel": "Administered Yesterday, 14:00",
+      "administeredOn": "22 Aug 2026",
+      "phase": "active",
+      "signed": true,
+      "emergency": false,
+      "labAssay": null,
+      "feedBatch": null,
+      "reason": "Preventative",
+      "withdrawal": null
+    },
+    {
+      "id": "trt-4",
+      "animalId": "MP-109",
+      "farmId": "farm-shree-krishna-dairy",
+      "prescriptionId": null,
+      "drug": "Vitamin B12",
+      "route": "Injection",
+      "dosage": "5 mL",
+      "administeredLabel": "Administered Today, 09:00 AM",
+      "administeredOn": "23 Aug 2026",
+      "phase": "active",
+      "signed": false,
+      "emergency": false,
+      "labAssay": null,
+      "feedBatch": null,
+      "reason": "Supportive care",
+      "withdrawal": null
+    },
+    {
+      "id": "trt-5",
+      "animalId": "MP-108",
+      "farmId": "farm-shree-krishna-dairy",
+      "prescriptionId": "Rx-195",
+      "drug": "Ivermectin",
+      "route": "Pour-on",
+      "dosage": "500 mcg/kg",
+      "administeredLabel": "Administered 5 days ago",
+      "administeredOn": "18 Aug 2026",
+      "phase": "completed",
+      "signed": true,
+      "emergency": false,
+      "labAssay": "within_mrl",
+      "feedBatch": null,
+      "reason": "Parasite control",
+      "withdrawal": null
+    }
+  ],
+  "FARMER_DISPATCHES": [
+    {
+      "id": "DSP-024",
+      "farmId": "farm-shree-krishna-dairy",
+      "product": "Milk",
+      "animalId": "MP-104",
+      "dateLabel": "Today",
+      "status": "withdrawal",
+      "treatmentId": "trt-1",
+      "labDispatchId": "MLK-2026-00124",
+      "blocked": null
+    },
+    {
+      "id": "DSP-023",
+      "farmId": "farm-shree-krishna-dairy",
+      "product": "Milk",
+      "animalId": "MP-108",
+      "dateLabel": "Yesterday",
+      "status": "cleared",
+      "treatmentId": "trt-5",
+      "labDispatchId": null,
+      "blocked": null
+    },
+    {
+      "id": "DSP-022",
+      "farmId": "farm-meena-poultry",
+      "product": "Meat",
+      "animalId": "Flock-07",
+      "dateLabel": "20 Aug",
+      "status": "blocked",
+      "treatmentId": null,
+      "labDispatchId": null,
+      "blocked": {
+        "mrlMeasuredPpm": "0.14",
+        "mrlPermittedPpm": "0.10",
+        "prescriptionSigned": false
+      }
+    }
+  ],
+  "MEDICINE_STOCK": [
+    {
+      "name": "Oxytetracycline",
+      "quantity": 17,
+      "unit": "vials",
+      "recentUsage": 4,
+      "level": "restock",
+      "usageTotal": 25
+    },
+    {
+      "name": "Ivermectin",
+      "quantity": 32,
+      "unit": "doses",
+      "recentUsage": 3,
+      "level": "good",
+      "usageTotal": 18
+    },
+    {
+      "name": "Vitamin B Complex",
+      "quantity": 60,
+      "unit": "doses",
+      "recentUsage": 2,
+      "level": "good",
+      "usageTotal": 11
+    },
+    {
+      "name": "Amoxicillin",
+      "quantity": 8,
+      "unit": "vials",
+      "recentUsage": 2,
+      "level": "monitor",
+      "usageTotal": null
+    }
+  ],
+  "VETS": [
+    {
+      "id": "vet-1",
+      "name": "Dr. Bankey",
+      "designation": "Veterinary Officer",
+      "pin": "1234",
+      "isCurrentUser": true
+    },
+    {
+      "id": "vet-2",
+      "name": "Dr. Sofia Abidi",
+      "designation": "Senior Vet Surgeon",
+      "pin": "1234",
+      "isCurrentUser": false
+    },
+    {
+      "id": "vet-3",
+      "name": "Dr. Anil Sharma",
+      "designation": "Field Veterinarian",
+      "pin": "1234",
+      "isCurrentUser": false
+    }
+  ],
+  "LAB_SAMPLES": [
+    {
+      "dispatchId": "MLK-2026-00124",
+      "sampleId": "LAB-MLK-00981",
+      "product": "Milk",
+      "productSub": "Raw milk",
+      "productLabel": "Raw Milk",
+      "farmId": "farm-shree-krishna-dairy",
+      "sourceName": "Shree Krishna Dairy",
+      "animalId": "MP-104",
+      "batchLabel": null,
+      "farmerDispatchId": "DSP-024",
+      "stage": "testing",
+      "risk": "MODERATE",
+      "riskReason": "Recent antimicrobial exposure",
+      "priority": "HIGH PRIORITY",
+      "arrival": "Received 22 Aug · 11:05 AM",
+      "receiptReason": "Beta-lactam residue testing required",
+      "dateLabel": "22 Aug · 10:30 AM",
+      "date": "22 Aug 2026",
+      "time": "10:30 AM",
+      "resultDate": null,
+      "quantity": "850 L",
+      "receipt": {
+        "condition": "Acceptable",
+        "temperature": "4.2°C",
+        "container": "Intact",
+        "receivedBy": "Dr. Priya Sharma",
+        "receivedAt": "22 Aug · 11:05 AM"
+      },
+      "tests": [
+        {
+          "name": "Product Quality",
+          "checks": [
+            "Fat",
+            "SNF",
+            "Acidity",
+            "Adulteration screen"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Standard plate count",
+            "Coliform screening",
+            "Pathogen screen"
+          ],
+          "state": "active",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Beta-lactam screen",
+            "Targeted residue analysis"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": "Triggered by treatment history"
+        }
+      ],
+      "antimicrobialContext": null,
+      "antimicrobialStatus": null,
+      "activity": [
+        {
+          "time": "12:10 PM",
+          "title": "Microbiological testing started",
+          "desc": "Status updated to In Progress.",
+          "icon": "active"
+        },
+        {
+          "time": "11:20 AM",
+          "title": "Product quality testing completed",
+          "desc": "Results submitted by Dr. Priya Sharma.",
+          "icon": "done"
+        },
+        {
+          "time": "11:05 AM",
+          "title": "Sample received and registered",
+          "desc": "LAB-MLK-00981 linked to this dispatch.",
+          "icon": "done"
+        },
+        {
+          "time": "10:30 AM",
+          "title": "Dispatch created",
+          "desc": "Milk dispatch submitted from Shree Krishna Dairy.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": {
+        "desc": "Beta-lactam residue testing required.",
+        "status": "HIGH PRIORITY",
+        "statusColor": "amber",
+        "action": "Continue Testing →",
+        "page": "/lab/testing-workspace/MLK-2026-00124"
+      },
+      "report": null
+    },
+    {
+      "dispatchId": "MEAT-2026-00087",
+      "sampleId": "LAB-MT-00472",
+      "product": "Meat",
+      "productSub": "Batch M-42",
+      "productLabel": "Meat",
+      "farmId": "farm-green-valley-livestock",
+      "sourceName": "Green Valley Livestock",
+      "animalId": null,
+      "batchLabel": "M-42",
+      "farmerDispatchId": null,
+      "stage": "on_hold",
+      "risk": "HIGH",
+      "riskReason": "Tetracycline detected above threshold",
+      "priority": "HIGH PRIORITY",
+      "arrival": "Received 22 Aug · 09:15 AM",
+      "receiptReason": "Withdrawal verification requires review",
+      "dateLabel": "22 Aug · 08:45 AM",
+      "date": "22 Aug 2026",
+      "time": "08:45 AM",
+      "resultDate": "23 Aug 2026",
+      "quantity": "420 kg",
+      "receipt": {
+        "condition": "Acceptable",
+        "temperature": "2.8°C",
+        "container": "Intact",
+        "receivedBy": "Dr. Priya Sharma",
+        "receivedAt": "22 Aug · 09:15 AM"
+      },
+      "tests": [
+        {
+          "name": "Product Quality",
+          "checks": [
+            "pH",
+            "Appearance",
+            "Odour"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Aerobic count",
+            "E. coli",
+            "Salmonella"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Tetracycline screen",
+            "Confirmatory analysis"
+          ],
+          "state": "done",
+          "result": "REVIEW REQUIRED",
+          "ok": false,
+          "trigger": "Triggered by withdrawal dispute"
+        }
+      ],
+      "antimicrobialContext": "Oxytetracycline · Last administered 10 Aug 2026",
+      "antimicrobialStatus": "⚠ Withdrawal period disputed. Residue exceeds MRL — assessment on hold.",
+      "activity": [
+        {
+          "time": "02:40 PM",
+          "title": "Dispatch placed on hold",
+          "desc": "Tetracycline above MRL — awaiting review.",
+          "icon": "active"
+        },
+        {
+          "time": "01:15 PM",
+          "title": "Residue testing completed",
+          "desc": "Confirmatory analysis submitted.",
+          "icon": "done"
+        },
+        {
+          "time": "09:15 AM",
+          "title": "Sample received and registered",
+          "desc": "LAB-MT-00472 linked to this dispatch.",
+          "icon": "done"
+        },
+        {
+          "time": "08:45 AM",
+          "title": "Dispatch created",
+          "desc": "Meat dispatch submitted from Green Valley Livestock.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": {
+        "desc": "Withdrawal verification requires review.",
+        "status": "REVIEW REQUIRED",
+        "statusColor": "red",
+        "action": "View Dispatch →",
+        "page": "/lab/dispatches/MEAT-2026-00087"
+      },
+      "report": {
+        "refNo": "LAB-REF-2026-00087",
+        "verifiedBy": "Laboratory Authority",
+        "verifiedOn": "—",
+        "status": "ON HOLD",
+        "statusColor": "red",
+        "assessments": [
+          {
+            "label": "Product Quality",
+            "result": "Compliant",
+            "ok": true,
+            "detail": "pH 5.7 · Appearance normal · Odour normal"
+          },
+          {
+            "label": "Microbiological Safety",
+            "result": "Compliant",
+            "ok": true,
+            "detail": "Aerobic count within range · E. coli ND · Salmonella ND"
+          },
+          {
+            "label": "Antimicrobial Residue",
+            "result": "Review Required",
+            "ok": false,
+            "detail": "Tetracycline detected above threshold"
+          }
+        ],
+        "mrl": {
+          "drug": "Tetracycline",
+          "measured": 220,
+          "limit": 100,
+          "unit": "μg/kg",
+          "ratio": 2.2,
+          "verdict": "EXCEEDS MRL",
+          "verdictOk": false
+        },
+        "withdrawal": {
+          "drug": "Oxytetracycline",
+          "administered": "10 Aug 2026",
+          "completed": "18 Aug 2026",
+          "status": "Disputed — review required"
+        },
+        "outcome": "ON HOLD",
+        "outcomeOk": false
+      }
+    },
+    {
+      "dispatchId": "EGG-2026-00241",
+      "sampleId": "LAB-EGG-01128",
+      "product": "Eggs",
+      "productSub": "Flock dispatch",
+      "productLabel": "Eggs",
+      "farmId": "farm-sunrise-poultry",
+      "sourceName": "Sunrise Poultry",
+      "animalId": "FLK-2026-042",
+      "batchLabel": "FLK-2026-042",
+      "farmerDispatchId": null,
+      "stage": "awaiting_verification",
+      "risk": "LOW",
+      "riskReason": "Routine surveillance",
+      "priority": "ROUTINE",
+      "arrival": "Received 21 Aug · 04:55 PM",
+      "receiptReason": "Routine residue surveillance",
+      "dateLabel": "21 Aug · 04:20 PM",
+      "date": "21 Aug 2026",
+      "time": "04:20 PM",
+      "resultDate": "22 Aug 2026",
+      "quantity": "6,400 eggs",
+      "receipt": {
+        "condition": "Acceptable",
+        "temperature": "18.0°C",
+        "container": "Intact",
+        "receivedBy": "Dr. Priya Sharma",
+        "receivedAt": "21 Aug · 04:55 PM"
+      },
+      "tests": [
+        {
+          "name": "Physical Quality",
+          "checks": [
+            "Average weight",
+            "Shell integrity",
+            "Cleanliness"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Salmonella screen",
+            "Pathogen screen"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Enrofloxacin screen"
+          ],
+          "state": "done",
+          "result": "WITHIN LIMIT",
+          "ok": true,
+          "trigger": null
+        }
+      ],
+      "antimicrobialContext": "Enrofloxacin · Last administered 8 Aug 2026",
+      "antimicrobialStatus": "✓ Withdrawal completed before dispatch. Assessment awaiting verification.",
+      "activity": [
+        {
+          "time": "03:10 PM",
+          "title": "Assessment submitted",
+          "desc": "Awaiting authority verification.",
+          "icon": "active"
+        },
+        {
+          "time": "01:40 PM",
+          "title": "Residue testing completed",
+          "desc": "Enrofloxacin within limit.",
+          "icon": "done"
+        },
+        {
+          "time": "04:55 PM",
+          "title": "Sample received and registered",
+          "desc": "LAB-EGG-01128 linked to this dispatch.",
+          "icon": "done"
+        },
+        {
+          "time": "04:20 PM",
+          "title": "Dispatch created",
+          "desc": "Egg dispatch submitted from Sunrise Poultry.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": {
+        "desc": "Assessment is awaiting verification.",
+        "status": "ACTION REQUIRED",
+        "statusColor": "amber",
+        "action": "Review Results →",
+        "page": "/lab/results"
+      },
+      "report": null
+    },
+    {
+      "dispatchId": "MLK-2026-00118",
+      "sampleId": "LAB-MLK-00972",
+      "product": "Milk",
+      "productSub": "Raw milk",
+      "productLabel": "Raw Milk",
+      "farmId": "farm-mahalaxmi-dairy",
+      "sourceName": "Mahalaxmi Dairy",
+      "animalId": "MP-087",
+      "batchLabel": null,
+      "farmerDispatchId": null,
+      "stage": "verified",
+      "risk": "LOW",
+      "riskReason": "No recent antimicrobial exposure",
+      "priority": "ROUTINE",
+      "arrival": "Received 21 Aug · 11:40 AM",
+      "receiptReason": "Routine residue surveillance",
+      "dateLabel": "21 Aug · 11:15 AM",
+      "date": "21 Aug 2026",
+      "time": "11:15 AM",
+      "resultDate": "22 Aug 2026",
+      "quantity": "620 L",
+      "receipt": {
+        "condition": "Acceptable",
+        "temperature": "4.0°C",
+        "container": "Intact",
+        "receivedBy": "Dr. Priya Sharma",
+        "receivedAt": "21 Aug · 11:40 AM"
+      },
+      "tests": [
+        {
+          "name": "Product Quality",
+          "checks": [
+            "Fat",
+            "SNF",
+            "Acidity",
+            "Adulteration screen"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Standard plate count",
+            "Coliform screening",
+            "Pathogen screen"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Beta-lactam screen",
+            "Tetracycline screen"
+          ],
+          "state": "done",
+          "result": "WITHIN LIMIT",
+          "ok": true,
+          "trigger": null
+        }
+      ],
+      "antimicrobialContext": "Amoxicillin · Last administered 15 Aug 2026",
+      "antimicrobialStatus": "✓ Withdrawal completed before dispatch. Residue testing complete.",
+      "activity": [
+        {
+          "time": "04:20 PM",
+          "title": "Report verified and released",
+          "desc": "Cleared for dispatch by Laboratory Authority.",
+          "icon": "done"
+        },
+        {
+          "time": "02:05 PM",
+          "title": "Residue testing completed",
+          "desc": "Beta-lactam within limit.",
+          "icon": "done"
+        },
+        {
+          "time": "11:40 AM",
+          "title": "Sample received and registered",
+          "desc": "LAB-MLK-00972 linked to this dispatch.",
+          "icon": "done"
+        },
+        {
+          "time": "11:15 AM",
+          "title": "Dispatch created",
+          "desc": "Milk dispatch submitted from Mahalaxmi Dairy.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": null,
+      "report": {
+        "refNo": "LAB-REF-2026-00118",
+        "verifiedBy": "Laboratory Authority",
+        "verifiedOn": "22 Aug 2026 · 4:20 PM",
+        "status": "CLEARED",
+        "statusColor": "green",
+        "assessments": [
+          {
+            "label": "Product Quality",
+            "result": "Compliant",
+            "ok": true,
+            "detail": "Fat 3.8% · SNF 8.6% · Acidity Normal · No adulteration"
+          },
+          {
+            "label": "Microbiological Safety",
+            "result": "Compliant",
+            "ok": true,
+            "detail": "SPC 4,200 CFU/mL · Coliform ND · Pathogen ND"
+          },
+          {
+            "label": "Antimicrobial Residue",
+            "result": "Within Limit",
+            "ok": true,
+            "detail": "Beta-lactam · Tetracycline screened"
+          }
+        ],
+        "mrl": {
+          "drug": "Amoxicillin (Beta-lactam)",
+          "measured": 3.2,
+          "limit": 4,
+          "unit": "μg/kg",
+          "ratio": 0.8,
+          "verdict": "WITHIN MRL",
+          "verdictOk": true
+        },
+        "withdrawal": {
+          "drug": "Amoxicillin",
+          "administered": "15 Aug 2026",
+          "completed": "20 Aug 2026",
+          "status": "Completed before dispatch"
+        },
+        "outcome": "CLEARED FOR DISPATCH",
+        "outcomeOk": true
+      }
+    },
+    {
+      "dispatchId": "MEAT-2026-00072",
+      "sampleId": "LAB-MT-00461",
+      "product": "Meat",
+      "productSub": "Batch M-18",
+      "productLabel": "Meat",
+      "farmId": "farm-raj-farms",
+      "sourceName": "Raj Farms",
+      "animalId": null,
+      "batchLabel": "M-18",
+      "farmerDispatchId": null,
+      "stage": "on_hold",
+      "risk": "HIGH",
+      "riskReason": "Sample integrity dispute",
+      "priority": "HIGH PRIORITY",
+      "arrival": "Received 20 Aug · 02:35 PM",
+      "receiptReason": "Re-collection requested",
+      "dateLabel": "20 Aug · 02:00 PM",
+      "date": "20 Aug 2026",
+      "time": "02:00 PM",
+      "resultDate": null,
+      "quantity": "310 kg",
+      "receipt": {
+        "condition": "Container seal broken",
+        "temperature": "6.5°C",
+        "container": "Compromised",
+        "receivedBy": "Dr. Priya Sharma",
+        "receivedAt": "20 Aug · 02:35 PM"
+      },
+      "tests": [
+        {
+          "name": "Product Quality",
+          "checks": [
+            "pH",
+            "Appearance",
+            "Odour"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Aerobic count",
+            "E. coli",
+            "Salmonella"
+          ],
+          "state": "done",
+          "result": "COMPLIANT",
+          "ok": true,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Tetracycline screen"
+          ],
+          "state": "active",
+          "result": null,
+          "ok": false,
+          "trigger": "Held pending re-collection"
+        }
+      ],
+      "antimicrobialContext": null,
+      "antimicrobialStatus": "⚠ Sample integrity compromised. Residue testing held pending re-collection.",
+      "activity": [
+        {
+          "time": "03:10 PM",
+          "title": "Dispatch placed on hold",
+          "desc": "Container seal broken on arrival.",
+          "icon": "active"
+        },
+        {
+          "time": "02:35 PM",
+          "title": "Sample received and registered",
+          "desc": "LAB-MT-00461 linked to this dispatch.",
+          "icon": "done"
+        },
+        {
+          "time": "02:00 PM",
+          "title": "Dispatch created",
+          "desc": "Meat dispatch submitted from Raj Farms.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": null,
+      "report": null
+    },
+    {
+      "dispatchId": "MLK-2026-00131",
+      "sampleId": "LAB-MLK-00992",
+      "product": "Milk",
+      "productSub": "Raw Milk",
+      "productLabel": "Raw Milk",
+      "farmId": "farm-mahalaxmi-dairy",
+      "sourceName": "Mahalaxmi Dairy",
+      "animalId": "MP-087",
+      "batchLabel": null,
+      "farmerDispatchId": null,
+      "stage": "awaiting_receipt",
+      "risk": "HIGH",
+      "riskReason": "Targeted residue test required",
+      "priority": "HIGH PRIORITY",
+      "arrival": "Expected today · 10:45 AM",
+      "receiptReason": "Targeted residue test required",
+      "dateLabel": "23 Aug · 10:45 AM",
+      "date": "23 Aug 2026",
+      "time": "10:45 AM",
+      "resultDate": null,
+      "quantity": "540 L",
+      "receipt": {
+        "condition": "—",
+        "temperature": "—",
+        "container": "—",
+        "receivedBy": "—",
+        "receivedAt": "—"
+      },
+      "tests": [
+        {
+          "name": "Product Quality",
+          "checks": [
+            "Fat",
+            "SNF",
+            "Acidity",
+            "Adulteration screen"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Standard plate count",
+            "Coliform screening"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Targeted residue analysis"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": "Targeted residue test required"
+        }
+      ],
+      "antimicrobialContext": null,
+      "antimicrobialStatus": null,
+      "activity": [
+        {
+          "time": "09:30 AM",
+          "title": "Dispatch created",
+          "desc": "Milk dispatch submitted from Mahalaxmi Dairy.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": null,
+      "report": null
+    },
+    {
+      "dispatchId": "MEAT-2026-00091",
+      "sampleId": "LAB-MT-00481",
+      "product": "Meat",
+      "productSub": "Batch M-56",
+      "productLabel": "Meat",
+      "farmId": "farm-green-valley-livestock",
+      "sourceName": "Green Valley Livestock",
+      "animalId": null,
+      "batchLabel": "M-56",
+      "farmerDispatchId": null,
+      "stage": "awaiting_receipt",
+      "risk": "MODERATE",
+      "riskReason": "Routine surveillance",
+      "priority": "MODERATE",
+      "arrival": "Received 15 min ago",
+      "receiptReason": "",
+      "dateLabel": "23 Aug · 09:50 AM",
+      "date": "23 Aug 2026",
+      "time": "09:50 AM",
+      "resultDate": null,
+      "quantity": "380 kg",
+      "receipt": {
+        "condition": "—",
+        "temperature": "—",
+        "container": "—",
+        "receivedBy": "—",
+        "receivedAt": "—"
+      },
+      "tests": [
+        {
+          "name": "Quality Assessment",
+          "checks": [
+            "pH",
+            "Appearance",
+            "Odour"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Microbiology",
+          "checks": [
+            "Aerobic count",
+            "E. coli",
+            "Salmonella"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Tetracycline screen"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        }
+      ],
+      "antimicrobialContext": null,
+      "antimicrobialStatus": null,
+      "activity": [
+        {
+          "time": "09:50 AM",
+          "title": "Dispatch created",
+          "desc": "Meat dispatch submitted from Green Valley Livestock.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": null,
+      "report": null
+    },
+    {
+      "dispatchId": "EGG-2026-00255",
+      "sampleId": "LAB-EGG-01142",
+      "product": "Eggs",
+      "productSub": "Flock FLK-2026-051",
+      "productLabel": "Eggs",
+      "farmId": "farm-sunrise-poultry",
+      "sourceName": "Sunrise Poultry",
+      "animalId": "FLK-2026-051",
+      "batchLabel": "FLK-2026-051",
+      "farmerDispatchId": null,
+      "stage": "awaiting_receipt",
+      "risk": "LOW",
+      "riskReason": "Routine surveillance",
+      "priority": "ROUTINE",
+      "arrival": "Expected today · 12:30 PM",
+      "receiptReason": "",
+      "dateLabel": "23 Aug · 12:30 PM",
+      "date": "23 Aug 2026",
+      "time": "12:30 PM",
+      "resultDate": null,
+      "quantity": "5,200 eggs",
+      "receipt": {
+        "condition": "—",
+        "temperature": "—",
+        "container": "—",
+        "receivedBy": "—",
+        "receivedAt": "—"
+      },
+      "tests": [
+        {
+          "name": "Physical Quality",
+          "checks": [
+            "Average weight",
+            "Shell integrity",
+            "Cleanliness"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Microbiological Safety",
+          "checks": [
+            "Salmonella screen"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        },
+        {
+          "name": "Antimicrobial Residue",
+          "checks": [
+            "Enrofloxacin screen"
+          ],
+          "state": "pending",
+          "result": null,
+          "ok": false,
+          "trigger": null
+        }
+      ],
+      "antimicrobialContext": null,
+      "antimicrobialStatus": null,
+      "activity": [
+        {
+          "time": "08:15 AM",
+          "title": "Dispatch created",
+          "desc": "Egg dispatch submitted from Sunrise Poultry.",
+          "icon": "neutral"
+        }
+      ],
+      "attention": null,
+      "report": null
+    }
+  ],
+  "ADMIN_ANOMALIES": [
+    {
+      "id": "A001",
+      "farm": "Farm 247",
+      "region": "Maharashtra",
+      "medicine": "Oxytetracycline",
+      "amuChange": 68,
+      "baseline": 100,
+      "healthEvent": null,
+      "status": "UNEXPLAINED",
+      "severity": "HIGH",
+      "species": "Dairy",
+      "date": "24 Aug 2026",
+      "history": [
+        98,
+        102,
+        97,
+        104,
+        99,
+        101,
+        100,
+        98,
+        103,
+        115,
+        142,
+        168
+      ]
+    },
+    {
+      "id": "A002",
+      "farm": "Meena Poultry",
+      "farmId": "farm-meena-poultry",
+      "region": "Punjab",
+      "medicine": "Oxytetracycline",
+      "amuChange": 54,
+      "baseline": 100,
+      "healthEvent": "Gumboro (IBD)",
+      "status": "EXPLAINED",
+      "severity": "MEDIUM",
+      "species": "Poultry",
+      "date": "22 Aug 2026",
+      "history": [
+        96,
+        100,
+        98,
+        102,
+        97,
+        99,
+        101,
+        98,
+        100,
+        108,
+        154,
+        148
+      ]
+    },
+    {
+      "id": "A003",
+      "farm": "Farm 18",
+      "region": "Gujarat",
+      "medicine": "Amoxicillin",
+      "amuChange": 41,
+      "baseline": 100,
+      "healthEvent": "Mastitis",
+      "status": "EXPLAINED",
+      "severity": "MEDIUM",
+      "species": "Dairy",
+      "date": "21 Aug 2026",
+      "history": [
+        101,
+        99,
+        102,
+        97,
+        100,
+        98,
+        102,
+        99,
+        101,
+        110,
+        141,
+        138
+      ]
+    },
+    {
+      "id": "A004",
+      "farm": "Farm 91",
+      "region": "Rajasthan",
+      "medicine": "Enrofloxacin",
+      "amuChange": 73,
+      "baseline": 100,
+      "healthEvent": null,
+      "status": "UNEXPLAINED",
+      "severity": "HIGH",
+      "species": "Dairy",
+      "date": "20 Aug 2026",
+      "history": [
+        100,
+        103,
+        98,
+        101,
+        99,
+        102,
+        98,
+        101,
+        100,
+        118,
+        148,
+        173
+      ]
+    },
+    {
+      "id": "A005",
+      "farm": "Shree Krishna Dairy",
+      "farmId": "farm-shree-krishna-dairy",
+      "region": "Haryana",
+      "medicine": "Amoxicillin",
+      "amuChange": 38,
+      "baseline": 100,
+      "healthEvent": "Mastitis",
+      "status": "EXPLAINED",
+      "severity": "LOW",
+      "species": "Dairy",
+      "date": "19 Aug 2026",
+      "history": [
+        99,
+        101,
+        100,
+        98,
+        102,
+        100,
+        99,
+        101,
+        98,
+        105,
+        138,
+        132
+      ]
+    },
+    {
+      "id": "A006",
+      "farm": "Farm 334",
+      "region": "Uttar Pradesh",
+      "medicine": "Oxytetracycline",
+      "amuChange": 82,
+      "baseline": 100,
+      "healthEvent": null,
+      "status": "UNEXPLAINED",
+      "severity": "HIGH",
+      "species": "Poultry",
+      "date": "18 Aug 2026",
+      "history": [
+        102,
+        98,
+        101,
+        99,
+        103,
+        100,
+        98,
+        102,
+        104,
+        122,
+        158,
+        182
+      ]
+    },
+    {
+      "id": "A007",
+      "farm": "Shanti Farms",
+      "region": "Karnataka",
+      "medicine": "Enrofloxacin",
+      "amuChange": 29,
+      "baseline": 100,
+      "healthEvent": "Respiratory infection",
+      "status": "EXPLAINED",
+      "severity": "LOW",
+      "species": "Poultry",
+      "date": "17 Aug 2026",
+      "history": [
+        98,
+        100,
+        99,
+        101,
+        100,
+        98,
+        102,
+        99,
+        100,
+        104,
+        129,
+        125
+      ]
+    },
+    {
+      "id": "A008",
+      "farm": "Farm 512",
+      "region": "Rajasthan",
+      "medicine": "Oxytetracycline",
+      "amuChange": 61,
+      "baseline": 100,
+      "healthEvent": null,
+      "status": "UNEXPLAINED",
+      "severity": "MEDIUM",
+      "species": "Dairy",
+      "date": "16 Aug 2026",
+      "history": [
+        101,
+        99,
+        102,
+        98,
+        100,
+        103,
+        99,
+        101,
+        100,
+        114,
+        145,
+        161
+      ]
+    },
+    {
+      "id": "A009",
+      "farm": "Greenview Dairy",
+      "region": "Maharashtra",
+      "medicine": "Penicillin",
+      "amuChange": 44,
+      "baseline": 100,
+      "healthEvent": "Foot rot",
+      "status": "EXPLAINED",
+      "severity": "MEDIUM",
+      "species": "Dairy",
+      "date": "15 Aug 2026",
+      "history": [
+        100,
+        102,
+        98,
+        101,
+        99,
+        100,
+        103,
+        99,
+        101,
+        108,
+        144,
+        139
+      ]
+    },
+    {
+      "id": "A010",
+      "farm": "Farm 88",
+      "region": "Gujarat",
+      "medicine": "Enrofloxacin",
+      "amuChange": 57,
+      "baseline": 100,
+      "healthEvent": null,
+      "status": "UNEXPLAINED",
+      "severity": "HIGH",
+      "species": "Poultry",
+      "date": "14 Aug 2026",
+      "history": [
+        99,
+        101,
+        100,
+        102,
+        98,
+        101,
+        99,
+        103,
+        101,
+        116,
+        148,
+        157
+      ]
+    },
+    {
+      "id": "A011",
+      "farm": "Farm 203",
+      "region": "Bihar",
+      "medicine": "Amoxicillin",
+      "amuChange": 35,
+      "baseline": 100,
+      "healthEvent": "Colibacillosis",
+      "status": "EXPLAINED",
+      "severity": "LOW",
+      "species": "Poultry",
+      "date": "13 Aug 2026",
+      "history": [
+        100,
+        98,
+        101,
+        99,
+        102,
+        100,
+        98,
+        101,
+        99,
+        104,
+        135,
+        130
+      ]
+    },
+    {
+      "id": "A012",
+      "farm": "Sunrise Poultry",
+      "farmId": "farm-sunrise-poultry",
+      "region": "West Bengal",
+      "medicine": "Oxytetracycline",
+      "amuChange": 47,
+      "baseline": 100,
+      "healthEvent": "Newcastle disease",
+      "status": "EXPLAINED",
+      "severity": "MEDIUM",
+      "species": "Poultry",
+      "date": "12 Aug 2026",
+      "history": [
+        102,
+        99,
+        101,
+        98,
+        100,
+        102,
+        99,
+        101,
+        100,
+        109,
+        147,
+        142
+      ]
+    }
+  ],
+  "PRESCRIPTION_OPTIONS2": [
+    {
+      "id": "opt-1",
+      "drugName": "Oxytetracycline",
+      "dosage": "10 mg/kg",
+      "route": "Injection",
+      "prescriptionId": "Rx-208",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-2",
+      "drugName": "Amoxicillin",
+      "dosage": "7 mg/kg",
+      "route": "Injection",
+      "prescriptionId": "Rx-198",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-3",
+      "drugName": "Ivermectin",
+      "dosage": "500 mcg/kg",
+      "route": "Pour-on",
+      "prescriptionId": "Rx-195",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-4",
+      "drugName": "Vitamin B12",
+      "dosage": "5 mL",
+      "route": "Injection",
+      "prescriptionId": null,
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-5",
+      "drugName": "Oxytetracycline",
+      "dosage": "Medicated Feed",
+      "route": "",
+      "prescriptionId": "Rx-207",
+      "isEmergencyException": false
+    },
+    {
+      "id": "opt-6",
+      "drugName": "No signed Rx — Emergency Log",
+      "dosage": "",
+      "route": "",
+      "prescriptionId": null,
+      "isEmergencyException": true
+    }
+  ]
+}
