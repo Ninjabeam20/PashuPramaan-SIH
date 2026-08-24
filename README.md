@@ -33,7 +33,7 @@
 
 ---
 
-## 🌟 Executive Overview
+## 🌟 Executive Overview:
 
 **PashuPramaan (पशु प्रमाण)** is a next-generation livestock lifecycle, clinical health, and food supply chain verification platform. It solves the critical intersection between **livestock healthcare**, **antimicrobial resistance (AMR)** containment, and **consumer food safety**.
 
