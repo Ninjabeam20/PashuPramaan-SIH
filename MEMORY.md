@@ -4,8 +4,8 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-24  
 **Branch:** `main`  
-**HEAD:** `66f8918` — Add public passport verifier and one-click Generate Passport lab notify  
-**HEAD (main):** `66f8918`
+**HEAD:** `6e7da23` — Fix lab sample insert so Generate Passport can create a new queue row  
+**HEAD (main):** `6e7da23`
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -98,6 +98,10 @@ Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001). **
 Lab-sample insert order + `LAB_PENDING` enum value on local Postgres so Generate Passport can create a new lab row. README lists the live Vercel URL. `.env` `VERIFY_PUBLIC_BASE_URL` is local-only (not committed).
 
 ---
+
+### `6e7da23` — Fix lab sample insert so Generate Passport can create a new queue row (2026-08-24)
+
+Insert `LabSample` before `FarmerDispatch` to avoid FK order issues. README records live URL `https://pashu-verifier.vercel.app`. Local Postgres `dispatch_status_enum` gained `LAB_PENDING` (already in the SQLAlchemy model) so new lab rows can be stored. `.env` `VERIFY_PUBLIC_BASE_URL` is local-only.
 
 ### `66f8918` — Add public passport verifier and one-click Generate Passport lab notify (2026-08-24)
 
