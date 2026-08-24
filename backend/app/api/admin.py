@@ -91,19 +91,18 @@ def get_health_amu(db: Session = Depends(get_db)):
     }
 
 @router.get("/forecast")
-def get_forecast(db: Session = Depends(get_db)):
-    return {
-        "series": {
-            "months": ["Jul", "Aug", "Sep"],
-            "historical": [4200, 4300, None],
-            "forecast": [None, 4300, 4500],
-            "lower_bound": [None, 4100, 4200],
-            "upper_bound": [None, 4500, 4800]
-        },
-        "regional_planning": [
-            {"region": "Maharashtra", "predicted_shortfall": "Oxytetracycline", "risk_level": "High"}
-        ]
-    }
+def get_forecast(
+    medicine: str = "All Medicines",
+    species: str = "All Species",
+    region: str = "All Regions",
+    period: str = "Next 30 days",
+):
+    from app.forecast.service import build_forecast
+
+    try:
+        return build_forecast(medicine, species, region, period)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 @router.get("/workspace/insights")
 def get_insights(db: Session = Depends(get_db)):

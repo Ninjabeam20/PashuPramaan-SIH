@@ -1,6 +1,4 @@
 import { getToken } from "./auth-utils";
-import { store } from "@/lib/seed/store";
-import { animalStatus, speciesGroups, stockQuantityLabel, stockStatus } from "@/lib/seed/project";
 
 export interface FarmInsights {
   range: "30d" | "60d" | "90d";
@@ -44,14 +42,16 @@ const pressureLevel = (underTreatment: number): "Low" | "Moderate" | "High" => {
 
 export const getFarmInsights = async (range: "30d" | "60d" | "90d"): Promise<FarmInsights> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/insights`, {
+  const params = new URLSearchParams({ range });
+  const res = await fetch(`http://localhost:8000/api/farmer/insights?${params}`, {
     method: "GET",
-    headers: { "Authorization": `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
-    // some fallback just in case or throw
+    const detail = await res.text();
+    throw new Error(detail || "Failed to load insights");
   }
-  return await res.json() as any;
+  return (await res.json()) as FarmInsights;
 };
 
 export const getDrugsList = async () => {

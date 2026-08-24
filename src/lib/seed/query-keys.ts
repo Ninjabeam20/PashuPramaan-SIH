@@ -22,6 +22,8 @@ export const queryKeys = {
   dispatchDetail: (dispatchId: string) => ["dispatch-detail", dispatchId] as const,
   dispatchSafety: (product: string, animalIds: string[]) => ["dispatch-safety", product, animalIds] as const,
   farmInsights: (range: string) => ["farm-insights", range] as const,
+  adminForecast: (q: { medicine: string; species: string; region: string; period: string }) =>
+    ["admin-forecast", q.medicine, q.species, q.region, q.period] as const,
   availableVets: () => ["available-vets"] as const,
 
   // Vet

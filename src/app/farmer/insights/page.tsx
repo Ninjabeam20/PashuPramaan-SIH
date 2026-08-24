@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getFarmInsights } from "@/lib/api/dummy/farm-insights";
+import { queryKeys } from "@/lib/seed/query-keys";
 import { MedicineStockTable } from "@/components/farmer/MedicineStockTable";
 import { MedicineDemandForecastCard } from "@/components/farmer/MedicineDemandForecastCard";
 import { MostUsedMedicinesList } from "@/components/farmer/MostUsedMedicinesList";
@@ -15,7 +16,7 @@ export default function InsightsPage() {
   const [range, setRange] = React.useState<"30d" | "60d" | "90d">("30d");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["farm-insights", range],
+    queryKey: queryKeys.farmInsights(range),
     queryFn: () => getFarmInsights(range),
   });
 
@@ -75,12 +76,13 @@ export default function InsightsPage() {
                   Farm Performance
                 </div>
                 <p className="text-sm text-[var(--color-text-muted)]">
-                  Milk output vs. medicine cost over recent months
+                  Milk output vs. medicine cost over the past year
                 </p>
               </div>
               <DualLineTrendChart 
                 data={data.farm_performance.chart_data}
                 xAxisKey="month"
+                yAxis="dual"
                 series1={{ key: "milk_output", label: "Milk output (L)", color: "#557b4f" }}
                 series2={{ key: "medicine_cost", label: "Medicine cost (₹00s)", color: "#e46a4d", dashed: true }}
               />
@@ -92,7 +94,7 @@ export default function InsightsPage() {
                   Health & Treatment Trends
                 </div>
                 <p className="text-sm text-[var(--color-text-muted)]">
-                  Health events and treatment activity over recent months
+                  Health events and treatment activity over the past year
                 </p>
               </div>
               <DualLineTrendChart 

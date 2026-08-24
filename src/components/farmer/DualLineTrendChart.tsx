@@ -22,22 +22,33 @@ export interface DualLineTrendChartProps {
   xAxisKey: string;
   series1: Series;
   series2: Series;
+  yAxis?: "shared" | "dual";
 }
 
-export function DualLineTrendChart({ data, xAxisKey, series1, series2 }: DualLineTrendChartProps) {
+export function DualLineTrendChart({ data, xAxisKey, series1, series2, yAxis = "shared" }: DualLineTrendChartProps) {
+  const dual = yAxis === "dual";
+
   return (
     <div className="flex flex-col w-full h-full min-h-[300px]">
       <div className="flex-1 w-full min-h-[200px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
-            <XAxis 
-              dataKey={xAxisKey} 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 10, fill: "var(--color-text-muted)" }} 
-              dy={10}
-            />
-            <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
+          <ComposedChart data={data} margin={{ top: 20, right: dual ? 10 : 10, left: 10, bottom: 0 }}>
+              <XAxis 
+                dataKey={xAxisKey} 
+                interval={0}
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: "var(--color-text-muted)" }} 
+                dy={10}
+              />
+            {dual ? (
+              <>
+                <YAxis yAxisId="left" hide domain={["dataMin - 10", "dataMax + 10"]} />
+                <YAxis yAxisId="right" orientation="right" hide domain={["dataMin - 2", "dataMax + 2"]} />
+              </>
+            ) : (
+              <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
+            )}
             <Tooltip 
               contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               itemStyle={{ color: 'var(--color-text)', fontSize: '12px', fontWeight: 'bold' }}
@@ -53,6 +64,7 @@ export function DualLineTrendChart({ data, xAxisKey, series1, series2 }: DualLin
               dot={{ r: 3, fill: series1.color, strokeWidth: 0 }}
               activeDot={{ r: 5 }}
               name={series1.label}
+              yAxisId={dual ? "left" : undefined}
             />
 
             <Line 
@@ -64,6 +76,7 @@ export function DualLineTrendChart({ data, xAxisKey, series1, series2 }: DualLin
               dot={{ r: 3, fill: series2.color, strokeWidth: 0 }}
               activeDot={{ r: 5 }}
               name={series2.label}
+              yAxisId={dual ? "right" : undefined}
             />
           </ComposedChart>
         </ResponsiveContainer>

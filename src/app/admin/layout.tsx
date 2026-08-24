@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, BarChart2, AlertTriangle, Activity, TrendingUp, BookOpen } from "lucide-react";
 import { SAVED_INSIGHTS_INIT, SavedInsight, TabId } from "@/components/admin/AdminShared";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 type AdminContextType = {
   savedInsights: SavedInsight[];
@@ -82,6 +83,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const activeTabId = pathname.split("/").pop() as TabId;
 
   return (
+    <ReactQueryProvider>
     <AdminContext.Provider value={{
       savedInsights, setSavedInsights,
       navigateAnomaly, setNavigateAnomaly,
@@ -144,5 +146,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
       </div>
     </AdminContext.Provider>
+    </ReactQueryProvider>
   );
 }

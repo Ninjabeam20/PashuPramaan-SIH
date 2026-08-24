@@ -2,14 +2,16 @@
 
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
-**Last updated:** 2026-08-24  
-**Branch:** `main`  
-**HEAD:** `d342ff0` — Park merge leftovers in improvements.md for later.  
+**Last updated:** 2026-08-25  
+**Branch:** `main` (local; not pushed)  
+**HEAD:** `af8241b` — Record improvements.md in repository memory.  
 **qr-fixes:** `f4761a9` (kept)
 
 ## Current tree (uncommitted)
 
-- Untracked only: Python `__pycache__` and `pashu-verifier/public/reference/` (do not commit). Parked items: `improvements.md`.
+- Forecast & Planning is now on-demand exponential smoothing, not hardcoded series. Uncommitted: `backend/app/forecast/` (DGP, panel loader, SES/Holt/Holt-Winters, `GET /api/admin/forecast`), `backend/data/amu_monthly_panel.csv` (36 months, history only), `backend/test_forecast.py`, `src/components/admin/ForecastTab.tsx`, `src/lib/forecast/parse-slots.ts`, `src/lib/api/dummy/admin-forecast.ts`. Also modified: `backend/app/api/admin.py`, `backend/requirements.txt` (numpy/pandas/statsmodels), admin layout React Query provider, `query-keys.ts`. Do not commit Python `__pycache__` or `pashu-verifier/public/reference/`.
+- Farmer Insights charts now use the same Punjab×Dairy AMU panel. `GET /api/farmer/insights?range=30d|60d|90d` runs ES for the demand card (3 history months + 1/2/3 forecast months). Farm Performance / Health & Treatment plot the last 12 history months with display-only festive multipliers (dairy milk peaks at Holi/Diwali; medicine/health follow a poultry-style festive dip) plus a gentle uptrend — panel CSV/DGP unchanged. Frontend passes `range`; Farm Performance uses a dual Y-axis; dual charts show all 12 month ticks. Tests in `backend/test_forecast.py` (`test_farmer_insights_range_changes_forecast`).
+- Parked items: `improvements.md`.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -91,7 +93,7 @@ Root `improvements.md`: stop-and-fix rule, file refs for missing enums, MRL fals
 | `/admin/analytics` | Admin | Live |
 | `/admin/anomalies` | Admin | Live |
 | `/admin/health` | Admin | Live |
-| `/admin/forecast` | Admin | Live |
+| `/admin/forecast` | Admin | Live (filters call `GET /api/admin/forecast`; SES/Holt/Holt-Winters) |
 | `/admin/workspace` | Admin | Live |
 | `/admin/states/[slug]` | Admin / Researcher | Live (34 state/UT district maps, dummy headcount) |
 

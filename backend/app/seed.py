@@ -65,6 +65,7 @@ def seed_db():
         for farm_data in data['FARMS']:
             farm = db.query(Farm).filter_by(id=farm_data['id']).first()
             if not farm:
+                herd = farm_data.get('herd') or {}
                 farm = Farm(
                     id=farm_data['id'],
                     name=farm_data['name'],
@@ -72,7 +73,10 @@ def seed_db():
                     region=farm_data['region'],
                     aliases=farm_data.get('aliases', []),
                     operatedByFarmer=farm_data.get('operatedByFarmer', False),
-                    ownerId=farmer.id if farm_data.get('operatedByFarmer', False) else None
+                    ownerId=farmer.id if farm_data.get('operatedByFarmer', False) else None,
+                    cowsCount=herd.get('cows', 0),
+                    buffaloesCount=herd.get('buffaloes', 0),
+                    goatsCount=herd.get('goats', 0),
                 )
                 db.add(farm)
         db.commit()

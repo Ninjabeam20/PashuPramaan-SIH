@@ -814,28 +814,38 @@ def get_treatment_detail(treatmentId: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/insights")
-def get_insights(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
-    if not farm: farm = db.query(Farm).first()
+def get_insights(
+    range: str = "30d",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.forecast.farmer_insights import build_farmer_insights, _month_start
 
-    # Get medicine stock for the farm
+    farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
+    if not farm:
+        farm = db.query(Farm).first()
+
     medicine_stocks = db.query(MedicineStock).filter_by(farmId=farm.id).all()
-    
+
     stock_list = []
-    most_used_list = []
-    
     for ms in medicine_stocks:
         stock_list.append({
             "name": ms.name,
             "current_stock": f"{ms.quantity} {ms.unit}",
             "recent_usage": f"{ms.recentUsage} {ms.unit}",
-            "status": { "text": ms.level.name, "variant": ms.level.name.lower() }
+            "status": {"text": ms.level.name, "variant": ms.level.name.lower()},
         })
-        
-    # Most Used Medicines (derived from MedicineStock usageTotal or recentUsage)
-    sorted_by_usage = sorted(medicine_stocks, key=lambda x: x.usageTotal or x.recentUsage or 0, reverse=True)
-    max_usage = (sorted_by_usage[0].usageTotal or sorted_by_usage[0].recentUsage or 0) if sorted_by_usage else 0
-    
+
+    sorted_by_usage = sorted(
+        medicine_stocks, key=lambda x: x.usageTotal or x.recentUsage or 0, reverse=True
+    )
+    max_usage = (
+        (sorted_by_usage[0].usageTotal or sorted_by_usage[0].recentUsage or 0)
+        if sorted_by_usage
+        else 0
+    )
+
+    most_used_list = []
     for idx, ms in enumerate(sorted_by_usage[:5]):
         val = ms.usageTotal or ms.recentUsage or 0
         if val > 0:
@@ -844,48 +854,51 @@ def get_insights(db: Session = Depends(get_db), current_user: User = Depends(get
                 "rank": idx + 1,
                 "name": ms.name,
                 "usage": f"{val} {ms.unit}",
-                "usage_value": rel_val
+                "usage_value": rel_val,
             })
-            
+
     if not most_used_list:
         most_used_list = [
-            { "rank": 1, "name": "No data yet", "usage": "0 ml", "usage_value": 0 }
+            {"rank": 1, "name": "No data yet", "usage": "0 ml", "usage_value": 0}
         ]
 
+    live_treatments: dict = {}
+    for trt in db.query(Treatment).filter_by(farmId=farm.id).all():
+        key = _month_start(trt.administeredOn)
+        if key:
+            live_treatments[key] = live_treatments.get(key, 0) + 1
+
+    animal_ids = [a.id for a in db.query(Animal).filter_by(farmId=farm.id).all()]
+    live_events: dict = {}
+    if animal_ids:
+        for ev in db.query(HealthEvent).filter(HealthEvent.animalId.in_(animal_ids)).all():
+            key = _month_start(ev.onset)
+            if key:
+                live_events[key] = live_events.get(key, 0) + 1
+
+    try:
+        charts = build_farmer_insights(
+            range,
+            current_stock_label=stock_list[0]["current_stock"] if stock_list else "0 ml",
+            cows=farm.cowsCount or 10,
+            buffaloes=farm.buffaloesCount or 20,
+            live_treatments_by_month=live_treatments,
+            live_events_by_month=live_events,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     return {
-        "range": "30d",
+        "range": charts["range"],
         "medicine_stock": stock_list,
-        "demand_forecast": {
-            "chart_data": [
-                { "month": "Jun", "past_usage": 300, "forecast": None },
-                { "month": "Jul", "past_usage": 400, "forecast": None },
-                { "month": "Aug", "past_usage": 450, "forecast": 450 },
-                { "month": "Sep", "past_usage": None, "forecast": 480 }
-            ],
-            "now_index": 2,
-            "current_stock": stock_list[0]["current_stock"] if stock_list else "0 ml",
-            "expected_requirement": "480 ml",
-            "status": { "text": "HIGH DEMAND EXPECTED", "variant": "orange" }
-        },
+        "demand_forecast": charts["demand_forecast"],
         "most_used_medicines": most_used_list,
         "farm_health_map": [
-            { "species": "Cows", "level": "High", "detail": "Multiple mastitis cases" },
-            { "species": "Buffaloes", "level": "Low", "detail": "Generally healthy" }
+            {"species": "Cows", "level": "High", "detail": "Multiple mastitis cases"},
+            {"species": "Buffaloes", "level": "Low", "detail": "Generally healthy"},
         ],
-        "farm_performance": {
-            "chart_data": [
-                { "month": "Jun", "milk_output": 1200, "medicine_cost": 25 },
-                { "month": "Jul", "milk_output": 1100, "medicine_cost": 40 },
-                { "month": "Aug", "milk_output": 1150, "medicine_cost": 35 }
-            ]
-        },
-        "health_treatment_trends": {
-            "chart_data": [
-                { "month": "Jun", "health_events": 2, "treatments": 2 },
-                { "month": "Jul", "health_events": 5, "treatments": 4 },
-                { "month": "Aug", "health_events": 3, "treatments": 3 }
-            ]
-        }
+        "farm_performance": charts["farm_performance"],
+        "health_treatment_trends": charts["health_treatment_trends"],
     }
 
 class AddStockReq(BaseModel):
