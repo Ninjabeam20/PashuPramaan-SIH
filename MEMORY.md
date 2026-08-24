@@ -4,12 +4,12 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-24  
 **Branch:** `main`  
-**HEAD:** `c93ca7a` — Record the qr-fixes merge in repository memory.  
+**HEAD:** `d342ff0` — Park merge leftovers in improvements.md for later.  
 **qr-fixes:** `f4761a9` (kept)
 
 ## Current tree (uncommitted)
 
-- Parked merge leftovers live in `improvements.md` (stop-and-fix rule at the top). About to commit that file plus this pointer, then push `origin/main`. Leave `__pycache__` and `pashu-verifier/public/reference/` untracked.
+- Untracked only: Python `__pycache__` and `pashu-verifier/public/reference/` (do not commit). Parked items: `improvements.md`.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -53,6 +53,12 @@ lint errors unchanged).
 **Known leftovers (page literals, stage 4/6):** `src/app/lab/dispatches/[dispatchId]/page.tsx`
 hardcodes "· Holstein Cow", "Clinical Mastitis" and a "Continue Testing →" button for every lot;
 `LabDispatchesTable.tsx` hardcodes "of 48 dispatches"; the lab dispatches header stats are literals.
+
+---
+
+### `d342ff0` — Park merge leftovers in improvements.md for later (2026-08-24)
+
+Root `improvements.md`: stop-and-fix rule, file refs for missing enums, MRL false pass, lab VERIFIED on fail, dummy dispatch-detail QR, plus pre-existing leftovers. No product code.
 
 ---
 
