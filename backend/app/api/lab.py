@@ -10,12 +10,82 @@ from app.models import (
     Farm, Animal, ProductType, DispatchStatus
 )
 from app.api.deps import get_db, get_current_user
+from app.lab_workflow import (
+    ensure_standard_tests,
+    first_pending,
+    queue_bucket,
+    test_state_token,
+    workspace_assessments,
+)
 
 router = APIRouter()
 
+def _newest_samples(db) -> List[LabSample]:
+    return db.query(LabSample).order_by(desc(LabSample.createdAt), desc(LabSample.dispatchId)).all()
+
+
+def _find_sample(db, sample_id: str) -> LabSample:
+    s = db.query(LabSample).filter_by(dispatchId=sample_id).first()
+    if not s:
+        s = db.query(LabSample).filter_by(sampleId=sample_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="Sample not found")
+    return s
+
+
+def _stage_timeline(stage: LabStage):
+    labels = ["Created", "Received", "Testing", "Verification", "Assessment"]
+    active_at = {
+        LabStage.AWAITING_RECEIPT: 1,
+        LabStage.RECEIVED: 2,
+        LabStage.TESTING: 2,
+        LabStage.AWAITING_VERIFICATION: 3,
+        LabStage.VERIFIED: 4,
+        LabStage.ON_HOLD: 3,
+    }.get(stage, 1)
+    items = []
+    for i, label in enumerate(labels):
+        if i < active_at:
+            state = "done"
+        elif i == active_at:
+            state = "active"
+        else:
+            state = "upcoming"
+        items.append({"label": label, "state": state})
+    return items
+
+
+def _dispatch_list_item(s: LabSample) -> dict:
+    stage_name = s.stage.name.replace("_", " ") if s.stage else ""
+    if s.stage == LabStage.RECEIVED:
+        status = "READY FOR TESTING"
+    elif s.stage == LabStage.TESTING:
+        status = "TESTING"
+    else:
+        status = stage_name
+    return {
+        "id": s.dispatchId,
+        "date": s.createdAt.strftime("%d %b · %I:%M %p") if s.createdAt else "",
+        "createdAt": s.createdAt.isoformat() if s.createdAt else "",
+        "product": s.product.name.capitalize() if s.product else "",
+        "productSub": s.productSub,
+        "source": s.sourceName,
+        "sourceSub": f"{s.animal.species.name.capitalize()} {s.animalId}" if s.animal and s.animalId else (f"Animal: {s.animalId}" if s.animalId else ""),
+        "sample": s.sampleId,
+        "sampleStatus": stage_name.capitalize() if stage_name else "",
+        "sampleColor": "green" if s.stage != LabStage.AWAITING_RECEIPT else "amber",
+        "risk": (s.priority or "MODERATE").replace(" PRIORITY", "").upper(),
+        "riskColor": "red" if s.priority == "HIGH PRIORITY" else "amber",
+        "status": status,
+        "statusColor": "amber",
+        "action": "View →",
+        "clickable": True
+    }
+
+
 @router.get("/dashboard")
 def get_dashboard(db: Session = Depends(get_db)):
-    samples = db.query(LabSample).all()
+    samples = _newest_samples(db)
     awaiting = sum(1 for s in samples if s.stage == LabStage.AWAITING_RECEIPT)
     high_priority = sum(1 for s in samples if s.stage == LabStage.AWAITING_RECEIPT and s.priority == "HIGH PRIORITY")
     
@@ -54,48 +124,55 @@ def get_dashboard(db: Session = Depends(get_db)):
 
 @router.get("/dispatches")
 def get_dispatches(db: Session = Depends(get_db)):
-    samples = db.query(LabSample).all()
-    items = []
-    for s in samples:
-        items.append({
-            "id": s.dispatchId,
-            "date": s.createdAt.strftime("%d %b · %I:%M %p"),
-            "product": s.product.name.capitalize(),
-            "productSub": s.productSub,
-            "source": s.sourceName,
-            "sourceSub": f"{s.animal.species.name.capitalize()} {s.animalId}" if s.animal and s.animalId else (f"Animal: {s.animalId}" if s.animalId else ""),
-            "sample": s.sampleId,
-            "sampleStatus": s.stage.name.replace("_", " ").capitalize(),
-            "sampleColor": "green" if s.stage != LabStage.AWAITING_RECEIPT else "amber",
-            "risk": "MODERATE",
-            "riskColor": "amber",
-            "status": "READY FOR TESTING" if s.stage == LabStage.RECEIVED else s.stage.name.replace("_", " "),
-            "statusColor": "amber",
-            "action": "View →",
-            "clickable": True
-        })
-    return items
+    return [_dispatch_list_item(s) for s in _newest_samples(db)]
 
 @router.get("/dispatches/{dispatchId}")
 def get_dispatch_detail(dispatchId: str, db: Session = Depends(get_db)):
-    s = db.query(LabSample).filter_by(dispatchId=dispatchId).first()
-    if not s: raise HTTPException(status_code=404)
-    
+    s = _find_sample(db, dispatchId)
+    tests = ensure_standard_tests(db, s)
+    db.commit()
+    assessments = workspace_assessments(tests)
+    test_items = []
+    for a in assessments:
+        state = a["state"]
+        test_items.append({
+            "num": str(a["num"]).zfill(2),
+            "title": a["label"],
+            "checks": a["checks"],
+            "status": "COMPLETED" if state == "done" else "IN PROGRESS" if state == "active" else "PENDING",
+            "statusColor": "green" if state == "done" else "amber" if state == "active" else "neutral",
+            "action": "View Results →" if state == "done" else "Continue Testing →" if state == "active" else "Start Test →",
+            "active": state == "active",
+            "badge": None,
+        })
+    done_or_active = sum(1 for a in assessments if a["state"] in ("done", "active"))
+    assessment = [
+        {"label": "Traceability", "status": "Complete", "color": "green"},
+        *[
+            {
+                "label": a["label"],
+                "status": "Complete" if a["state"] == "done" else "In Progress" if a["state"] == "active" else "Pending",
+                "color": "green" if a["state"] == "done" else "amber" if a["state"] == "active" else "neutral",
+            }
+            for a in assessments
+        ],
+    ]
     return {
         "id": s.dispatchId,
         "product": s.productLabel,
         "source": s.sourceName,
-        "date": s.createdAt.strftime("%d %b %Y"),
-        "time": s.createdAt.strftime("%I:%M %p"),
+        "date": s.createdAt.strftime("%d %b %Y") if s.createdAt else "",
+        "time": s.createdAt.strftime("%I:%M %p") if s.createdAt else "",
         "quantity": s.quantity,
         "linkedAnimal": s.animalId,
         "currentSample": s.sampleId,
         "risk": s.priority.replace(" PRIORITY", "").upper() if s.priority else "MODERATE",
         "riskReason": "",
-        "overallStatus": s.stage.name.replace("_", " "),
-        "stages": [],
-        "tests": [],
-        "assessment": [],
+        "overallStatus": s.stage.name.replace("_", " ") if s.stage else "",
+        "progressText": f"{done_or_active} of {len(assessments) or 3} required test categories are complete or active.",
+        "stages": _stage_timeline(s.stage),
+        "tests": test_items,
+        "assessment": assessment,
         "notes": {
             "condition": s.condition or "",
             "temperature": s.temperature or "",
@@ -114,24 +191,14 @@ class ReceiveRequest(BaseModel):
 
 @router.post("/dispatches/{dispatchId}/receive")
 def receive_sample(dispatchId: str, req: ReceiveRequest, db: Session = Depends(get_db)):
-    s = db.query(LabSample).filter_by(dispatchId=dispatchId).first()
-    if not s: raise HTTPException(status_code=404)
+    s = _find_sample(db, dispatchId)
     
     s.stage = LabStage.RECEIVED
     s.receivedOn = datetime.utcnow()
     s.condition = req.condition
     s.temperature = req.temperature
     s.container = req.container
-    
-    # Create standard tests
-    from app.models import LabTest, LabTestState
-    
-    tests = [
-        LabTest(dispatchId=s.dispatchId, name="Product Quality", checks=["Fat", "SNF", "Acidity", "Adulteration"], state=LabTestState.ACTIVE),
-        LabTest(dispatchId=s.dispatchId, name="Microbiological Safety", checks=["Standard Plate Count", "Coliform screening", "Pathogen screen"], state=LabTestState.PENDING),
-        LabTest(dispatchId=s.dispatchId, name="Antimicrobial Residue", checks=["Beta-lactam", "Targeted residue analysis"], state=LabTestState.PENDING)
-    ]
-    db.add_all(tests)
+    ensure_standard_tests(db, s)
     db.commit()
     
     return {
@@ -143,7 +210,7 @@ def receive_sample(dispatchId: str, req: ReceiveRequest, db: Session = Depends(g
 
 @router.get("/queue")
 def get_queue(db: Session = Depends(get_db)):
-    samples = db.query(LabSample).all()
+    samples = _newest_samples(db)
     awaiting = []
     ready = []
 
@@ -154,11 +221,12 @@ def get_queue(db: Session = Depends(get_db)):
     }
 
     for s in samples:
+        bucket = queue_bucket(s.stage)
         p_color = priority_color_map.get(s.priority or "", "neutral")
-        if s.stage == LabStage.AWAITING_RECEIPT:
+        if bucket == "awaiting":
             awaiting.append({
                 "id": s.dispatchId,
-                "product": s.product.name.capitalize(),
+                "product": s.product.name.capitalize() if s.product else "",
                 "productSub": s.productLabel or "",
                 "source": s.sourceName or "",
                 "sourceSub": f"{s.animal.species.name.capitalize()} {s.animalId}" if s.animal and s.animalId else (f"Animal: {s.animalId}" if s.animalId else ""),
@@ -170,20 +238,20 @@ def get_queue(db: Session = Depends(get_db)):
                 "action": "Receive Sample →",
                 "highlighted": s.priority == "HIGH PRIORITY"
             })
-        elif s.stage == LabStage.RECEIVED:
+        elif bucket == "ready":
             tests_list = []
-            for t in (s.tests or []):
+            for t in workspace_assessments(s.tests or []):
                 tests_list.append({
-                    "name": t.name,
-                    "status": t.state.value if hasattr(t.state, "value") else str(t.state)
+                    "name": t["label"],
+                    "status": t["state"],
                 })
             ready.append({
                 "id": s.dispatchId,
-                "product": s.product.name.capitalize(),
+                "product": s.product.name.capitalize() if s.product else "",
                 "source": s.sourceName or "",
                 "sample": s.sampleId,
                 "tests": tests_list,
-                "action": "Start Testing →"
+                "action": "Continue Testing →" if s.stage == LabStage.TESTING else "Start Testing →"
             })
 
     return {
@@ -193,29 +261,13 @@ def get_queue(db: Session = Depends(get_db)):
 
 @router.get("/workspace/{sampleId}")
 def get_workspace(sampleId: str, db: Session = Depends(get_db)):
-    # Wait, api-contract says GET /api/lab/workspace/{dispatchId} or sampleId? 
-    # Contract says /workspace/{sampleId} for sample detail and workspace
-    s = db.query(LabSample).filter_by(dispatchId=sampleId).first()
-    if not s:
-        s = db.query(LabSample).filter_by(sampleId=sampleId).first()
-    if not s: raise HTTPException(status_code=404)
-    
-    assessments = []
-    for idx, t in enumerate(sorted(s.tests, key=lambda x: x.id)):
-        assessments.append({
-            "id": t.id,
-            "num": idx + 1,
-            "label": t.name,
-            "state": t.state.value.lower() if hasattr(t.state, 'value') else str(t.state).lower(),
-            "checks": t.checks,
-            "result": t.result,
-            "ok": t.ok
-        })
-        
+    s = _find_sample(db, sampleId)
+    tests = ensure_standard_tests(db, s)
+    db.commit()
     return {
         "dispatchId": s.dispatchId,
         "sampleId": s.sampleId,
-        "product": s.product.name.capitalize(),
+        "product": s.product.name.capitalize() if s.product else "",
         "productSub": s.productLabel or "",
         "source": s.sourceName or "",
         "sourceSub": f"Animal: {s.animalId}" if s.animalId else "",
@@ -224,11 +276,11 @@ def get_workspace(sampleId: str, db: Session = Depends(get_db)):
         "riskLevel": s.priority.replace(" PRIORITY", "").upper() if s.priority else "MODERATE",
         "antimicrobialContext": "",
         "antimicrobialStatus": "",
-        "assessments": assessments
+        "assessments": workspace_assessments(tests)
     }
 
 class TestSubmission(BaseModel):
-    test_id: str
+    test_id: Optional[str] = None
     result_value: float
     unit: str
     operator: str
@@ -236,27 +288,30 @@ class TestSubmission(BaseModel):
 
 @router.post("/workspace/{sampleId}/tests")
 def submit_test(sampleId: str, req: TestSubmission, db: Session = Depends(get_db)):
-    from app.models import LabTest, LabTestState
-    s = db.query(LabSample).filter_by(dispatchId=sampleId).first()
-    if not s:
-        s = db.query(LabSample).filter_by(sampleId=sampleId).first()
-    if not s: raise HTTPException(status_code=404)
+    s = _find_sample(db, sampleId)
+    tests = ensure_standard_tests(db, s)
 
-    # Find the test
-    test = db.query(LabTest).filter_by(id=req.test_id).first()
-    if not test: raise HTTPException(status_code=404, detail="Test not found")
+    test = None
+    if req.test_id:
+        test = next((t for t in tests if t.id == req.test_id), None)
+        if test is None:
+            test = db.query(LabTest).filter_by(id=req.test_id).first()
+    if test is None:
+        test = next((t for t in tests if test_state_token(t.state) == "active"), None)
+    if test is None:
+        raise HTTPException(status_code=404, detail="Test not found")
 
     mrl_limit = 0.1
     is_ok = req.result_value <= mrl_limit
-    
-    # Update the current test
+
     test.state = LabTestState.DONE
     test.result = f"{req.result_value} {req.unit}"
     test.ok = is_ok
-    
-    # Unlock the next test if any
-    all_tests = sorted(s.tests, key=lambda x: x.id)
-    next_test = next((t for t in all_tests if t.state == LabTestState.PENDING), None)
+
+    if s.stage in (LabStage.AWAITING_RECEIPT, LabStage.RECEIVED):
+        s.stage = LabStage.TESTING
+
+    next_test = first_pending(tests)
     if next_test:
         next_test.state = LabTestState.ACTIVE
 
@@ -265,26 +320,21 @@ def submit_test(sampleId: str, req: TestSubmission, db: Session = Depends(get_db
     return {
         "success": True,
         "sample_id": sampleId,
-        "test_id": req.test_id,
+        "test_id": test.id,
         "verdict": "WITHIN_MRL" if is_ok else "EXCEEDED",
         "next_step": "verification_required" if not next_test else "continue"
     }
 
 @router.post("/workspace/{sampleId}/submit_assessment")
 def submit_assessment(sampleId: str, db: Session = Depends(get_db)):
-    s = db.query(LabSample).filter_by(dispatchId=sampleId).first()
-    if not s:
-        s = db.query(LabSample).filter_by(sampleId=sampleId).first()
-    if not s: raise HTTPException(status_code=404)
-    
+    s = _find_sample(db, sampleId)
     s.stage = LabStage.AWAITING_VERIFICATION
     db.commit()
-    
     return {"success": True, "sampleId": sampleId}
 
 @router.get("/results")
 def get_results(db: Session = Depends(get_db)):
-    samples = db.query(LabSample).all()
+    samples = _newest_samples(db)
     items = []
     for s in samples:
         # Check if all tests are done
@@ -346,41 +396,38 @@ class VerificationRequest(BaseModel):
 
 @router.post("/results/{resultId}/verify")
 def verify_result(resultId: str, req: VerificationRequest, db: Session = Depends(get_db)):
-    import uuid
     from app.models import FarmerDispatch, DispatchStatus, LabReport
     
     s = db.query(LabSample).filter_by(dispatchId=resultId).first()
     if not s: raise HTTPException(status_code=404)
     fd = db.query(FarmerDispatch).filter_by(id=s.dispatchId).first()
 
+    from app.supabase_passports import extract_mrl_from_sample
+
+    measured_ppm, limit_ppm, within_limit = extract_mrl_from_sample(s)
+    mrl_ok = False
+
     if req.action == "RELEASE":
         s.stage = LabStage.VERIFIED
-        
-        # Read measured result from completed LabTest
-        res_test = db.query(LabTest).filter(
-            LabTest.dispatchId == s.dispatchId,
-            LabTest.result.isnot(None)
-        ).first()
-        
-        mrl_measured_val = 0.05
-        mrl_limit_val = 0.10
-        mrl_ok = True
-        
-        if res_test and res_test.result:
-            try:
-                import re
-                match = re.search(r'([\d\.]+)', res_test.result)
-                if match:
-                    mrl_measured_val = float(match.group(1))
-                mrl_ok = res_test.ok if res_test.ok is not None else (mrl_measured_val <= mrl_limit_val)
-            except Exception:
-                pass
+
+        d = fd or db.query(FarmerDispatch).filter_by(id=s.dispatchId).first()
+        mrl_measured = str(measured_ppm) if measured_ppm is not None else (getattr(d, "mrlMeasuredPpm", "0.0") if d else "0.0")
+        mrl_limit = str(limit_ppm) if limit_ppm else (getattr(d, "mrlPermittedPpm", "0.10") if d else "0.10")
+        if d and measured_ppm is not None:
+            d.mrlMeasuredPpm = str(measured_ppm)
+            d.mrlPermittedPpm = str(limit_ppm)
+        try:
+            mrl_ok = float(mrl_measured) <= float(mrl_limit)
+        except Exception:
+            mrl_ok = within_limit
 
         if fd:
             fd.status = DispatchStatus.CLEARED if mrl_ok else DispatchStatus.BLOCKED
-        
+
+        mrl_measured_val = float(mrl_measured) if mrl_measured else 0.0
+        mrl_limit_val = float(mrl_limit) if mrl_limit else 0.10
         mrl_verdict_str = "WITHIN_LIMITS" if mrl_ok else "EXCEEDED"
-        
+
         report = LabReport(
             dispatchId=s.dispatchId,
             refNo=f"REP-{s.dispatchId}",
@@ -411,6 +458,22 @@ def verify_result(resultId: str, req: VerificationRequest, db: Session = Depends
         if fd: fd.status = DispatchStatus.BLOCKED
 
     db.commit()
+    db.refresh(s)
+
+    from app.supabase_passports import lab_payload_from_sample, update_latest_unverified
+
+    is_verified = req.action == "RELEASE" and mrl_ok
+    lab_results, safety, extra_timeline = lab_payload_from_sample(s, is_release=is_verified)
+    product_label = s.product.name.capitalize() if s.product else ""
+    if s.animalId:
+        update_latest_unverified(
+            s.animalId,
+            product_label,
+            is_verified=is_verified,
+            lab_results=lab_results,
+            safety=safety,
+            extra_timeline=extra_timeline,
+        )
 
     return {
         "success": True,
@@ -421,7 +484,7 @@ def verify_result(resultId: str, req: VerificationRequest, db: Session = Depends
 @router.get("/reports")
 def get_reports(db: Session = Depends(get_db)):
     from app.models import LabReport, LabSample
-    reports = db.query(LabReport).all()
+    reports = db.query(LabReport).order_by(desc(LabReport.verifiedOn)).all()
     
     items = []
     for r in reports:

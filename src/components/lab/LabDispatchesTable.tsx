@@ -2,6 +2,7 @@ import * as React from "react";
 import { Badge, BadgeVariant } from "@/components/ui/Badge";
 import { LabDispatchItem } from "@/lib/api/dummy/lab-dispatches";
 import { Milk, Beef, Egg } from "lucide-react";
+import { LAB_PAGE_SIZE, paginate } from "@/lib/lab-list";
 
 interface LabDispatchesTableProps {
   dispatches: LabDispatchItem[];
@@ -16,6 +17,17 @@ function ProductIcon({ product }: { product: string }) {
 }
 
 export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesTableProps) {
+  const [page, setPage] = React.useState(1);
+  const listKey = dispatches.map((d) => d.id).join(",");
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [listKey]);
+
+  const slice = paginate(dispatches, page, LAB_PAGE_SIZE);
+  const pageItems = slice.items;
+  const pageNumbers = Array.from({ length: slice.totalPages }, (_, i) => i + 1);
+
   if (dispatches.length === 0) {
     return (
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center py-16 text-sm text-[var(--color-text-muted)]">
@@ -31,7 +43,7 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
         <div className="flex items-center justify-between p-5 border-b border-[var(--color-border)]">
           <div>
             <h3 className="font-display font-semibold text-lg text-[var(--color-text)]">All Dispatches</h3>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">Showing {dispatches.length} dispatches across milk, meat and egg products.</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">Showing {slice.from}–{slice.to} of {slice.total} dispatches across milk, meat and egg products.</p>
           </div>
           <div className="text-sm font-semibold text-[var(--color-text-muted)]">
             Sort: <span className="text-[var(--color-text)] ml-1 cursor-pointer hover:underline">Most Recent ▼</span>
@@ -51,7 +63,7 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {(dispatches || []).map((item) => (
+              {(pageItems || []).map((item) => (
                 <tr 
                   key={item.id} 
                   onClick={() => item.clickable && onActionClick?.(item.id, item.action)}
@@ -102,24 +114,43 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
           </table>
         </div>
         <div className="flex items-center justify-between p-4 border-t border-[var(--color-border)] text-sm text-[var(--color-text-muted)] bg-[var(--color-bg)]">
-          <p>Showing 1–{dispatches.length} of {dispatches.length} dispatches</p>
+          <p>Showing {slice.from}–{slice.to} of {slice.total} dispatches</p>
           <div className="flex gap-4 items-center">
-            <button className="hover:text-[var(--color-text)] transition-colors">Previous</button>
+            <button
+              type="button"
+              disabled={slice.page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="hover:text-[var(--color-text)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
             <div className="flex gap-3">
-              <span className="font-semibold text-[var(--color-text)]">1</span>
-              <span className="cursor-pointer hover:text-[var(--color-text)]">2</span>
-              <span className="cursor-pointer hover:text-[var(--color-text)]">3</span>
-              <span className="cursor-pointer hover:text-[var(--color-text)]">4</span>
-              <span className="cursor-pointer hover:text-[var(--color-text)]">5</span>
+              {pageNumbers.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPage(n)}
+                  className={n === slice.page ? "font-semibold text-[var(--color-text)]" : "cursor-pointer hover:text-[var(--color-text)]"}
+                >
+                  {n}
+                </button>
+              ))}
             </div>
-            <button className="hover:text-[var(--color-text)] transition-colors font-semibold">Next</button>
+            <button
+              type="button"
+              disabled={slice.page >= slice.totalPages}
+              onClick={() => setPage((p) => Math.min(slice.totalPages, p + 1))}
+              className="hover:text-[var(--color-text)] transition-colors font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
 
       {/* Mobile Stacked Cards View */}
       <div className="sm:hidden flex flex-col gap-4 mb-8">
-        {(dispatches || []).map((item) => (
+        {(pageItems || []).map((item) => (
           <div 
             key={item.id}
             onClick={() => item.clickable && onActionClick?.(item.id, item.action)}
@@ -177,9 +208,25 @@ export function LabDispatchesTable({ dispatches, onActionClick }: LabDispatchesT
             </div>
           </div>
         ))}
-        <p className="text-center text-xs text-[var(--color-text-muted)] py-2">
-          Showing 1–{dispatches.length} of {dispatches.length} dispatches
-        </p>
+        <div className="flex items-center justify-center gap-4 py-2 text-xs text-[var(--color-text-muted)]">
+          <button
+            type="button"
+            disabled={slice.page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <p>Showing {slice.from}–{slice.to} of {slice.total} dispatches</p>
+          <button
+            type="button"
+            disabled={slice.page >= slice.totalPages}
+            onClick={() => setPage((p) => Math.min(slice.totalPages, p + 1))}
+            className="disabled:opacity-40 font-semibold"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </>
   );

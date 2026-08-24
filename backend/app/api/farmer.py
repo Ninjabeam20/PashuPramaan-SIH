@@ -280,6 +280,88 @@ def check_safety(req: SafetyCheckReq, db: Session = Depends(get_db)):
         }
     }
 
+def _product_type_from_name(product: str) -> ProductType:
+    name = (product or "").lower()
+    if name == "meat":
+        return ProductType.MEAT
+    if name == "eggs":
+        return ProductType.EGGS
+    return ProductType.MILK
+
+
+def _ensure_open_lab_sample(db: Session, farm, animal_id: str, product: str):
+    """Create a lab sample for this animal+product, or reuse one still in the pipeline."""
+    from datetime import datetime
+    import uuid
+    from app.models import LabSample, LabStage
+
+    if farm is None:
+        raise HTTPException(status_code=400, detail="Farm not found")
+
+    product_type = _product_type_from_name(product)
+    open_stages = (
+        LabStage.AWAITING_RECEIPT,
+        LabStage.RECEIVED,
+        LabStage.TESTING,
+        LabStage.AWAITING_VERIFICATION,
+    )
+    existing = (
+        db.query(LabSample)
+        .filter(
+            LabSample.animalId == animal_id,
+            LabSample.product == product_type,
+            LabSample.stage.in_(open_stages),
+        )
+        .order_by(desc(LabSample.createdAt))
+        .first()
+    )
+    if existing:
+        return {
+            "dispatch_id": existing.dispatchId,
+            "sample_id": existing.sampleId,
+            "product_type": product_type,
+            "created": False,
+        }
+
+    dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
+    sample_id = f"SMP-{str(uuid.uuid4())[:6].upper()}"
+    date_label = datetime.utcnow().strftime("%d %b %Y")
+    ls = LabSample(
+        dispatchId=dsp_id,
+        sampleId=sample_id,
+        product=product_type,
+        productSub="Raw",
+        productLabel=product,
+        farmId=farm.id,
+        animalId=animal_id,
+        sourceName=farm.name,
+        quantity="1 Sample",
+        scheduledFor=date_label,
+        priority="Standard",
+        stage=LabStage.AWAITING_RECEIPT,
+    )
+    db.add(ls)
+    db.flush()
+    fd = FarmerDispatch(
+        id=dsp_id,
+        farmId=farm.id,
+        animalId=animal_id,
+        product=product_type,
+        dateLabel=date_label,
+        status=DispatchStatus.LAB_PENDING,
+        prescriptionSigned=True,
+        labDispatchId=dsp_id,
+    )
+    db.add(fd)
+    db.commit()
+    return {
+        "dispatch_id": dsp_id,
+        "sample_id": sample_id,
+        "product_type": product_type,
+        "created": True,
+    }
+
+
 class PassportIssueReq(BaseModel):
     product: str
     animal_ids: List[str]
@@ -289,44 +371,46 @@ class PassportIssueReq(BaseModel):
 def issue_passport(req: PassportIssueReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     from datetime import datetime
     import uuid
-    from fastapi import HTTPException
+    from app.supabase_passports import (
+        PassportWriteError,
+        assemble_row,
+        qr_verify_url,
+        upsert_passport,
+    )
     
     if not req.animal_ids:
         raise HTTPException(status_code=400, detail="No animal specified")
         
     animal_id = req.animal_ids[0]
     
-    # Re-run safety check
     sc_req = SafetyCheckReq(product_type=req.product, animal_flock_id=animal_id)
     sc_res = check_safety(sc_req, db)
-    
-    if not sc_res.get("eligible"):
-        raise HTTPException(status_code=409, detail="Safety check failed. Dispatch blocked.")
         
     farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
-    if not farm: farm = db.query(Farm).first()
-    
-    # Check ProductType
-    product_type = ProductType.MILK
-    if req.product.lower() == "meat": product_type = ProductType.MEAT
-    elif req.product.lower() == "eggs": product_type = ProductType.EGGS
-    
-    dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
-    passport_id = f"PP-2026-{str(uuid.uuid4())[:4].upper()}"
-    
-    fd = FarmerDispatch(
-        id=dsp_id,
-        farmId=farm.id,
-        animalId=animal_id,
-        product=product_type,
-        dateLabel=datetime.utcnow().strftime("%d %b %Y"),
-        status=DispatchStatus.CLEARED,
-        prescriptionSigned=sc_res["prescription"]["signed"],
-        mrlMeasuredPpm=str(sc_res["mrl"]["lab_result_ppm"]),
-        mrlPermittedPpm=str(sc_res["mrl"]["permitted_ppm"])
+    if not farm:
+        farm = db.query(Farm).first()
+
+    lab_row = _ensure_open_lab_sample(db, farm, animal_id, req.product)
+    product_type = lab_row["product_type"]
+    date_label = datetime.utcnow().strftime("%d %b %Y")
+    passport_id = f"PP-2026-{uuid.uuid4().hex[:8].upper()}"
+
+    row = assemble_row(
+        passport_id=passport_id,
+        product=req.product,
+        animal_id=animal_id,
+        farm=farm,
+        sc_res=sc_res,
+        db=db,
+        is_verified=False,
     )
-    db.add(fd)
-    db.commit()
+    try:
+        upsert_passport(row)
+    except PassportWriteError:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not publish the public passport. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+        )
     
     lab_status = "No assay on file"
     if sc_res["lab_assay"]["available"]:
@@ -334,79 +418,40 @@ def issue_passport(req: PassportIssueReq, db: Session = Depends(get_db), current
         
     return {
         "passport_id": passport_id,
-        "dispatch_id": dsp_id,
+        "dispatch_id": lab_row["dispatch_id"],
+        "sample_id": lab_row["sample_id"],
         "product": product_type.name.capitalize(),
-        "farm": farm.name,
+        "farm": farm.name if farm else "",
         "animal_flock": animal_id,
-        "dispatch_date": fd.dateLabel,
+        "dispatch_date": date_label,
         "withdrawal": sc_res["withdrawal"]["status"].capitalize(),
         "mrl": lab_status,
         "prescription": "Vet Signed" if sc_res["prescription"]["signed"] else "Unsigned",
         "lab": lab_status,
-        "qr_verify_url": f"https://pashupramaan.gov.in/verify/{passport_id}"
+        "qr_verify_url": qr_verify_url(passport_id)
     }
 
 @router.post("/dispatch/send-to-lab")
 def send_to_lab(req: PassportIssueReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    from datetime import datetime
-    import uuid
-    from fastapi import HTTPException
-    from app.models import FarmerDispatch, LabSample, LabStage, ProductType, DispatchStatus
-    
     if not req.animal_ids:
         raise HTTPException(status_code=400, detail="No animal specified")
-        
+
     animal_id = req.animal_ids[0]
     animal = db.query(Animal).filter_by(id=animal_id).first()
     if not animal:
         animal = db.query(Animal).first()
         if animal:
             animal_id = animal.id
-            
+
     farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
-    if not farm: farm = db.query(Farm).first()
-    
-    product_type = ProductType.MILK
-    if req.product.lower() == "meat": product_type = ProductType.MEAT
-    elif req.product.lower() == "eggs": product_type = ProductType.EGGS
-    
-    dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
-    sample_id = f"SMP-{str(uuid.uuid4())[:6].upper()}"
-    
-    fd = FarmerDispatch(
-        id=dsp_id,
-        farmId=farm.id,
-        animalId=animal_id,
-        product=product_type,
-        dateLabel=datetime.utcnow().strftime("%d %b %Y"),
-        status=DispatchStatus.LAB_PENDING,
-        prescriptionSigned=True, # default for now
-        labDispatchId=dsp_id
-    )
-    db.add(fd)
-    
-    ls = LabSample(
-        dispatchId=dsp_id,
-        sampleId=sample_id,
-        product=product_type,
-        productSub="Raw",
-        productLabel=req.product,
-        farmId=farm.id,
-        animalId=animal_id,
-        sourceName=farm.name,
-        quantity="1 Sample",
-        scheduledFor=datetime.utcnow().strftime("%d %b %Y"),
-        priority="Standard",
-        stage=LabStage.AWAITING_RECEIPT
-    )
-    db.add(ls)
-    
-    db.commit()
-    
+    if not farm:
+        farm = db.query(Farm).first()
+
+    lab_row = _ensure_open_lab_sample(db, farm, animal_id, req.product)
     return {
-        "dispatch_id": dsp_id,
-        "sample_id": sample_id,
-        "status": "lab_pending"
+        "dispatch_id": lab_row["dispatch_id"],
+        "sample_id": lab_row["sample_id"],
+        "status": "lab_pending",
     }
 
 @router.get("/dispatch/{dispatchId}")

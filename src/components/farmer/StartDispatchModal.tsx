@@ -1,5 +1,6 @@
 import * as React from "react";
 import { X, Check, Search } from "lucide-react";
+import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/Badge";
@@ -22,15 +23,21 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   const [safetyOutcome, setSafetyOutcome] = React.useState<DispatchSafetyOutcome | null>(null);
   
   const [issuedPassportId, setIssuedPassportId] = React.useState<string | null>(null);
+  const [issuedQrUrl, setIssuedQrUrl] = React.useState<string | null>(null);
+  const [labNotice, setLabNotice] = React.useState(false);
   
   const queryClient = useQueryClient();
   
   const issueMutation = useMutation({
     mutationFn: () => issuePassport(selectedProduct!, selectedAnimalIds),
     onSuccess: (data) => {
-      setIssuedPassportId(data.id);
+      setIssuedPassportId(data.passport_id);
+      setIssuedQrUrl(data.qr_verify_url);
       setStep(4);
       queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dashboard"] });
     }
   });
 
@@ -43,6 +50,12 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  React.useEffect(() => {
+    if (!labNotice) return;
+    const timer = window.setTimeout(() => setLabNotice(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [labNotice]);
 
   const handleNext = async () => {
     if (step === 2) {
@@ -64,19 +77,48 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
 
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
+  const sendToLabMutation = useMutation({
+    mutationFn: () => {
+      return sendToLab(selectedProduct!, selectedAnimalIds);
+    },
+    onSuccess: () => {
+      setLabNotice(true);
+      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
+    }
+  });
+
   const handleGenerate = () => {
     issueMutation.mutate();
+  };
+
+  const handleSendToLab = () => {
+    sendToLabMutation.mutate();
   };
 
   const handleCloseFinal = () => {
     onSuccess?.();
   };
 
+  const labToast = labNotice ? (
+    <div
+      role="status"
+      className="fixed top-4 left-1/2 z-[60] -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-200"
+    >
+      <div className="flex items-center gap-2 rounded-xl border border-[#358a6f]/40 bg-[var(--status-good-bg)] px-4 py-3 shadow-lg">
+        <Check size={16} className="text-[var(--status-good-text)]" />
+        <p className="text-sm font-semibold text-[var(--status-good-text)]">Sent to lab for testing</p>
+      </div>
+    </div>
+  ) : null;
+
   // Step 4: Result Screen
   if (step === 4) {
     const passportId = issuedPassportId || "PP-GENERATING...";
     return (
       <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
+        {labToast}
         <div className="bg-[var(--color-surface)] w-full sm:max-w-[440px] sm:mx-auto sm:rounded-2xl rounded-t-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
           <div className="p-6 border-b border-[var(--color-border)] flex justify-between items-start">
             <div className="flex gap-4">
@@ -129,15 +171,21 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
             </div>
 
             <div className="bg-[var(--color-bg)] rounded-xl p-6 flex flex-col items-center gap-3">
-              <div className="w-24 h-24 bg-[#e2ead8] rounded-xl flex items-center justify-center">
-                {/* Dummy QR placeholder */}
-                <div className="w-12 h-12 border-4 border-[#a6bca2] rounded grid grid-cols-2 gap-1 p-1">
-                  <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
-                  <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
-                </div>
+              <div className="w-40 h-40 bg-white rounded-xl flex items-center justify-center p-3 border border-[var(--color-border)]">
+                {issuedQrUrl ? (
+                  <QRCode value={issuedQrUrl} size={160} />
+                ) : (
+                  <div className="w-12 h-12 border-4 border-[#a6bca2] rounded grid grid-cols-2 gap-1 p-1">
+                    <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
+                    <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
+                  </div>
+                )}
               </div>
               <div className="text-sm text-[var(--color-text-muted)]">Scan to Verify</div>
               <div className="font-bold text-sm text-[var(--color-text)]">Passport ID: {passportId}</div>
+              {issuedQrUrl && (
+                <div className="text-[11px] text-[var(--color-text-muted)] break-all text-center max-w-[280px]">{issuedQrUrl}</div>
+              )}
             </div>
 
             <div className="flex gap-3 mt-2">
@@ -161,24 +209,9 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
 
   const filteredAnimals = (animals || []).filter(a => a.id.toLowerCase().includes(searchQuery.toLowerCase()) || a.type.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const sendToLabMutation = useMutation({
-    mutationFn: () => {
-      return sendToLab(selectedProduct!, selectedAnimalIds);
-    },
-    onSuccess: (data) => {
-      onSuccess?.(data);
-      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
-      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
-      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
-    }
-  });
-
-  const handleSendToLab = () => {
-    sendToLabMutation.mutate();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
+      {labToast}
       <div className="bg-[var(--color-surface)] w-full sm:max-w-[512px] sm:mx-auto sm:rounded-2xl rounded-t-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:fade-in-0 duration-200">
         
         {/* Header */}
@@ -398,32 +431,21 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
             </Button>
           ) : (
             <div className="flex flex-1 gap-2">
-              {safetyOutcome?.withdrawal.status === "cleared" && (
-                <Button
-                  variant="outline"
-                  className="min-h-[44px] flex-1 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                  onClick={handleSendToLab}
-                  disabled={isChecking || sendToLabMutation.isPending}
-                >
-                  {sendToLabMutation.isPending ? "Sending..." : "Send to Lab"}
-                </Button>
-              )}
-              {safetyOutcome?.eligible ? (
-                <Button 
-                  className="min-h-[44px] border-none flex-[2] bg-[#1e6147] hover:bg-[#164a35] text-white"
-                  onClick={handleGenerate}
-                  disabled={isChecking || issueMutation.isPending}
-                >
-                  {issueMutation.isPending ? "Generating..." : "Generate Passport"}
-                </Button>
-              ) : (
-                <Button 
-                  className="min-h-[44px] border-none flex-[2] bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed"
-                  disabled
-                >
-                  Resolve Blocked Gates
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                className="min-h-[44px] flex-1 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                onClick={handleSendToLab}
+                disabled={isChecking || !safetyOutcome || sendToLabMutation.isPending}
+              >
+                {sendToLabMutation.isPending ? "Sending..." : "Send to Lab"}
+              </Button>
+              <Button 
+                className="min-h-[44px] border-none flex-[2] bg-[#1e6147] hover:bg-[#164a35] text-white"
+                onClick={handleGenerate}
+                disabled={isChecking || !safetyOutcome || issueMutation.isPending}
+              >
+                {issueMutation.isPending ? "Generating..." : "Generate Passport"}
+              </Button>
             </div>
           )}
         </div>

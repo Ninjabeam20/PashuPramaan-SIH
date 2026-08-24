@@ -1,8 +1,8 @@
-"""Add missing columns
+"""Add condition
 
-Revision ID: e6f261e2386c
+Revision ID: 893a29eb66a3
 Revises: 2fe9b486ef67
-Create Date: 2026-08-24 16:20:14.895253
+Create Date: 2026-08-24 16:33:33.246790
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e6f261e2386c'
+revision: str = '893a29eb66a3'
 down_revision: Union[str, Sequence[str], None] = '2fe9b486ef67'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

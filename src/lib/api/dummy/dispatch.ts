@@ -66,9 +66,8 @@ export const checkDispatchSafety = async (
 export const issuePassport = async (
   product: string,
   animalIds: string[]
-) => {
+): Promise<{ passport_id: string; qr_verify_url: string; dispatch_id?: string | null }> => {
   const token = getToken();
-  // We need to fix the request payload for issuePassport while we're at it (it was using product_type, animal_flock_id, instead of product, animal_ids)
   const res = await fetch(`http://localhost:8000/api/farmer/dispatch/passport`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
