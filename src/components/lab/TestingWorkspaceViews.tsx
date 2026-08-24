@@ -18,7 +18,16 @@ interface FormViewProps {
 
 export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
   const [showContext, setShowContext] = React.useState(false);
-  const activeTest = data.assessments.find(a => a.state === "active");
+  const activeTest =
+    data.assessments.find((a) => a.state === "active") ||
+    data.assessments.find((a) => a.state === "pending") ||
+    data.assessments[0];
+  const completedCount = data.assessments.filter((a) => a.state === "done").length;
+  const totalTests = data.assessments.length || 3;
+  const testNumber = String(activeTest?.num ?? completedCount + 1).padStart(2, "0");
+  const testTitle = activeTest?.label
+    ? (activeTest.label.toLowerCase().includes("residue") ? "Antimicrobial Residue (MRL)" : activeTest.label)
+    : "Laboratory Test";
 
   // Form State
   const [mrlValue, setMrlValue] = React.useState("");
@@ -29,12 +38,12 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
 
   const handleComplete = () => {
     if (!activeTest) return;
-    onNext({ 
-      test_id: activeTest.id, 
-      test_name: activeTest.label, 
-      mrlValue, 
-      unit, 
-      notes 
+    onNext({
+      test_id: activeTest.id,
+      test_name: activeTest.label || testTitle,
+      mrlValue,
+      unit,
+      notes
     });
   };
 
@@ -111,7 +120,7 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-[var(--color-text)]">Required Assessments</h2>
-            <p className="text-xs font-bold text-[var(--color-primary)]">1 of 3 Complete</p>
+            <p className="text-xs font-bold text-[var(--color-primary)]">{completedCount} of {totalTests} Complete</p>
           </div>
           <div className="overflow-x-auto hide-scrollbar pb-2">
             <div className="min-w-[400px]">
@@ -131,9 +140,9 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
         <Card className="overflow-hidden border-l-4 border-l-[var(--color-primary)]">
           <div className="p-5 border-b border-[var(--color-border)] flex items-start justify-between bg-[var(--color-surface)]">
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">TEST 03 OF 03</p>
-              <h2 className="font-display text-2xl font-semibold text-[var(--color-text)]">Antimicrobial Residue (MRL)</h2>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">Record the MRL laboratory findings for this sample.</p>
+              <p className="text-[10px] font-bold tracking-widest text-[var(--color-text-muted)] uppercase mb-1">TEST {testNumber} OF {String(totalTests).padStart(2, "0")}</p>
+              <h2 className="font-display text-2xl font-semibold text-[var(--color-text)]">{testTitle}</h2>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">Record the laboratory findings for this sample.</p>
             </div>
             <Badge variant="amber">IN PROGRESS</Badge>
           </div>
@@ -212,7 +221,7 @@ export function WorkspaceFormView({ data, onNext, onBack }: FormViewProps) {
       {/* Bottom Actions */}
       <div className="fixed bottom-16 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4 flex gap-3 z-30 pb-safe md:relative md:bottom-auto shadow-[0_-4px_10px_rgb(0,0,0,0.05)] md:shadow-none">
         <Button variant="outline" className="px-6" onClick={handleSaveDraft}>Save Draft</Button>
-        <Button className="flex-1" onClick={handleComplete}>Complete Test &rarr;</Button>
+        <Button className="flex-1" onClick={handleComplete} disabled={!activeTest}>Complete Test &rarr;</Button>
       </div>
     </div>
   );

@@ -3,9 +3,15 @@
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
 **Last updated:** 2026-08-24  
-**Branch:** `main`  
-**HEAD:** `4c47361` — Record the public verifier deploy in repository memory  
-**HEAD (main):** `4c47361`
+**Branch:** `qr-fixes`  
+**HEAD:** `b1fe3c3` — Point repository memory HEAD at the latest commit.  
+**HEAD (main):** `b1fe3c3`
+
+## Current tree (uncommitted)
+
+- `qr-fixes` is cut from this local tree only. `origin/main` has 3 commits this branch does not merge (`f46432d`, `b82c224`, `d49cb73`) so the local QR/lab work stays intact.
+- `src/components/farmer/StartDispatchModal.tsx`: `sendToLabMutation` now runs before the step-4 early return so Generate Passport no longer crashes with a hooks-count error. Send to Lab is always shown on step 3 next to Generate Passport (no longer gated on withdrawal cleared). Send to Lab keeps the modal open and shows a 3-second "Sent to lab for testing" toast so Generate Passport can still be used on the same screen.
+- Lab Dispatches list is newest-first and paginates 15 rows per page. Page 2+ now shows older rows instead of dummy page numbers. Queue/results/reports use the same newest-first order. `Complete Test` from Dispatches → View → Continue Testing works because the workspace now creates the missing 3-test plan (the Queue receive path was the only place that used to create tests).
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)

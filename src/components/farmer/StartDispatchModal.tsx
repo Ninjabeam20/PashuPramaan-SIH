@@ -24,6 +24,7 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   
   const [issuedPassportId, setIssuedPassportId] = React.useState<string | null>(null);
   const [issuedQrUrl, setIssuedQrUrl] = React.useState<string | null>(null);
+  const [labNotice, setLabNotice] = React.useState(false);
   
   const queryClient = useQueryClient();
   
@@ -50,6 +51,12 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  React.useEffect(() => {
+    if (!labNotice) return;
+    const timer = window.setTimeout(() => setLabNotice(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [labNotice]);
+
   const handleNext = async () => {
     if (step === 2) {
       // Transition to step 3 involves fetching the safety outcome
@@ -70,19 +77,48 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
 
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
+  const sendToLabMutation = useMutation({
+    mutationFn: () => {
+      return sendToLab(selectedProduct!, selectedAnimalIds);
+    },
+    onSuccess: () => {
+      setLabNotice(true);
+      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
+    }
+  });
+
   const handleGenerate = () => {
     issueMutation.mutate();
+  };
+
+  const handleSendToLab = () => {
+    sendToLabMutation.mutate();
   };
 
   const handleCloseFinal = () => {
     onSuccess?.();
   };
 
+  const labToast = labNotice ? (
+    <div
+      role="status"
+      className="fixed top-4 left-1/2 z-[60] -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-200"
+    >
+      <div className="flex items-center gap-2 rounded-xl border border-[#358a6f]/40 bg-[var(--status-good-bg)] px-4 py-3 shadow-lg">
+        <Check size={16} className="text-[var(--status-good-text)]" />
+        <p className="text-sm font-semibold text-[var(--status-good-text)]">Sent to lab for testing</p>
+      </div>
+    </div>
+  ) : null;
+
   // Step 4: Result Screen
   if (step === 4) {
     const passportId = issuedPassportId || "PP-GENERATING...";
     return (
       <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
+        {labToast}
         <div className="bg-[var(--color-surface)] w-full sm:max-w-[440px] sm:mx-auto sm:rounded-2xl rounded-t-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
           <div className="p-6 border-b border-[var(--color-border)] flex justify-between items-start">
             <div className="flex gap-4">
@@ -173,24 +209,9 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
 
   const filteredAnimals = (animals || []).filter(a => a.id.toLowerCase().includes(searchQuery.toLowerCase()) || a.type.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const sendToLabMutation = useMutation({
-    mutationFn: () => {
-      return sendToLab(selectedProduct!, selectedAnimalIds);
-    },
-    onSuccess: (data) => {
-      onSuccess?.(data);
-      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
-      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
-      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
-    }
-  });
-
-  const handleSendToLab = () => {
-    sendToLabMutation.mutate();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center bg-black/40 backdrop-blur-sm sm:px-4" ref={backdropRef} onClick={handleBackdropClick}>
+      {labToast}
       <div className="bg-[var(--color-surface)] w-full sm:max-w-[512px] sm:mx-auto sm:rounded-2xl rounded-t-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:fade-in-0 duration-200">
         
         {/* Header */}
@@ -410,16 +431,14 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
             </Button>
           ) : (
             <div className="flex flex-1 gap-2">
-              {safetyOutcome?.withdrawal.status === "cleared" && (
-                <Button
-                  variant="outline"
-                  className="min-h-[44px] flex-1 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                  onClick={handleSendToLab}
-                  disabled={isChecking || sendToLabMutation.isPending}
-                >
-                  {sendToLabMutation.isPending ? "Sending..." : "Send to Lab"}
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                className="min-h-[44px] flex-1 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                onClick={handleSendToLab}
+                disabled={isChecking || !safetyOutcome || sendToLabMutation.isPending}
+              >
+                {sendToLabMutation.isPending ? "Sending..." : "Send to Lab"}
+              </Button>
               <Button 
                 className="min-h-[44px] border-none flex-[2] bg-[#1e6147] hover:bg-[#164a35] text-white"
                 onClick={handleGenerate}

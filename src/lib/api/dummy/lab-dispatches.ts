@@ -72,6 +72,7 @@ export type LabDispatchDetail = {
   riskColor: "amber" | "red" | "green" | "sage" | "blue" | "neutral" | string;
   riskReason: string;
   overallStatus: string;
+  progressText?: string;
   stages: Array<{ label: string; state: "done" | "active" | "upcoming" }>;
   tests: LabTestItem[];
   assessment: LabAssessmentItem[];

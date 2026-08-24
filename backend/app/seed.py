@@ -8,7 +8,8 @@ from .models import (
     User, UserRole, Vet, Farm, FarmKind, Animal, Species, CareStatus, HealthEvent,
     Prescription, PrescriptionStatus, AwareClass, PrescriptionOption,
     Treatment, TreatmentPhase, LabAssayVerdict, FarmerDispatch, DispatchStatus, ProductType,
-    MedicineStock, StockLevel, LabSample, LabStage, AdminAnomaly, AnomalySeverity, Drug
+    MedicineStock, StockLevel, LabSample, LabStage, AdminAnomaly, AnomalySeverity, Drug,
+    LabTest, LabTestState
 )
 
 # Load data
@@ -266,6 +267,23 @@ def seed_db():
                     stage=LabStage[sample['stage'].upper()]
                 )
                 db.add(ls)
+            for test in sample.get("tests") or []:
+                existing_test = db.query(LabTest).filter_by(
+                    dispatchId=sample["dispatchId"],
+                    name=test["name"],
+                ).first()
+                if existing_test:
+                    continue
+                state_key = str(test.get("state") or "pending").upper()
+                db.add(LabTest(
+                    dispatchId=sample["dispatchId"],
+                    name=test["name"],
+                    checks=test.get("checks") or [],
+                    state=LabTestState[state_key] if state_key in LabTestState.__members__ else LabTestState.PENDING,
+                    result=test.get("result"),
+                    ok=bool(test.get("ok", True)),
+                    trigger=test.get("trigger"),
+                ))
         db.commit()
 
         # 10. Insert Farmer Dispatches

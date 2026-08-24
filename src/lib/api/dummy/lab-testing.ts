@@ -73,13 +73,24 @@ export type WorkspaceData = {
   riskLevel: string;
   antimicrobialContext: string;
   antimicrobialStatus: string;
-  assessments: Array<{ num: number; label: string; state: "done" | "active" | "pending" }>;
+  assessments: Array<{
+    id?: string;
+    num: number;
+    label: string;
+    state: "done" | "active" | "pending";
+    checks?: string[];
+    result?: string | null;
+    ok?: boolean;
+  }>;
 };
 
 export async function fetchTestingWorkspace(sampleId: string): Promise<WorkspaceData> {
   const token = getToken();
   const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}`, { headers: { Authorization: `Bearer ${token}` } });
-  return (await res.json()) as any;
+  if (!res.ok) {
+    throw new Error("Failed to load testing workspace");
+  }
+  return (await res.json()) as WorkspaceData;
 }
 
 export async function submitTestResult(sampleId: string, payload: { test_id: string; result_value: number; unit: string; operator: string; verdict: string }) {

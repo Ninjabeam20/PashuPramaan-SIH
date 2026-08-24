@@ -356,7 +356,7 @@ export default function DispatchDetailPage() {
               <div className="border-t border-[var(--color-border)] pt-4">
                 <p className="text-[10px] font-bold tracking-wider text-[var(--color-text-muted)] uppercase mb-2">Overall Status</p>
                 <Badge variant="amber" className="mb-2 w-fit">{data.overallStatus}</Badge>
-                <p className="text-xs text-[var(--color-text-muted)] mb-4">2 of 3 required test categories are complete or active.</p>
+                <p className="text-xs text-[var(--color-text-muted)] mb-4">{data.progressText || "Required laboratory tests for this dispatch."}</p>
                 <Button className="w-full" onClick={() => router.push("/lab/testing-workspace/" + data.currentSample)}>
                   Continue Testing &rarr;
                 </Button>
