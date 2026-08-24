@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDispatches, DispatchItem } from "@/lib/api/dummy/dispatch";
 import { getFarmDetail } from "@/lib/api/dummy/farm-detail";
 import { DispatchStatSummary } from "@/components/farmer/DispatchStatSummary";
@@ -25,7 +25,10 @@ export default function DispatchPage() {
     queryFn: getFarmDetail,
   });
 
+  const queryClient = useQueryClient();
+
   const handleDispatchSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["dispatches"] });
     setIsStartModalOpen(false);
   };
 

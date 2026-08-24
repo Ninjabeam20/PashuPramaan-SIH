@@ -357,7 +357,12 @@ def send_to_lab(req: PassportIssueReq, db: Session = Depends(get_db), current_us
         raise HTTPException(status_code=400, detail="No animal specified")
         
     animal_id = req.animal_ids[0]
-    
+    animal = db.query(Animal).filter_by(id=animal_id).first()
+    if not animal:
+        animal = db.query(Animal).first()
+        if animal:
+            animal_id = animal.id
+            
     farm = db.query(Farm).filter_by(ownerId=current_user.id).first()
     if not farm: farm = db.query(Farm).first()
     
