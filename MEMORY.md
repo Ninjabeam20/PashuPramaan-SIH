@@ -4,8 +4,8 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-24  
 **Branch:** `main`  
-**HEAD:** `6e7da23` — Fix lab sample insert so Generate Passport can create a new queue row  
-**HEAD (main):** `6e7da23`
+**HEAD:** `4c47361` — Record the public verifier deploy in repository memory  
+**HEAD (main):** `4c47361`
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -90,12 +90,6 @@ Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001). **
 | Route | Role | Status |
 |---|---|---|
 | `/verify/[passportId]` | Public | Reads hosted Supabase `passports`. `status=REVOKED` → Not Verified; `status=VALID` → Verified. Lab writes change the row; no Vercel redeploy. |
-
----
-
-## Current tree (uncommitted after `66f8918`)
-
-Lab-sample insert order + `LAB_PENDING` enum value on local Postgres so Generate Passport can create a new lab row. README lists the live Vercel URL. `.env` `VERIFY_PUBLIC_BASE_URL` is local-only (not committed).
 
 ---
 
