@@ -326,16 +326,6 @@ def _ensure_open_lab_sample(db: Session, farm, animal_id: str, product: str):
     dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
     sample_id = f"SMP-{str(uuid.uuid4())[:6].upper()}"
     date_label = datetime.utcnow().strftime("%d %b %Y")
-    fd = FarmerDispatch(
-        id=dsp_id,
-        farmId=farm.id,
-        animalId=animal_id,
-        product=product_type,
-        dateLabel=date_label,
-        status=DispatchStatus.LAB_PENDING,
-        prescriptionSigned=True,
-        labDispatchId=dsp_id,
-    )
     ls = LabSample(
         dispatchId=dsp_id,
         sampleId=sample_id,
@@ -350,8 +340,19 @@ def _ensure_open_lab_sample(db: Session, farm, animal_id: str, product: str):
         priority="Standard",
         stage=LabStage.AWAITING_RECEIPT,
     )
-    db.add(fd)
     db.add(ls)
+    db.flush()
+    fd = FarmerDispatch(
+        id=dsp_id,
+        farmId=farm.id,
+        animalId=animal_id,
+        product=product_type,
+        dateLabel=date_label,
+        status=DispatchStatus.LAB_PENDING,
+        prescriptionSigned=True,
+        labDispatchId=dsp_id,
+    )
+    db.add(fd)
     db.commit()
     return {
         "dispatch_id": dsp_id,

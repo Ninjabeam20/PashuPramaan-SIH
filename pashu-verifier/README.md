@@ -23,7 +23,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 
 Do not add `SUPABASE_SERVICE_ROLE_KEY` here. Do not use the `/rest/v1/` suffix on the URL.
 
-After the first production URL exists, set repo-root `.env` `VERIFY_PUBLIC_BASE_URL` to that origin (no trailing slash) and restart FastAPI so new QRs encode the live link.
+Production URL: `https://pashu-verifier.vercel.app`
+
+Set repo-root `.env` `VERIFY_PUBLIC_BASE_URL` to that origin (no trailing slash) and restart FastAPI so new QRs encode the live link.
 
 ## Local
 

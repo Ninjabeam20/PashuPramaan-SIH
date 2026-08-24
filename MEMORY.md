@@ -4,8 +4,8 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-24  
 **Branch:** `main`  
-**HEAD:** `0284fa8` — lab pipeline fully working  
-**HEAD (main):** `0284fa8`
+**HEAD:** `66f8918` — Add public passport verifier and one-click Generate Passport lab notify  
+**HEAD (main):** `66f8918`
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -85,7 +85,7 @@ hardcodes "· Holstein Cow", "Clinical Mastitis" and a "Continue Testing →" bu
 | `/admin/workspace` | Admin | Live |
 | `/admin/states/[slug]` | Admin / Researcher | Live (34 state/UT district maps, dummy headcount) |
 
-Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001; Vercel hosts only this folder):
+Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001). **Live Vercel (this folder only):** `https://pashu-verifier.vercel.app`
 
 | Route | Role | Status |
 |---|---|---|
@@ -93,9 +93,15 @@ Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001; Ver
 
 ---
 
-## Current tree (uncommitted, 2026-08-24)
+## Current tree (uncommitted after `66f8918`)
 
-One-click Generate Passport: FastAPI creates a lab sample (reuses an open one if present), upserts hosted Supabase `passports` as `REVOKED` with `issue_date`/`expiry_date`, and returns an 8-char passport id plus `qr_verify_url`. A failed Supabase write returns 502. Lab Approve/Release updates the latest matching passport to `VALID`; Hold stays `REVOKED`. Send to Lab remains on the modal but is duplicate-safe. Sibling app `pashu-verifier/` is the only Vercel target. Local Postgres schema unchanged. Secrets stay in `.env` / `.env.local` (not committed).
+Lab-sample insert order + `LAB_PENDING` enum value on local Postgres so Generate Passport can create a new lab row. README lists the live Vercel URL. `.env` `VERIFY_PUBLIC_BASE_URL` is local-only (not committed).
+
+---
+
+### `66f8918` — Add public passport verifier and one-click Generate Passport lab notify (2026-08-24)
+
+Generate Passport writes an unverified hosted Supabase passport, returns a QR URL, and creates (or reuses) a lab sample. Lab Approve/Release sets `VALID`; Hold stays `REVOKED`. Added sibling `pashu-verifier/` Next.js app. Local Postgres schema unchanged in this commit. Secrets not committed.
 
 ---
 
