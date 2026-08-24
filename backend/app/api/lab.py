@@ -346,30 +346,35 @@ class VerificationRequest(BaseModel):
 
 @router.post("/results/{resultId}/verify")
 def verify_result(resultId: str, req: VerificationRequest, db: Session = Depends(get_db)):
-    import uuid
     from app.models import FarmerDispatch, DispatchStatus, LabReport
     
     s = db.query(LabSample).filter_by(dispatchId=resultId).first()
     if not s: raise HTTPException(status_code=404)
     fd = db.query(FarmerDispatch).filter_by(id=s.dispatchId).first()
 
+    from app.supabase_passports import extract_mrl_from_sample
+
+    measured_ppm, limit_ppm, within_limit = extract_mrl_from_sample(s)
+
     if req.action == "RELEASE":
         s.stage = LabStage.VERIFIED
         if fd: fd.status = DispatchStatus.CLEARED
-        
-        # calculate MRL from dispatch
+
         d = db.query(FarmerDispatch).filter_by(id=s.dispatchId).first()
-        mrl_measured = getattr(d, 'mrlMeasuredPpm', "0.0") if d else "0.0"
-        mrl_limit = getattr(d, 'mrlPermittedPpm', "1.0") if d else "1.0"
+        mrl_measured = str(measured_ppm) if measured_ppm is not None else (getattr(d, "mrlMeasuredPpm", "0.0") if d else "0.0")
+        mrl_limit = str(limit_ppm) if limit_ppm else (getattr(d, "mrlPermittedPpm", "0.10") if d else "0.10")
+        if d and measured_ppm is not None:
+            d.mrlMeasuredPpm = str(measured_ppm)
+            d.mrlPermittedPpm = str(limit_ppm)
         mrl_ok = True
         try:
             mrl_ok = float(mrl_measured) <= float(mrl_limit)
-        except:
-            pass
+        except Exception:
+            mrl_ok = within_limit
         mrl_ratio = 0.0
         try:
             mrl_ratio = float(mrl_measured) / float(mrl_limit) if float(mrl_limit) > 0 else 0.0
-        except:
+        except Exception:
             pass
         
         report = LabReport(
@@ -402,6 +407,22 @@ def verify_result(resultId: str, req: VerificationRequest, db: Session = Depends
         if fd: fd.status = DispatchStatus.BLOCKED
 
     db.commit()
+    db.refresh(s)
+
+    from app.supabase_passports import lab_payload_from_sample, update_latest_unverified
+
+    is_release = req.action == "RELEASE"
+    lab_results, safety, extra_timeline = lab_payload_from_sample(s, is_release=is_release)
+    product_label = s.product.name.capitalize() if s.product else ""
+    if s.animalId:
+        update_latest_unverified(
+            s.animalId,
+            product_label,
+            is_verified=is_release,
+            lab_results=lab_results,
+            safety=safety,
+            extra_timeline=extra_timeline,
+        )
 
     return {
         "success": True,

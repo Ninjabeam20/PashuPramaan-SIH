@@ -2,11 +2,10 @@
 
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
-**Last updated:** 2026-08-23  
-**Branch:** `feat/stage1-canonical-seed` (branched off `main` @ `43f8e4e`; **do not merge until asked**)  
-**HEAD (branch):** `908bfd5` — docs: record stage 1 outcome in plan, MEMORY and README  
-**HEAD (main):** `43f8e4e` — docs: record plan commit in MEMORY (unchanged this session)  
-**Note:** `main` was clean at the start of this session — the "unstaged" navbar/README items listed in earlier revisions of this file had already landed in `400b4f6` / `439b276` / `51fef83`.
+**Last updated:** 2026-08-24  
+**Branch:** `main`  
+**HEAD:** `0284fa8` — lab pipeline fully working  
+**HEAD (main):** `0284fa8`
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -85,6 +84,18 @@ hardcodes "· Holstein Cow", "Clinical Mastitis" and a "Continue Testing →" bu
 | `/admin/forecast` | Admin | Live |
 | `/admin/workspace` | Admin | Live |
 | `/admin/states/[slug]` | Admin / Researcher | Live (34 state/UT district maps, dummy headcount) |
+
+Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001; Vercel hosts only this folder):
+
+| Route | Role | Status |
+|---|---|---|
+| `/verify/[passportId]` | Public | Reads hosted Supabase `passports`. `status=REVOKED` → Not Verified; `status=VALID` → Verified. Lab writes change the row; no Vercel redeploy. |
+
+---
+
+## Current tree (uncommitted, 2026-08-24)
+
+One-click Generate Passport: FastAPI creates a lab sample (reuses an open one if present), upserts hosted Supabase `passports` as `REVOKED` with `issue_date`/`expiry_date`, and returns an 8-char passport id plus `qr_verify_url`. A failed Supabase write returns 502. Lab Approve/Release updates the latest matching passport to `VALID`; Hold stays `REVOKED`. Send to Lab remains on the modal but is duplicate-safe. Sibling app `pashu-verifier/` is the only Vercel target. Local Postgres schema unchanged. Secrets stay in `.env` / `.env.local` (not committed).
 
 ---
 

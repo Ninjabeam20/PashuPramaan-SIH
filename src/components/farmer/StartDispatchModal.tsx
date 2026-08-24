@@ -1,5 +1,6 @@
 import * as React from "react";
 import { X, Check, Search } from "lucide-react";
+import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/Badge";
@@ -22,15 +23,20 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   const [safetyOutcome, setSafetyOutcome] = React.useState<DispatchSafetyOutcome | null>(null);
   
   const [issuedPassportId, setIssuedPassportId] = React.useState<string | null>(null);
+  const [issuedQrUrl, setIssuedQrUrl] = React.useState<string | null>(null);
   
   const queryClient = useQueryClient();
   
   const issueMutation = useMutation({
     mutationFn: () => issuePassport(selectedProduct!, selectedAnimalIds),
     onSuccess: (data) => {
-      setIssuedPassportId(data.id);
+      setIssuedPassportId(data.passport_id);
+      setIssuedQrUrl(data.qr_verify_url);
       setStep(4);
       queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-dashboard"] });
     }
   });
 
@@ -129,15 +135,21 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
             </div>
 
             <div className="bg-[var(--color-bg)] rounded-xl p-6 flex flex-col items-center gap-3">
-              <div className="w-24 h-24 bg-[#e2ead8] rounded-xl flex items-center justify-center">
-                {/* Dummy QR placeholder */}
-                <div className="w-12 h-12 border-4 border-[#a6bca2] rounded grid grid-cols-2 gap-1 p-1">
-                  <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
-                  <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
-                </div>
+              <div className="w-40 h-40 bg-white rounded-xl flex items-center justify-center p-3 border border-[var(--color-border)]">
+                {issuedQrUrl ? (
+                  <QRCode value={issuedQrUrl} size={160} />
+                ) : (
+                  <div className="w-12 h-12 border-4 border-[#a6bca2] rounded grid grid-cols-2 gap-1 p-1">
+                    <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
+                    <div className="bg-[#a6bca2] rounded-sm" /><div className="bg-[#a6bca2] rounded-sm" />
+                  </div>
+                )}
               </div>
               <div className="text-sm text-[var(--color-text-muted)]">Scan to Verify</div>
               <div className="font-bold text-sm text-[var(--color-text)]">Passport ID: {passportId}</div>
+              {issuedQrUrl && (
+                <div className="text-[11px] text-[var(--color-text-muted)] break-all text-center max-w-[280px]">{issuedQrUrl}</div>
+              )}
             </div>
 
             <div className="flex gap-3 mt-2">
@@ -408,22 +420,13 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
                   {sendToLabMutation.isPending ? "Sending..." : "Send to Lab"}
                 </Button>
               )}
-              {safetyOutcome?.eligible ? (
-                <Button 
-                  className="min-h-[44px] border-none flex-[2] bg-[#1e6147] hover:bg-[#164a35] text-white"
-                  onClick={handleGenerate}
-                  disabled={isChecking || issueMutation.isPending}
-                >
-                  {issueMutation.isPending ? "Generating..." : "Generate Passport"}
-                </Button>
-              ) : (
-                <Button 
-                  className="min-h-[44px] border-none flex-[2] bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed"
-                  disabled
-                >
-                  Resolve Blocked Gates
-                </Button>
-              )}
+              <Button 
+                className="min-h-[44px] border-none flex-[2] bg-[#1e6147] hover:bg-[#164a35] text-white"
+                onClick={handleGenerate}
+                disabled={isChecking || !safetyOutcome || issueMutation.isPending}
+              >
+                {issueMutation.isPending ? "Generating..." : "Generate Passport"}
+              </Button>
             </div>
           )}
         </div>
