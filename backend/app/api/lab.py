@@ -355,43 +355,52 @@ def verify_result(resultId: str, req: VerificationRequest, db: Session = Depends
 
     if req.action == "RELEASE":
         s.stage = LabStage.VERIFIED
-        if fd: fd.status = DispatchStatus.CLEARED
         
-        # calculate MRL from dispatch
-        d = db.query(FarmerDispatch).filter_by(id=s.dispatchId).first()
-        mrl_measured = getattr(d, 'mrlMeasuredPpm', "0.0") if d else "0.0"
-        mrl_limit = getattr(d, 'mrlPermittedPpm', "1.0") if d else "1.0"
+        # Read measured result from completed LabTest
+        res_test = db.query(LabTest).filter(
+            LabTest.dispatchId == s.dispatchId,
+            LabTest.result.isnot(None)
+        ).first()
+        
+        mrl_measured_val = 0.05
+        mrl_limit_val = 0.10
         mrl_ok = True
-        try:
-            mrl_ok = float(mrl_measured) <= float(mrl_limit)
-        except:
-            pass
-        mrl_ratio = 0.0
-        try:
-            mrl_ratio = float(mrl_measured) / float(mrl_limit) if float(mrl_limit) > 0 else 0.0
-        except:
-            pass
+        
+        if res_test and res_test.result:
+            try:
+                import re
+                match = re.search(r'([\d\.]+)', res_test.result)
+                if match:
+                    mrl_measured_val = float(match.group(1))
+                mrl_ok = res_test.ok if res_test.ok is not None else (mrl_measured_val <= mrl_limit_val)
+            except Exception:
+                pass
+
+        if fd:
+            fd.status = DispatchStatus.CLEARED if mrl_ok else DispatchStatus.BLOCKED
+        
+        mrl_verdict_str = "WITHIN_LIMITS" if mrl_ok else "EXCEEDED"
         
         report = LabReport(
             dispatchId=s.dispatchId,
             refNo=f"REP-{s.dispatchId}",
             verifiedBy="Authorized Technician",
             verifiedOn=datetime.utcnow(),
-            status="CLEARED" if req.action == "RELEASE" else "ON HOLD",
-            statusColor="green" if req.action == "RELEASE" else "red",
+            status="CLEARED" if (req.action == "RELEASE" and mrl_ok) else "ON HOLD",
+            statusColor="green" if (req.action == "RELEASE" and mrl_ok) else "red",
             mrlDrug="Regulated Residue",
-            mrlMeasured=float(mrl_measured) if mrl_measured else 0.0,
-            mrlLimit=float(mrl_limit) if mrl_limit else 1.0,
+            mrlMeasured=mrl_measured_val,
+            mrlLimit=mrl_limit_val,
             mrlUnit="ppm",
-            mrlRatio=mrl_ratio,
-            mrlVerdict="Within Limits" if mrl_ok else "Exceeds Limits",
+            mrlRatio=mrl_measured_val / mrl_limit_val if mrl_limit_val > 0 else 0.0,
+            mrlVerdict=mrl_verdict_str,
             mrlVerdictOk=mrl_ok,
             withdrawalDrug="General Treatment",
-            withdrawalAdministered="2026-08-01",
-            withdrawalCompleted="2026-08-15",
-            withdrawalStatus="Completed",
-            outcome="Eligible for Release" if req.action == "RELEASE" else "Hold Recommended",
-            outcomeOk=req.action == "RELEASE"
+            withdrawalAdministered=datetime.utcnow().strftime("%Y-%m-%d"),
+            withdrawalCompleted=datetime.utcnow().strftime("%Y-%m-%d"),
+            withdrawalStatus="Completed" if mrl_ok else "Violation",
+            outcome="Eligible for Release" if (req.action == "RELEASE" and mrl_ok) else "Hold Recommended",
+            outcomeOk=(req.action == "RELEASE" and mrl_ok)
         )
         existing = db.query(LabReport).filter_by(dispatchId=s.dispatchId).first()
         if existing: db.delete(existing)

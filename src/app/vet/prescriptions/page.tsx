@@ -98,13 +98,11 @@ function PrescriptionsContent() {
     // 2. Tab matching
     if (selectedFilter === "all") return true;
     
-    // Simplistic tag matching for the demo
-    const statusBadges = (item.status_badges || []).map(b => b.variant.toLowerCase());
-    
-    if (selectedFilter === "awaiting_signature" && statusBadges.includes("sign")) return true;
-    if (selectedFilter === "unsigned_emergency" && statusBadges.includes("unsigned_emergency")) return true;
-    if (selectedFilter === "signed" && (statusBadges.includes("signed") || statusBadges.includes("countersigned"))) return true;
-    if (selectedFilter === "voided" && statusBadges.includes("voided")) return true;
+    const status = item.status || "";
+    if (selectedFilter === "awaiting_signature" && status === "SIGN_REQUIRED") return true;
+    if (selectedFilter === "unsigned_emergency" && status === "UNSIGNED_EMERGENCY") return true;
+    if (selectedFilter === "signed" && (status === "SIGNED" || status === "COUNTERSIGNED")) return true;
+    if (selectedFilter === "voided" && status === "VOIDED") return true;
 
     return false;
   });

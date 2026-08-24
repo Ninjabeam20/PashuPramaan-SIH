@@ -39,6 +39,8 @@ class CareStatus(str, enum.Enum):
     IMPROVED = "IMPROVED"
     RECOVERED = "RECOVERED"
     NO_CHANGE = "NO_CHANGE"
+    WORSENED = "WORSENED"
+    RELAPSE = "RELAPSE"
     HEALTHY = "HEALTHY"
 
 class PrescriptionStatus(str, enum.Enum):

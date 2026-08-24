@@ -8,6 +8,8 @@ export interface PatientItem {
   type: string;
   farm: string;
   status: { text: string; variant: string; dot?: boolean };
+  care_status: string;
+  follow_up_due: boolean;
   last_follow_up: string;
 }
 
@@ -39,4 +41,28 @@ export const getVetPatients = async (): Promise<PatientsData> => {
     // some fallback just in case or throw
   }
   return await res.json() as any;
+};
+
+export const getPatientDetail = async (patientId: string) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/patients/${patientId}`, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error("Failed to fetch patient detail");
+  return await res.json();
+};
+
+export const recordFollowUp = async (payload: { patientId: string, outcome: string, notes: string, date: string }) => {
+  const token = getToken();
+  const res = await fetch(`http://localhost:8000/api/vet/patients/${payload.patientId}/follow-up`, {
+    method: "POST",
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ outcome: payload.outcome, notes: payload.notes, date: payload.date })
+  });
+  if (!res.ok) throw new Error("Failed to record follow-up");
+  return await res.json();
 };

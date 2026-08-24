@@ -15,6 +15,8 @@ export default function PatientsPage() {
 
   const [filter, setFilter] = React.useState("all");
   const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [recentlyUpdatedIds, setRecentlyUpdatedIds] = React.useState<Set<string>>(new Set());
 
   if (isLoading || !data) {
     return <div className="p-8 text-center text-sm text-[var(--color-text-muted)] animate-pulse">Loading patients...</div>;
@@ -24,16 +26,29 @@ export default function PatientsPage() {
     setFilter(f);
   };
 
+  const handleFollowUpSuccess = (id: string) => {
+    setRecentlyUpdatedIds(prev => new Set(prev).add(id));
+  };
+
   const activePillClass = "bg-[#2d4b29] text-white border-[#2d4b29] font-bold";
   const inactivePillClass = "bg-white text-[var(--color-text)] border-[var(--color-border)] hover:bg-[var(--color-bg)] font-medium";
 
-  // Dummy filtering logic
   const filteredPatients = (data.items || []).filter(item => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = item.id.toLowerCase().includes(q) || 
+                            item.farm.toLowerCase().includes(q) || 
+                            item.type.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+
+    if (recentlyUpdatedIds.has(item.id)) return true;
+
     if (filter === "all") return true;
-    if (filter === "under_treatment") return item.status.text === "Under Treatment";
-    if (filter === "follow_up_due") return item.status.text === "Follow-up Due" || item.status.text === "Improved"; // Just logic for dummy
-    if (filter === "recovered") return item.status.text === "Recovered";
-    if (filter === "needs_attention") return item.status.text === "No Change";
+    if (filter === "under_treatment") return item.care_status === "UNDER_TREATMENT";
+    if (filter === "follow_up_due") return item.follow_up_due === true;
+    if (filter === "recovered") return item.care_status === "RECOVERED";
+    if (filter === "needs_attention") return item.follow_up_due === true || item.care_status === "UNDER_TREATMENT";
     return true;
   });
 
@@ -52,6 +67,8 @@ export default function PatientsPage() {
         <input 
           type="text" 
           placeholder="Search by patient ID, farm or owner..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-white border border-[var(--color-border)] rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1"
         />
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
@@ -101,6 +118,7 @@ export default function PatientsPage() {
         <PatientDetailModal 
           patientId={selectedPatientId} 
           onClose={() => setSelectedPatientId(null)}
+          onFollowUpSuccess={handleFollowUpSuccess}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked" | "countersigned" | "voided" | "reserve" | "patient_under_treatment" | "no_change" | "red" | "green" | "amber";
+export type BadgeVariant = "good" | "high" | "medium" | "normal" | "alert" | "sign" | "access" | "watch" | "cia" | "unsigned_emergency" | "signed" | "recovered" | "improved" | "follow_up_pending" | "action_needed" | "healthy" | "under_treatment" | "waiting" | "withdrawal_active" | "vet_signed" | "lab_mrl" | "active" | "completed" | "emergency_unsigned" | "no_lab_assay" | "pending_vet_signature" | "exception" | "cleared" | "withdrawal" | "blocked" | "countersigned" | "voided" | "reserve" | "patient_under_treatment" | "no_change" | "worsened" | "relapse" | "red" | "green" | "amber";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -25,6 +25,8 @@ export function Badge({ variant = "good", dot, className, children, ...props }: 
     recovered: "text-[var(--status-good-text)] border border-[var(--status-good-text)]/30 bg-transparent",
     improved: "text-[var(--status-good-text)] border border-[var(--status-good-text)]/30 bg-transparent",
     no_change: "text-[#d97706] border border-[#d97706]/30 bg-transparent",
+    worsened: "bg-[#fce8e8] text-[#c93f4e] border border-[#c93f4e]/30",
+    relapse: "bg-[#fef2f2] text-[#991b1b] border border-[#991b1b]/30",
     patient_under_treatment: "bg-[#eff6ff] text-[#1d4ed8] border border-[#1d4ed8]/30",
     follow_up_pending: "text-[#d97706] border border-[#d97706]/30 bg-transparent",
     action_needed: "bg-[var(--status-high-bg)] text-[var(--status-high-text)]",

@@ -1,3 +1,4 @@
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -62,24 +63,79 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
             "badges": badges
         })
 
+    # Calculate stewardship reviews
+    stewardship_review = db.query(Prescription).filter(
+        Prescription.status.in_([PrescriptionStatus.SIGN_REQUIRED, PrescriptionStatus.UNSIGNED_EMERGENCY]),
+        (Prescription.cia == True) | (Prescription.aware.in_([AwareClass.WATCH, AwareClass.RESERVE]))
+    ).count()
+
+    recent_outcomes = []
+    from app.models import HealthEvent
+    recent_animals = db.query(Animal).filter(
+        Animal.lastFollowUp.isnot(None)
+    ).order_by(desc(Animal.lastFollowUp)).limit(5).all()
+    
+    if not recent_animals:
+        recent_animals = db.query(Animal).filter(
+            Animal.careStatus.isnot(None)
+        ).order_by(desc(Animal.updatedAt)).limit(5).all()
+    
+    for a in recent_animals:
+        he = db.query(HealthEvent).filter_by(animalId=a.id).order_by(desc(HealthEvent.createdAt)).first()
+        diagnosis = he.name if he else "Clinical evaluation"
+        
+        trt = db.query(Treatment).filter_by(animalId=a.id).order_by(desc(Treatment.createdAt)).first()
+        rx = db.query(Prescription).filter_by(animalId=a.id).order_by(desc(Prescription.createdAt)).first()
+        drug_name = trt.drug if trt else (rx.drug if rx else "Amoxicillin")
+        detail = f"{drug_name} course"
+        
+        variant = "green"
+        text = "Recovered"
+        if a.careStatus == CareStatus.RECOVERED:
+            variant, text = "green", "Recovered"
+        elif a.careStatus == CareStatus.IMPROVED:
+            variant, text = "green", "Improved"
+        elif a.careStatus == CareStatus.NO_CHANGE:
+            variant, text = "amber", "No Change"
+        elif a.careStatus == CareStatus.WORSENED:
+            variant, text = "worsened", "Worsened"
+        elif a.careStatus == CareStatus.RELAPSE:
+            variant, text = "relapse", "Relapse"
+        elif a.careStatus == CareStatus.UNDER_TREATMENT:
+            variant, text = "patient_under_treatment", "Under Treatment"
+        elif a.careStatus:
+            variant, text = "neutral", a.careStatus.name.title().replace("_", " ")
+        
+        recent_outcomes.append({
+            "animal_flock": f"{a.id} ({a.farm.name if a.farm else 'Unknown'})",
+            "diagnosis": diagnosis,
+            "detail": detail,
+            "outcome_badge": { "text": text, "variant": variant }
+        })
+
+    # Build alerts dynamically from unsigned emergency prescriptions
+    alerts = []
+    unsigned_rxs = db.query(Prescription).filter_by(status=PrescriptionStatus.UNSIGNED_EMERGENCY).order_by(desc(Prescription.createdAt)).all()
+    for rx in unsigned_rxs:
+        alerts.append({
+            "id": rx.id,
+            "farm": rx.farm.name if rx.farm else "Unknown Farm",
+            "animal_flock": rx.animalId,
+            "drug": rx.drug if rx.drug else "Emergency Medicine",
+            "administered_at": rx.dateLabel if rx.dateLabel else (rx.createdAt.strftime("%d %b") if rx.createdAt else "Recently"),
+            "badge": "UNSIGNED EMERGENCY"
+        })
+
     return {
         "vet": { "name": vet_name },
         "workload": {
             "awaiting_signature": awaiting_signature,
             "unsigned_emergency": unsigned_emergency,
             "follow_up": follow_up,
-            "stewardship_review": 1,
+            "stewardship_review": stewardship_review,
             "status": status
         },
-        "alerts": [
-            {
-                "id": "alert-1",
-                "priority_color": "red",
-                "title": "Disease Outbreak Alert",
-                "description": "3 new cases of Mastitis in Anand district today.",
-                "action_text": "View Regional Data"
-            }
-        ],
+        "alerts": alerts,
         "attention_items": attention_items,
         "insights": [
             {
@@ -93,14 +149,7 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
             }
         ],
         "recent_activity": recent_activity,
-        "recent_outcomes": [
-            {
-                "animal_flock": "MP-012 (Shree Krishna Dairy)",
-                "diagnosis": "Clinical mastitis",
-                "detail": "Amoxicillin course completed",
-                "outcome_badge": { "text": "RECOVERED", "variant": "green" }
-            }
-        ]
+        "recent_outcomes": recent_outcomes
     }
 
 @router.get("/prescriptions")
@@ -142,10 +191,11 @@ def get_prescriptions(db: Session = Depends(get_db), current_user: User = Depend
 
         items.append({
             "rx_id": p.id,
-            "farm": p.farm.name,
+            "farm": p.farm.name if p.farm else "Unknown",
             "animal_flock": p.animalId,
             "diagnosis": p.diagnosis,
-            "status_badges": [{ "text": p.status.name.replace("_", " "), "variant": variant }],
+            "status": p.status.name if p.status else "UNKNOWN",
+            "status_badges": [{ "text": p.status.name.replace("_", " ") if p.status else "UNKNOWN", "variant": variant }],
             "aware_badges": aware_badges,
             "date_label": p.dateLabel,
             "action_text": action_text,
@@ -171,22 +221,36 @@ def get_patients(db: Session = Depends(get_db), current_user: User = Depends(get
     under_treatment_count = sum(1 for a in animals if a.careStatus == CareStatus.UNDER_TREATMENT)
     follow_up_due_count = sum(1 for a in animals if a.followUpDue)
     recovered_count = sum(1 for a in animals if a.careStatus == CareStatus.RECOVERED)
-    needs_attention_count = under_treatment_count + follow_up_due_count
+    needs_attention_count = sum(1 for a in animals if (a.careStatus == CareStatus.UNDER_TREATMENT or a.followUpDue))
     
     items = []
     for a in animals:
-        if a.careStatus == CareStatus.UNDER_TREATMENT:
+        is_follow_up_due = bool(a.followUpDue)
+        if is_follow_up_due:
+            status = { "text": "Follow-up Due", "variant": "amber", "dot": True }
+        elif a.careStatus == CareStatus.UNDER_TREATMENT:
             status = { "text": "Under Treatment", "variant": "patient_under_treatment", "dot": True }
         elif a.careStatus == CareStatus.RECOVERED:
             status = { "text": "Recovered", "variant": "green", "dot": False }
+        elif a.careStatus == CareStatus.IMPROVED:
+            status = { "text": "Improved", "variant": "green", "dot": False }
+        elif a.careStatus == CareStatus.NO_CHANGE:
+            status = { "text": "No Change", "variant": "amber", "dot": False }
+        elif a.careStatus == CareStatus.WORSENED:
+            status = { "text": "Worsened", "variant": "worsened", "dot": True }
+        elif a.careStatus == CareStatus.RELAPSE:
+            status = { "text": "Relapse", "variant": "relapse", "dot": True }
         else:
-            status = { "text": "Healthy", "variant": "neutral", "dot": False }
+            txt = a.careStatus.name.title().replace("_", " ") if a.careStatus else "Healthy"
+            status = { "text": txt, "variant": "neutral", "dot": False }
             
         items.append({
             "id": a.id,
-            "type": a.species.name.capitalize(),
+            "type": a.species.name.capitalize() if a.species else "Unknown",
             "farm": a.farm.name if a.farm else "Unknown",
             "status": status,
+            "care_status": a.careStatus.name if a.careStatus else "HEALTHY",
+            "follow_up_due": is_follow_up_due,
             "last_follow_up": a.lastFollowUp.strftime("%d %b") if a.lastFollowUp else "N/A"
         })
         
@@ -344,17 +408,31 @@ def get_patient_detail(patient_id: str, db: Session = Depends(get_db), current_u
     a = db.query(Animal).filter_by(id=patient_id).first()
     if not a: raise HTTPException(status_code=404)
     
-    status = { "text": "Healthy", "variant": "neutral", "dot": False }
-    if a.careStatus == CareStatus.UNDER_TREATMENT:
+    if a.followUpDue:
+        status = { "text": "Follow-up Due", "variant": "amber", "dot": True }
+    elif a.careStatus == CareStatus.UNDER_TREATMENT:
         status = { "text": "Under Treatment", "variant": "patient_under_treatment", "dot": True }
+    elif a.careStatus == CareStatus.RECOVERED:
+        status = { "text": "Recovered", "variant": "green", "dot": False }
+    elif a.careStatus == CareStatus.IMPROVED:
+        status = { "text": "Improved", "variant": "green", "dot": False }
+    elif a.careStatus == CareStatus.WORSENED:
+        status = { "text": "Worsened", "variant": "worsened", "dot": True }
+    elif a.careStatus == CareStatus.RELAPSE:
+        status = { "text": "Relapse", "variant": "relapse", "dot": True }
+    elif a.careStatus == CareStatus.NO_CHANGE:
+        status = { "text": "No Change", "variant": "amber", "dot": False }
+    else:
+        txt = a.careStatus.name.title().replace("_", " ") if a.careStatus else "Healthy"
+        status = { "text": txt, "variant": "neutral", "dot": False }
         
     return {
         "id": a.id,
-        "type": a.species.name.capitalize(),
-        "farm": a.farm.name,
-        "condition": "Clinical mastitis" if a.careStatus == CareStatus.UNDER_TREATMENT else "None",
+        "type": a.species.name.capitalize() if a.species else "Cow",
+        "farm": a.farm.name if a.farm else "Unknown Farm",
+        "condition": "Clinical mastitis" if a.careStatus in [CareStatus.UNDER_TREATMENT, CareStatus.IMPROVED] else "Resolved / Normal",
         "status": status,
-        "current_treatment": "Amoxicillin · Intramammary · Twice daily" if a.careStatus == CareStatus.UNDER_TREATMENT else None,
+        "current_treatment": "Amoxicillin · Intramammary · Twice daily" if a.careStatus == CareStatus.UNDER_TREATMENT else "Course completed",
         "last_follow_up": a.lastFollowUp.strftime("%d %b") if a.lastFollowUp else "N/A",
         "health_history": []
     }
@@ -362,14 +440,25 @@ def get_patient_detail(patient_id: str, db: Session = Depends(get_db), current_u
 class FollowUpRequest(BaseModel):
     outcome: str
     notes: str
+    date: Optional[str] = None
 
 @router.post("/patients/{patient_id}/follow-up")
 def patient_followup(patient_id: str, req: FollowUpRequest, db: Session = Depends(get_db)):
+    from datetime import datetime
     a = db.query(Animal).filter_by(id=patient_id).first()
     if not a: raise HTTPException(status_code=404)
     a.followUpDue = False
-    if req.outcome.upper() in ["RECOVERED", "IMPROVED", "NO_CHANGE"]:
-        a.careStatus = CareStatus[req.outcome.upper()]
+    
+    outcome_upper = req.outcome.upper().replace(" ", "_")
+    if outcome_upper in CareStatus.__members__:
+        a.careStatus = CareStatus[outcome_upper]
+
+    if req.date:
+        try:
+            a.lastFollowUp = datetime.fromisoformat(req.date.replace("Z", "+00:00"))
+        except ValueError:
+            pass
+    a.updatedAt = datetime.utcnow()
     db.commit()
     return { "success": True, "follow_up_id": "fu-123" }
 
@@ -400,6 +489,8 @@ def create_prescription(req: CreateRxReq, db: Session = Depends(get_db), current
     if not animal:
         animal = db.query(Animal).first()
         
+    animal.followUpDue = True # Trigger follow up when prescribed
+    
     drug = db.query(Drug).filter_by(id=req.drug).first()
     if not drug:
         raise HTTPException(status_code=400, detail="Invalid drug ID")

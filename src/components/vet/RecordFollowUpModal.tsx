@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 interface RecordFollowUpModalProps {
   patientId: string;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (outcome: string, notes: string) => void;
 }
 
 const OUTCOMES = ["Recovered", "Improved", "No Change", "Worsened", "Relapse"];
@@ -107,7 +107,7 @@ export function RecordFollowUpModal({ patientId, onClose, onSave }: RecordFollow
           </Button>
           <Button 
             className="flex-1 min-h-[44px] rounded-xl font-bold text-white border-none bg-[#2d4b29] hover:bg-[#1f361c]"
-            onClick={onSave}
+            onClick={() => onSave(selectedOutcome, notes)}
           >
             Save Follow-up
           </Button>

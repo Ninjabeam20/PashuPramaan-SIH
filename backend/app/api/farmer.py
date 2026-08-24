@@ -252,7 +252,7 @@ def check_safety(req: SafetyCheckReq, db: Session = Depends(get_db)):
         lab_available = True
         lab_result_ppm = sample.report.mrlMeasured
         permitted_ppm = sample.report.mrlLimit
-        if sample.report.mrlVerdict == "EXCEEDED":
+        if sample.report.mrlVerdict in ["EXCEEDED", "Exceeds Limits"] or not sample.report.mrlVerdictOk:
             mrl_status = "exceeded"
             eligible = False
         else:
@@ -574,6 +574,8 @@ def create_treatment(req: CreateTreatmentReq, db: Session = Depends(get_db), cur
     for a_id in req.animal_ids:
         animal = db.query(Animal).filter_by(id=a_id).first()
         if not animal: continue
+        
+        animal.followUpDue = True # Trigger follow-up when treated
         
         trt_id = f"TRT-{str(uuid.uuid4())[:8].upper()}"
         trt = Treatment(
