@@ -3,13 +3,13 @@
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
 **Last updated:** 2026-08-24  
-**Branch:** `main` (local; not pushed)  
-**HEAD:** `3fb8e46` — Merge qr-fixes into main.  
+**Branch:** `main`  
+**HEAD:** `c93ca7a` — Record the qr-fixes merge in repository memory.  
 **qr-fixes:** `f4761a9` (kept)
 
 ## Current tree (uncommitted)
 
-- Local `main` is ahead of `origin/main` by the merge. Not pushed. Untracked: Python `__pycache__` and `pashu-verifier/public/reference/`.
+- Parked merge leftovers live in `improvements.md` (stop-and-fix rule at the top). About to commit that file plus this pointer, then push `origin/main`. Leave `__pycache__` and `pashu-verifier/public/reference/` untracked.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
