@@ -3,18 +3,13 @@
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
 **Last updated:** 2026-08-24  
-**Branch:** `main` (local merge; not pushed)  
-**HEAD:** merge of `qr-fixes` (`f4761a9`) into `origin/main` (`d49cb73`)  
+**Branch:** `main` (local; not pushed)  
+**HEAD:** `3fb8e46` — Merge qr-fixes into main.  
 **qr-fixes:** `f4761a9` (kept)
 
 ## Current tree (uncommitted)
 
-- Local `main` is the merge of `qr-fixes` into `origin/main`. Not pushed. Untracked: Python `__pycache__` and `pashu-verifier/public/reference/`.
-
-**Merge resolutions (2026-08-24):**
-- `backend/app/api/farmer.py`: kept `qr-fixes` `_ensure_open_lab_sample` send-to-lab path; kept origin/main animal-id fallback, `mrlVerdict` exceeded check, and `followUpDue` on create treatment.
-- `backend/app/api/lab.py`: kept `qr-fixes` `extract_mrl_from_sample` + Supabase `update_latest_unverified`; kept origin/main CLEARED/BLOCKED gating, live withdrawal dates, and `is_verified=mrl_ok`.
-- Dropped duplicate Alembic `e6f261e2386c` (same `lab_samples` columns as `893a29eb66a3`). Dropped origin/main bytecode added in that divergence.
+- Local `main` is ahead of `origin/main` by the merge. Not pushed. Untracked: Python `__pycache__` and `pashu-verifier/public/reference/`.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -102,9 +97,15 @@ Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001). **
 
 ---
 
+### `3fb8e46` — Merge qr-fixes into main (2026-08-24)
+
+Local merge only (not pushed). Combined `qr-fixes` (`f4761a9`) into `origin/main` (`d49cb73`). Passport/QR and lab-connection from `qr-fixes`; vet follow-up dashboard from main.
+
+Resolutions: `farmer.py` kept `_ensure_open_lab_sample` plus main’s animal fallback, `mrlVerdict` exceeded check, and `followUpDue`. `lab.py` kept `extract_mrl_from_sample` and Supabase updates, plus main’s CLEARED/BLOCKED gating and live withdrawal dates (`is_verified=mrl_ok`). Dropped duplicate Alembic `e6f261e2386c` in favor of `893a29eb66a3`.
+
 ### `fae9403` — Keep lab dispatches newest-first and make Complete Test work from View (2026-08-24)
 
-On `qr-fixes` (local tree; not merged with later `origin/main`). Lab lists sort newest-first and paginate 15/page. Opening a dispatch or workspace creates the 3-test plan if missing so Complete Test works from Dispatches → View, not only Queue → Receive Sample. Send to Lab keeps the farmer modal open with a 3-second toast.
+Lab lists sort newest-first and paginate 15/page. Opening a dispatch or workspace creates the 3-test plan if missing so Complete Test works from Dispatches → View, not only Queue → Receive Sample. Send to Lab keeps the farmer modal open with a 3-second toast.
 
 ### `6e7da23` — Fix lab sample insert so Generate Passport can create a new queue row (2026-08-24)
 
