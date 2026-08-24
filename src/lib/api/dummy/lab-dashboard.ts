@@ -1,11 +1,11 @@
 import { getToken } from "./auth-utils";
-import { store } from "@/lib/seed/store";
 
 export type LabSummaryCard = {
   value: string;
   label: string;
   sub: string;
   color: "amber" | "neutral" | "red" | "green";
+  href?: string;
 };
 
 export type LabAttentionItem = {
@@ -25,8 +25,22 @@ export type LabActivityItem = {
   icon: "check" | "inbox" | "hold" | "dispatch";
 };
 
+export type LabGreeting = {
+  hello: string;
+  name: string;
+  date: string;
+};
+
+export type LabProductMixItem = {
+  label: string;
+  count: number;
+};
+
 export type LabDashboardData = {
+  greeting?: LabGreeting;
   summary: LabSummaryCard[];
+  outcomes?: LabSummaryCard[];
+  productMix?: LabProductMixItem[];
   attention: LabAttentionItem[];
   activity: LabActivityItem[];
 };
@@ -34,8 +48,10 @@ export type LabDashboardData = {
 export async function fetchLabDashboard(): Promise<LabDashboardData> {
   const token = getToken();
   const res = await fetch("http://localhost:8000/api/lab/dashboard", {
-    headers: { "Authorization": `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  return data as any;
+  if (!res.ok) {
+    throw new Error("Failed to fetch lab dashboard");
+  }
+  return (await res.json()) as LabDashboardData;
 }

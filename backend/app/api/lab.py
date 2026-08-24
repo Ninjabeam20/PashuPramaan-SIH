@@ -11,6 +11,7 @@ from app.models import (
 )
 from app.api.deps import get_db, get_current_user
 from app.lab_workflow import (
+    build_lab_dashboard,
     ensure_standard_tests,
     first_pending,
     queue_bucket,
@@ -84,43 +85,17 @@ def _dispatch_list_item(s: LabSample) -> dict:
 
 
 @router.get("/dashboard")
-def get_dashboard(db: Session = Depends(get_db)):
+def get_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     samples = _newest_samples(db)
-    awaiting = sum(1 for s in samples if s.stage == LabStage.AWAITING_RECEIPT)
-    high_priority = sum(1 for s in samples if s.stage == LabStage.AWAITING_RECEIPT and s.priority == "HIGH PRIORITY")
-    
-    attention = []
-    for s in samples:
-        if s.priority == "HIGH PRIORITY" and s.stage == LabStage.AWAITING_RECEIPT:
-            attention.append({
-                "id": s.dispatchId,
-                "type": s.product.name,
-                "title": s.sourceName,
-                "desc": "Beta-lactam residue testing required.",
-                "status": "HIGH PRIORITY",
-                "statusColor": "amber",
-                "action": "Start Testing →",
-                "page": f"/lab/testing-workspace/{s.dispatchId}"
-            })
-
-    return {
-        "summary": [
-            {
-                "value": str(awaiting),
-                "label": "Awaiting Receipt",
-                "sub": f"{high_priority} high priority",
-                "color": "amber"
-            }
-        ],
-        "attention": attention,
-        "activity": [
-            {
-                "text": "Result submitted for MLK-2026-00118",
-                "time": "10 min ago",
-                "icon": "check"
-            }
-        ]
-    }
+    reports = db.query(LabReport).order_by(desc(LabReport.verifiedOn)).all()
+    name = "Dr. Priya"
+    role = getattr(getattr(current_user, "role", None), "name", "")
+    if current_user and role == "LAB_TECHNICIAN" and current_user.fullName:
+        name = current_user.fullName
+    return build_lab_dashboard(samples, reports, technician_name=name)
 
 @router.get("/dispatches")
 def get_dispatches(db: Session = Depends(get_db)):
