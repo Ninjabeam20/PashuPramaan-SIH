@@ -4,14 +4,12 @@ Living record of repo state and what each commit changed. **Update this file in 
 
 **Last updated:** 2026-08-24  
 **Branch:** `qr-fixes`  
-**HEAD:** `b1fe3c3` — Point repository memory HEAD at the latest commit.  
+**HEAD:** `fae9403` — Keep lab dispatches newest-first and make Complete Test work from View.  
 **HEAD (main):** `b1fe3c3`
 
 ## Current tree (uncommitted)
 
-- `qr-fixes` is cut from this local tree only. `origin/main` has 3 commits this branch does not merge (`f46432d`, `b82c224`, `d49cb73`) so the local QR/lab work stays intact.
-- `src/components/farmer/StartDispatchModal.tsx`: `sendToLabMutation` now runs before the step-4 early return so Generate Passport no longer crashes with a hooks-count error. Send to Lab is always shown on step 3 next to Generate Passport (no longer gated on withdrawal cleared). Send to Lab keeps the modal open and shows a 3-second "Sent to lab for testing" toast so Generate Passport can still be used on the same screen.
-- Lab Dispatches list is newest-first and paginates 15 rows per page. Page 2+ now shows older rows instead of dummy page numbers. Queue/results/reports use the same newest-first order. `Complete Test` from Dispatches → View → Continue Testing works because the workspace now creates the missing 3-test plan (the Queue receive path was the only place that used to create tests).
+- `qr-fixes` is this local tree only. It was **not** merged with `origin/main`, which has 3 extra commits (`f46432d`, `b82c224`, `d49cb73`). Python `__pycache__` and `pashu-verifier/public/reference/verified-mock.png` stay untracked.
 
 **Remotes:**
 - `origin` → https://github.com/Ninjabeam20/PashuPramaan-SIH.git (SIH push target)
@@ -98,6 +96,10 @@ Public verifier (separate Next.js app in `pashu-verifier/`; local port 3001). **
 | `/verify/[passportId]` | Public | Reads hosted Supabase `passports`. `status=REVOKED` → Not Verified; `status=VALID` → Verified. Lab writes change the row; no Vercel redeploy. |
 
 ---
+
+### `fae9403` — Keep lab dispatches newest-first and make Complete Test work from View (2026-08-24)
+
+On `qr-fixes` (local tree; not merged with later `origin/main`). Lab lists sort newest-first and paginate 15/page. Opening a dispatch or workspace creates the 3-test plan if missing so Complete Test works from Dispatches → View, not only Queue → Receive Sample. Send to Lab keeps the farmer modal open with a 3-second toast.
 
 ### `6e7da23` — Fix lab sample insert so Generate Passport can create a new queue row (2026-08-24)
 
