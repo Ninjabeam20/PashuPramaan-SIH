@@ -13,6 +13,7 @@ import { Badge, BadgeVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { LabResult } from "@/lib/api/dummy/lab-results";
+import { API_BASE } from "@/lib/api/config";
 
 /* ─── Shared helpers ─────────────────────────────────────────────────── */
 
@@ -171,7 +172,7 @@ export function VerificationScreen({ item, onViewAssessment, onBack, onReleased,
     setLoading(true);
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`http://localhost:8000/api/lab/results/${item.id}/verify`, {
+      const res = await fetch(`${API_BASE}/api/lab/results/${item.id}/verify`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ action })

@@ -20,6 +20,9 @@
 # production
 /build
 
+__pycache__/
+*.py[cod]
+
 # misc
 .DS_Store
 *.pem
@@ -39,6 +42,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# next-pwa generated (auto-built, do not commit)
+/public/sw.js
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
 
 # local verification artifacts (do not push)
 .playwright-mcp/

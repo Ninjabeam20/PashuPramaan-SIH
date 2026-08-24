@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 
@@ -9,7 +10,7 @@ export interface VetOption {
 
 export const getAvailableVets = async (): Promise<VetOption[]> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/vets`, {
+  const res = await fetch(`${API_BASE}/api/farmer/vets`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });

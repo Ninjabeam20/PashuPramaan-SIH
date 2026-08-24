@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { IndiaChoroplethMap } from "@/components/admin/IndiaChoroplethMap"
 import { Card, SelectField, SL, TH_STYLE, amuById } from "@/components/admin/AdminShared"
 import { getAdminForecast, type DemandLevel, type ForecastSeries } from "@/lib/api/dummy/admin-forecast"
+import { API_BASE } from "@/lib/api/config"
 import {
   MEDICINE_OPTIONS,
   PERIOD_OPTIONS,
@@ -259,7 +260,7 @@ export function ForecastTab() {
       )}
       {isError && (
         <Card style={{ padding: "16px 20px", marginBottom: 16, color: "#B91C1C", fontSize: 13 }}>
-          Could not load the forecast. Is the API running at localhost:8000? {error instanceof Error ? error.message : ""}
+          Could not load the forecast. Is the API running at {API_BASE}? {error instanceof Error ? error.message : ""}
         </Card>
       )}
 

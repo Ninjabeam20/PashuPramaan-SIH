@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, farmer, vet, lab, admin
 
+import os
 import asyncio
 from datetime import datetime
 from contextlib import asynccontextmanager
@@ -46,9 +47,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="PashuPramaan API", version="1.0.0", lifespan=lifespan)
 
+# Restrict to specific origins in production via ALLOWED_ORIGINS env var.
+# e.g. ALLOWED_ORIGINS=https://pashupramaan.vercel.app
+# Falls back to localhost for local dev.
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

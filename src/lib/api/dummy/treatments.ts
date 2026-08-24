@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { routeDosage, treatmentBadges, treatmentStatus, withdrawalDto } from "@/lib/seed/project";
@@ -53,7 +54,7 @@ const speciesLabel = (animalId: string): string => {
 
 export const getTreatments = async () => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/treatments`, {
+  const res = await fetch(`${API_BASE}/api/farmer/treatments`, {
     method: "GET",
     headers: { 
       "Authorization": `Bearer ${token}`,
@@ -70,7 +71,7 @@ export const getTreatments = async () => {
 
 export const createTreatment = async (payload: { animal_ids: string[]; prescription_option_id: string; timing: string; backdated_at?: string }) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/treatments`, {
+  const res = await fetch(`${API_BASE}/api/farmer/treatments`, {
     method: "POST",
     headers: { 
       "Authorization": `Bearer ${token}`,
@@ -86,7 +87,7 @@ export const createTreatment = async (payload: { animal_ids: string[]; prescript
 
 export const getPrescriptionOptions = async (): Promise<PrescriptionOption[]> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/treatments/prescriptions`, {
+  const res = await fetch(`${API_BASE}/api/farmer/treatments/prescriptions`, {
     method: "GET",
     headers: { 
       "Authorization": `Bearer ${token}`,
@@ -122,7 +123,7 @@ export interface TreatmentDetail {
 
 export const getTreatmentDetail = async (treatmentId: string): Promise<TreatmentDetail> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/treatments/${treatmentId}`, {
+  const res = await fetch(`${API_BASE}/api/farmer/treatments/${treatmentId}`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });

@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import {
@@ -10,7 +11,7 @@ import {
 
 export const getVetDashboard = async () => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/dashboard`, {
+  const res = await fetch(`${API_BASE}/api/vet/dashboard`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });

@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 
 export type NeedLevel = "High" | "Medium" | "Low";
@@ -72,7 +73,7 @@ export type ForecastQuery = {
 export const getAdminForecast = async (query: ForecastQuery): Promise<AdminForecastResponse> => {
   const token = getToken();
   const params = new URLSearchParams(query);
-  const res = await fetch(`http://localhost:8000/api/admin/forecast?${params}`, {
+  const res = await fetch(`${API_BASE}/api/admin/forecast?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {

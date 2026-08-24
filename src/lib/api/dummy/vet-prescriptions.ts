@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { prescriptionAction, prescriptionAwareBadges, prescriptionStatusBadge } from "@/lib/seed/project";
@@ -25,7 +26,7 @@ export interface PrescriptionsData {
 
 export const getPrescriptionsList = async (): Promise<PrescriptionsData> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/prescriptions`, {
+  const res = await fetch(`${API_BASE}/api/vet/prescriptions`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -37,7 +38,7 @@ export const getPrescriptionsList = async (): Promise<PrescriptionsData> => {
 
 export const createPrescription = async (payload: any) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/prescriptions`, {
+  const res = await fetch(`${API_BASE}/api/vet/prescriptions`, {
     method: "POST",
     headers: { 
       "Authorization": `Bearer ${token}`,
@@ -53,7 +54,7 @@ export const createPrescription = async (payload: any) => {
 
 export const getDrugsList = async () => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/drugs`, {
+  const res = await fetch(`${API_BASE}/api/vet/drugs`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });

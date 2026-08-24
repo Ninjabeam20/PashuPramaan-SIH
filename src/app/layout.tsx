@@ -15,7 +15,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "PashuPramaan",
-  description: "Livestock Management Platform",
+  description: "Livestock Health, AMR Stewardship & Food Safety Platform",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PashuPramaan",
+  },
 };
 
 export default function RootLayout({

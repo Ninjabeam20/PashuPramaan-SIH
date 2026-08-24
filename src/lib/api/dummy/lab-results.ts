@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { labTestingFinished } from "@/lib/seed/project";
@@ -30,7 +31,7 @@ const RESULT_VIEW = {
 
 export async function fetchLabResults(): Promise<LabResult[]> {
   const token = getToken();
-  const res = await fetch("http://localhost:8000/api/lab/results", {
+  const res = await fetch(`${API_BASE}/api/lab/results`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
   const data = await res.json();

@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import {
@@ -28,7 +29,7 @@ export type LabDispatchItem = {
 
 export async function fetchLabDispatches(): Promise<LabDispatchItem[]> {
   const token = getToken();
-  const res = await fetch("http://localhost:8000/api/lab/dispatches", {
+  const res = await fetch(`${API_BASE}/api/lab/dispatches`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
   const data = await res.json();
@@ -118,7 +119,7 @@ const assessmentList = (sample: LabSample): LabAssessmentItem[] => [
 export async function fetchLabDispatchDetail(dispatchId: string): Promise<LabDispatchDetail | null> {
   const token = getToken();
   try {
-    const res = await fetch(`http://localhost:8000/api/lab/dispatches/${dispatchId}`, {
+    const res = await fetch(`${API_BASE}/api/lab/dispatches/${dispatchId}`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
     if (!res.ok) return null;

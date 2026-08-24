@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import type { FarmerDispatch, Treatment } from "@/lib/seed/types";
@@ -50,7 +51,7 @@ const toItem = (dispatch: FarmerDispatch): DispatchItem => ({
 
 export const getDispatches = async () => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/dispatch`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(`${API_BASE}/api/farmer/dispatch`, { headers: { Authorization: `Bearer ${token}` } });
   return (await res.json()) as any;
 };
 
@@ -59,7 +60,7 @@ export const checkDispatchSafety = async (
   animalIds: string[],
 ): Promise<DispatchSafetyOutcome> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/dispatch/safety-check`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ product_type: product, animal_flock_id: animalIds[0], farm_id: "FARM-01" }) });
+  const res = await fetch(`${API_BASE}/api/farmer/dispatch/safety-check`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ product_type: product, animal_flock_id: animalIds[0], farm_id: "FARM-01" }) });
   return (await res.json()) as any;
 };
 
@@ -68,7 +69,7 @@ export const issuePassport = async (
   animalIds: string[]
 ): Promise<{ passport_id: string; qr_verify_url: string; dispatch_id?: string | null }> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/dispatch/passport`, {
+  const res = await fetch(`${API_BASE}/api/farmer/dispatch/passport`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ product: product, animal_ids: animalIds })
@@ -84,7 +85,7 @@ export const sendToLab = async (
   animalIds: string[]
 ) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/dispatch/send-to-lab`, {
+  const res = await fetch(`${API_BASE}/api/farmer/dispatch/send-to-lab`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ product: product, animal_ids: animalIds })
@@ -148,7 +149,7 @@ const timelineFor = (status: DispatchItem["status"]): DispatchDetail["timeline"]
 
 export const getDispatchDetail = async (dispatchId: string): Promise<DispatchDetail> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/dispatch/${dispatchId}`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(`${API_BASE}/api/farmer/dispatch/${dispatchId}`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await res.json();
   if (data) {
     data.timeline = timelineFor(data.status);

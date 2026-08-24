@@ -1,3 +1,4 @@
+import { API_BASE } from "../config";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { labAntimicrobial, labSourceSub, labTestingStarted, priorityColor } from "@/lib/seed/project";
@@ -38,7 +39,7 @@ export type TestingQueueData = {
 
 export async function fetchTestingQueue(): Promise<TestingQueueData> {
   const token = getToken();
-  const res = await fetch("http://localhost:8000/api/lab/queue", {
+  const res = await fetch(`${API_BASE}/api/lab/queue`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
   const data = await res.json();
@@ -47,7 +48,7 @@ export async function fetchTestingQueue(): Promise<TestingQueueData> {
 
 export async function receiveSample(dispatchId: string, payload: { condition: string; temperature: string; container: string; notes?: string }) {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/lab/dispatches/${dispatchId}/receive`, {
+  const res = await fetch(`${API_BASE}/api/lab/dispatches/${dispatchId}/receive`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
@@ -86,7 +87,7 @@ export type WorkspaceData = {
 
 export async function fetchTestingWorkspace(sampleId: string): Promise<WorkspaceData> {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(`${API_BASE}/api/lab/workspace/${sampleId}`, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) {
     throw new Error("Failed to load testing workspace");
   }
@@ -95,7 +96,7 @@ export async function fetchTestingWorkspace(sampleId: string): Promise<Workspace
 
 export async function submitTestResult(sampleId: string, payload: { test_id: string; result_value: number; unit: string; operator: string; verdict: string }) {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}/tests`, {
+  const res = await fetch(`${API_BASE}/api/lab/workspace/${sampleId}/tests`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
@@ -111,7 +112,7 @@ export async function submitTestResult(sampleId: string, payload: { test_id: str
 
 export async function submitAssessment(sampleId: string) {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/lab/workspace/${sampleId}/submit_assessment`, {
+  const res = await fetch(`${API_BASE}/api/lab/workspace/${sampleId}/submit_assessment`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
