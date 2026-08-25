@@ -1,5 +1,6 @@
+import { API_BASE } from "@/lib/api/base-url";
 export const loginUser = async (role: string, userId: string, password: string) => {
-  const res = await fetch("http://localhost:8000/api/auth/login", {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: userId, password, role })

@@ -25,11 +25,12 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
   const [issuedPassportId, setIssuedPassportId] = React.useState<string | null>(null);
   const [issuedQrUrl, setIssuedQrUrl] = React.useState<string | null>(null);
   const [labNotice, setLabNotice] = React.useState(false);
+  const [labDispatchId, setLabDispatchId] = React.useState<string | null>(null);
   
   const queryClient = useQueryClient();
   
   const issueMutation = useMutation({
-    mutationFn: () => issuePassport(selectedProduct!, selectedAnimalIds),
+    mutationFn: () => issuePassport(selectedProduct!, selectedAnimalIds, labDispatchId),
     onSuccess: (data) => {
       setIssuedPassportId(data.passport_id);
       setIssuedQrUrl(data.qr_verify_url);
@@ -81,7 +82,8 @@ export function StartDispatchModal({ animals, onClose, onSuccess }: StartDispatc
     mutationFn: () => {
       return sendToLab(selectedProduct!, selectedAnimalIds);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data?.dispatch_id) setLabDispatchId(data.dispatch_id);
       setLabNotice(true);
       queryClient.invalidateQueries({ queryKey: ["dispatches"] });
       queryClient.invalidateQueries({ queryKey: ["lab-testing-queue"] });

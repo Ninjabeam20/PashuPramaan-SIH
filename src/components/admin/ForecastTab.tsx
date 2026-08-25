@@ -259,7 +259,7 @@ export function ForecastTab() {
       )}
       {isError && (
         <Card style={{ padding: "16px 20px", marginBottom: 16, color: "#B91C1C", fontSize: 13 }}>
-          Could not load the forecast. Is the API running at localhost:8000? {error instanceof Error ? error.message : ""}
+          Could not load the forecast. Is the API running? {error instanceof Error ? error.message : ""}
         </Card>
       )}
 

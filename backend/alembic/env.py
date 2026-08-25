@@ -36,6 +36,8 @@ def get_url():
         url = url.replace("postgres://", "postgresql://", 1)
     if "?schema=" in url:
         url = url.split("?schema=")[0]
+    if "render.com" in url and "sslmode=" not in url:
+        url = url + ("&" if "?" in url else "?") + "sslmode=require"
     return url
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""

@@ -57,15 +57,16 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
             })
 
     medicine_stock = []
+    status_map = {
+        StockLevel.RESTOCK: {"text": "Restock recommended", "variant": "red"},
+        StockLevel.MONITOR: {"text": "Monitor", "variant": "amber"},
+        StockLevel.GOOD: {"text": "Good", "variant": "green"},
+    }
     for s in stocks:
-        status_str = "good"
-        if s.level == StockLevel.RESTOCK: status_str = "restock"
-        elif s.level == StockLevel.MONITOR: status_str = "monitor"
-        
         medicine_stock.append({
             "name": s.name,
             "quantity_label": f"{s.quantity} {s.unit}",
-            "status": status_str
+            "status": status_map.get(s.level, status_map[StockLevel.GOOD]),
         })
 
     return {
@@ -289,8 +290,17 @@ def _product_type_from_name(product: str) -> ProductType:
     return ProductType.MILK
 
 
-def _ensure_open_lab_sample(db: Session, farm, animal_id: str, product: str):
-    """Create a lab sample for this animal+product, or reuse one still in the pipeline."""
+def _lab_row_from_sample(sample, created: bool):
+    return {
+        "dispatch_id": sample.dispatchId,
+        "sample_id": sample.sampleId,
+        "product_type": sample.product,
+        "created": created,
+    }
+
+
+def _create_lab_sample(db: Session, farm, animal_id: str, product: str):
+    """Always insert a new lab sample + farmer dispatch so a demo re-run still hits the queue."""
     from datetime import datetime
     import uuid
     from app.models import LabSample, LabStage
@@ -299,30 +309,6 @@ def _ensure_open_lab_sample(db: Session, farm, animal_id: str, product: str):
         raise HTTPException(status_code=400, detail="Farm not found")
 
     product_type = _product_type_from_name(product)
-    open_stages = (
-        LabStage.AWAITING_RECEIPT,
-        LabStage.RECEIVED,
-        LabStage.TESTING,
-        LabStage.AWAITING_VERIFICATION,
-    )
-    existing = (
-        db.query(LabSample)
-        .filter(
-            LabSample.animalId == animal_id,
-            LabSample.product == product_type,
-            LabSample.stage.in_(open_stages),
-        )
-        .order_by(desc(LabSample.createdAt))
-        .first()
-    )
-    if existing:
-        return {
-            "dispatch_id": existing.dispatchId,
-            "sample_id": existing.sampleId,
-            "product_type": product_type,
-            "created": False,
-        }
-
     dsp_id = f"DSP-{str(uuid.uuid4())[:6].upper()}"
     sample_id = f"SMP-{str(uuid.uuid4())[:6].upper()}"
     date_label = datetime.utcnow().strftime("%d %b %Y")
@@ -354,18 +340,14 @@ def _ensure_open_lab_sample(db: Session, farm, animal_id: str, product: str):
     )
     db.add(fd)
     db.commit()
-    return {
-        "dispatch_id": dsp_id,
-        "sample_id": sample_id,
-        "product_type": product_type,
-        "created": True,
-    }
+    return _lab_row_from_sample(ls, created=True)
 
 
 class PassportIssueReq(BaseModel):
     product: str
     animal_ids: List[str]
     safety_check_id: Optional[str] = None
+    dispatch_id: Optional[str] = None
 
 @router.post("/dispatch/passport")
 def issue_passport(req: PassportIssueReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -390,7 +372,17 @@ def issue_passport(req: PassportIssueReq, db: Session = Depends(get_db), current
     if not farm:
         farm = db.query(Farm).first()
 
-    lab_row = _ensure_open_lab_sample(db, farm, animal_id, req.product)
+    from app.models import LabSample
+
+    if req.dispatch_id:
+        sample = db.query(LabSample).filter_by(dispatchId=req.dispatch_id).first()
+        if not sample:
+            raise HTTPException(status_code=404, detail="Dispatch not found")
+        if sample.animalId and sample.animalId != animal_id:
+            raise HTTPException(status_code=400, detail="Dispatch does not match animal")
+        lab_row = _lab_row_from_sample(sample, created=False)
+    else:
+        lab_row = _create_lab_sample(db, farm, animal_id, req.product)
     product_type = lab_row["product_type"]
     date_label = datetime.utcnow().strftime("%d %b %Y")
     passport_id = f"PP-2026-{uuid.uuid4().hex[:8].upper()}"
@@ -447,7 +439,7 @@ def send_to_lab(req: PassportIssueReq, db: Session = Depends(get_db), current_us
     if not farm:
         farm = db.query(Farm).first()
 
-    lab_row = _ensure_open_lab_sample(db, farm, animal_id, req.product)
+    lab_row = _create_lab_sample(db, farm, animal_id, req.product)
     return {
         "dispatch_id": lab_row["dispatch_id"],
         "sample_id": lab_row["sample_id"],

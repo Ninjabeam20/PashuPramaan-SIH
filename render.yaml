@@ -1,0 +1,28 @@
+# Render Blueprint — connect this branch, not main.
+# Dashboard: New → Blueprint → this repo → branch deploy/vercel-render
+databases:
+  - name: pashupramaan-db
+    plan: free
+    databaseName: pashupramaan
+    user: pashupramaan
+
+services:
+  - type: web
+    name: pashupramaan-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pashupramaan-db
+          property: connectionString
+      - key: VERIFY_PUBLIC_BASE_URL
+        value: https://pashu-verifier.vercel.app
+      # Set these in the Render dashboard (do not commit secrets):
+      # SUPABASE_URL
+      # SUPABASE_SERVICE_ROLE_KEY

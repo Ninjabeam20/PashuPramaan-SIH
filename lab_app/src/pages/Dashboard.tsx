@@ -93,7 +93,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: Page) => 
       <div className="flex-1 overflow-y-auto pb-28">
         {/* Greeting */}
         <div className="px-4 pt-5 pb-4">
-          <p className="text-[12px] text-[#9ca3af] font-medium mb-0.5">Good morning, Dr. Priya · Sat 23 Aug 2026</p>
+          <p className="text-[12px] text-[#9ca3af] font-medium mb-0.5">Namaste, Dr. Priya · Sat 23 Aug 2026</p>
           <h1 style={{ fontFamily: "var(--font-serif)" }} className="text-[24px] font-semibold text-[#1a2418] leading-tight">
             Laboratory Dashboard
           </h1>

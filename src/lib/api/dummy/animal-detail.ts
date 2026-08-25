@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { animalStatus, signatureBadge, withdrawalDto } from "@/lib/seed/project";
@@ -24,7 +25,7 @@ export interface AnimalDetail {
 
 export const getAnimalDetail = async (animalId: string): Promise<AnimalDetail> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/animals/${animalId}`, {
+  const res = await fetch(`${API_BASE}/api/farmer/animals/${animalId}`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });

@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 
 export type ReportMrl = {
@@ -59,7 +60,7 @@ export const REPORTS_SUMMARY: ReportsSummary[] = [
 
 export async function fetchLabReports(): Promise<{ summary: ReportsSummary[], items: LabReport[] }> {
   const token = getToken();
-  const res = await fetch("http://localhost:8000/api/lab/reports", {
+  const res = await fetch(`${API_BASE}/api/lab/reports`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
   if (!res.ok) throw new Error("Failed to fetch reports");

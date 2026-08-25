@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 
 export interface FarmInsights {
@@ -43,7 +44,7 @@ const pressureLevel = (underTreatment: number): "Low" | "Moderate" | "High" => {
 export const getFarmInsights = async (range: "30d" | "60d" | "90d"): Promise<FarmInsights> => {
   const token = getToken();
   const params = new URLSearchParams({ range });
-  const res = await fetch(`http://localhost:8000/api/farmer/insights?${params}`, {
+  const res = await fetch(`${API_BASE}/api/farmer/insights?${params}`, {
     method: "GET",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -56,7 +57,7 @@ export const getFarmInsights = async (range: "30d" | "60d" | "90d"): Promise<Far
 
 export const getDrugsList = async () => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/drugs`, {
+  const res = await fetch(`${API_BASE}/api/farmer/drugs`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -66,7 +67,7 @@ export const getDrugsList = async () => {
 
 export const addMedicineStock = async (payload: { drug_id: string, quantity: number }) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/farmer/inventory/stock`, {
+  const res = await fetch(`${API_BASE}/api/farmer/inventory/stock`, {
     method: "POST",
     headers: { 
       "Authorization": `Bearer ${token}`,

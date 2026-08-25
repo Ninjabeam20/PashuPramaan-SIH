@@ -3,15 +3,19 @@
 Living record of repo state and what each commit changed. **Update this file in the same session whenever code or docs change.** Do not invent commits; only record what `git log` and the working tree actually show.
 
 **Last updated:** 2026-08-25  
-**Branch:** `main` (local; not pushed)  
-**HEAD:** `af8241b` — Record improvements.md in repository memory.  
+**Branch:** `main` (tracks `origin/main`)  
+**HEAD:** `e3952ae` — final changes to lab dashboard.  
 **qr-fixes:** `f4761a9` (kept)
+
+**Deploy status:** Public QR verifier is already live at `https://pashu-verifier.vercel.app` (separate Vercel project, root `pashu-verifier`). Main farmer/vet/lab/admin Next.js app and FastAPI are **not** hosted yet. This branch wires `NEXT_PUBLIC_API_URL` and a Render Blueprint so hosting can happen without changing `main` or the verifier project.
 
 ## Current tree (uncommitted)
 
+- Farmer dispatch no longer reuses an open lab sample for the same animal. Send to Lab always inserts a new `LabSample` + `FarmerDispatch`, so a second demo of MP-112 still appears in the lab queue. Generate Passport reuses that row only when the modal passes `dispatch_id` after Send to Lab; otherwise it also creates a new sample. Covered by `backend/test_dispatch_queue.py`. Local Postgres leftover DSP-* demo rows were removed so the queue again shows the 3 seeded awaiting lots plus MP-104 in testing.
 - Lab dashboard overview: `GET /api/lab/dashboard` now returns pipeline KPIs (receipt / testing / verification / hold), outcomes (reports / passed / violations), product mix, actionable attention (up to 5), and activity from sample/report timestamps. Frontend [`src/app/lab/dashboard/page.tsx`](src/app/lab/dashboard/page.tsx) shows clickable card grids and empty states. Builder lives in `backend/app/lab_workflow.py` (`build_lab_dashboard`); covered by `backend/test_lab_workflow.py`.
 - Forecast & Planning is now on-demand exponential smoothing, not hardcoded series. Uncommitted: `backend/app/forecast/` (DGP, panel loader, SES/Holt/Holt-Winters, `GET /api/admin/forecast`), `backend/data/amu_monthly_panel.csv` (36 months, history only), `backend/test_forecast.py`, `src/components/admin/ForecastTab.tsx`, `src/lib/forecast/parse-slots.ts`, `src/lib/api/dummy/admin-forecast.ts`. Also modified: `backend/app/api/admin.py`, `backend/requirements.txt` (numpy/pandas/statsmodels), admin layout React Query provider, `query-keys.ts`. Do not commit Python `__pycache__` or `pashu-verifier/public/reference/`.
 - Farmer Insights charts now use the same Punjab×Dairy AMU panel. `GET /api/farmer/insights?range=30d|60d|90d` runs ES for the demand card (3 history months + 1/2/3 forecast months). Farm Performance / Health & Treatment plot the last 12 history months with display-only festive multipliers (dairy milk peaks at Holi/Diwali; medicine/health follow a poultry-style festive dip) plus a gentle uptrend — panel CSV/DGP unchanged. Frontend passes `range`; Farm Performance uses a dual Y-axis; dual charts show all 12 month ticks. Tests in `backend/test_forecast.py` (`test_farmer_insights_range_changes_forecast`).
+- Farmer home: greeting is time-neutral **Namaste 🙏** (not “Good morning”). `getFarmerDashboard` falls back to the canonical seed when the API fails or returns no `farm` (fixes `farm.name` crash from invalid/default tokens returning `{detail}`); normalizes medicine stock `status` to `{text, variant}`. Backend `GET /api/farmer/dashboard` stock badges match that shape. `getToken` no longer invents `farmer1_id:FARMER`.
 - Parked items: `improvements.md`.
 
 **Remotes:**

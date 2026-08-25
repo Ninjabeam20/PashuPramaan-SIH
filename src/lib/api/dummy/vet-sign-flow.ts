@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 // Dummy API for the Vet Signature Flow
 
@@ -96,7 +97,7 @@ const toSignDetail = (prescription: Prescription): PrescriptionSignDetail => {
 
 export const getPrescriptionForSigning = async (rxId: string): Promise<PrescriptionSignDetail> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/prescriptions/${rxId}/for-signing`, {
+  const res = await fetch(`${API_BASE}/api/vet/prescriptions/${rxId}/for-signing`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -111,7 +112,7 @@ export const submitSignature = async (
   payload: { typed_name: string; has_drawn_signature: boolean; pin: string, signature_image?: string },
 ) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/prescriptions/${rxId}/sign`, {
+  const res = await fetch(`${API_BASE}/api/vet/prescriptions/${rxId}/sign`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
     body: JSON.stringify(payload)
@@ -124,7 +125,7 @@ export const submitSignature = async (
 
 export const getEmergencyForCountersigning = async (rxId: string): Promise<PrescriptionSignDetail> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/emergencies/${rxId}/for-countersigning`, {
+  const res = await fetch(`${API_BASE}/api/vet/emergencies/${rxId}/for-countersigning`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -139,7 +140,7 @@ export const submitCountersignature = async (
   payload: { typed_name: string; has_drawn_signature: boolean; pin: string, signature_image?: string },
 ) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/emergencies/${rxId}/countersign`, {
+  const res = await fetch(`${API_BASE}/api/vet/emergencies/${rxId}/countersign`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
     body: JSON.stringify(payload)

@@ -65,7 +65,7 @@ The active Dashboard navigation item should use a very subtle pale green backgro
 At the top:
 
 Small greeting text:
-**Good morning, Dr. Priya**
+**Namaste, Dr. Priya**
 
 Large serif heading:
 **Laboratory Dashboard**

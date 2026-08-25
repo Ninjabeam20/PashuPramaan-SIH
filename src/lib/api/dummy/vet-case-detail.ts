@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import {
@@ -44,7 +45,7 @@ export interface CaseDetail {
 
 export const getCaseDetail = async (caseId: string): Promise<CaseDetail> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/cases/${caseId}`, {
+  const res = await fetch(`${API_BASE}/api/vet/cases/${caseId}`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });

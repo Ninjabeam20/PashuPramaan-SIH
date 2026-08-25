@@ -45,7 +45,7 @@ export default function VetHome() {
           YOUR DESK
         </div>
         <h1 className="text-4xl font-display font-normal text-[var(--color-text)] mb-2">
-          Good morning, {data.vet.name}
+          Namaste 🙏, {data.vet.name}
         </h1>
         <p className="text-sm text-[var(--color-text-muted)]">
           Your prescription desk at a glance.

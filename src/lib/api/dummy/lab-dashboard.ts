@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 
 export type LabSummaryCard = {
@@ -47,7 +48,7 @@ export type LabDashboardData = {
 
 export async function fetchLabDashboard(): Promise<LabDashboardData> {
   const token = getToken();
-  const res = await fetch("http://localhost:8000/api/lab/dashboard", {
+  const res = await fetch(`${API_BASE}/api/lab/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {

@@ -8,6 +8,7 @@
 "use client";
 
 import * as React from "react";
+import { API_BASE } from "@/lib/api/base-url";
 import { ArrowLeft, Check, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Badge, BadgeVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -171,7 +172,7 @@ export function VerificationScreen({ item, onViewAssessment, onBack, onReleased,
     setLoading(true);
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`http://localhost:8000/api/lab/results/${item.id}/verify`, {
+      const res = await fetch(`${API_BASE}/api/lab/results/${item.id}/verify`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ action })

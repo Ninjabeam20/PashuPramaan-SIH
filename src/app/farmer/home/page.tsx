@@ -59,6 +59,10 @@ export default function FarmerHome() {
 
   const { farm, attention_items, medicine_stock } = data as DashboardData;
 
+  if (!farm?.name) {
+    return <div className="text-red-500">Error loading dashboard.</div>;
+  }
+
   return (
     <div className="flex flex-col gap-8 pb-8">
       {pendingPrescriptions && pendingPrescriptions.length > 0 && (

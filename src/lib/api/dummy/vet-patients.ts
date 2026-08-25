@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api/base-url";
 import { getToken } from "./auth-utils";
 import { store } from "@/lib/seed/store";
 import { patientTypeLabel } from "@/lib/seed/project";
@@ -33,7 +34,7 @@ const CARE_STATUS_BADGE: Record<Exclude<CareStatus, "healthy">, { text: string; 
 
 export const getVetPatients = async (): Promise<PatientsData> => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/patients`, {
+  const res = await fetch(`${API_BASE}/api/vet/patients`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -45,7 +46,7 @@ export const getVetPatients = async (): Promise<PatientsData> => {
 
 export const getPatientDetail = async (patientId: string) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/patients/${patientId}`, {
+  const res = await fetch(`${API_BASE}/api/vet/patients/${patientId}`, {
     method: "GET",
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -55,7 +56,7 @@ export const getPatientDetail = async (patientId: string) => {
 
 export const recordFollowUp = async (payload: { patientId: string, outcome: string, notes: string, date: string }) => {
   const token = getToken();
-  const res = await fetch(`http://localhost:8000/api/vet/patients/${payload.patientId}/follow-up`, {
+  const res = await fetch(`${API_BASE}/api/vet/patients/${payload.patientId}/follow-up`, {
     method: "POST",
     headers: { 
       "Authorization": `Bearer ${token}`,

@@ -17,6 +17,9 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 if "?schema=" in SQLALCHEMY_DATABASE_URL:
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.split("?schema=")[0]
+if "render.com" in SQLALCHEMY_DATABASE_URL and "sslmode=" not in SQLALCHEMY_DATABASE_URL:
+    joiner = "&" if "?" in SQLALCHEMY_DATABASE_URL else "?"
+    SQLALCHEMY_DATABASE_URL = f"{SQLALCHEMY_DATABASE_URL}{joiner}sslmode=require"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
